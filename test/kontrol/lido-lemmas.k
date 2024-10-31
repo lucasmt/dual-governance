@@ -42,6 +42,9 @@ module LIDO-LEMMAS [symbolic]
       requires X modInt ( 2 ^Int ( 8 *Int lengthBytes ( BA2 ) ) ) ==Int 0
       [simplification, preserves-definedness]
 
+    rule [notBool-or]:  notBool ( A  orBool B ) => ( notBool A ) andBool ( notBool B ) [simplification]
+    rule [notBool-and]: notBool ( A andBool B ) => ( notBool A )  orBool ( notBool B ) [simplification]
+
     //
     // Rules
     //

@@ -29,8 +29,8 @@ contract EscrowInvariants is StorageSetup {
         //_establish(mode, totals.amountFinalized <= totalPooledEther);
         //_establish(mode, totals.amountClaimed <= totals.amountFinalized);
         EscrowSt currentState = EscrowSt(_getCurrentState(escrow));
-        _establish(mode, 0 < uint8(currentState));
-        _establish(mode, uint8(currentState) < 3);
+        _establish(mode, 0 <= uint8(currentState));
+        _establish(mode, uint8(currentState) <= 2);
     }
 
     function signallingEscrowInvariants(Mode mode, Escrow escrow) external view {

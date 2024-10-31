@@ -92,9 +92,9 @@ contract EscrowAccountingTest is EscrowInvariants {
     function _setUpGenericState() public {
         _setUpInitialState();
 
-        address dualGovernanceAddress = address(uint160(kevm.freshUInt(20))); // ?WORD2
         uint8 currentState = uint8(kevm.freshUInt(1)); // ?WORD3
-        vm.assume(currentState < 3);
+        vm.assume(0 < currentState);
+        vm.assume(currentState <= 2);
 
         // ?STORAGE0
         // ?WORD4: lockedShares
