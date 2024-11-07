@@ -12,9 +12,9 @@ contract RageQuitTest is DualGovernanceSetUp {
         dualGovernance.activateNextState();
 
         uint40 rageQuitExtensionPeriodStartedAt = _getRageQuitExtensionPeriodStartedAt(rageQuitEscrow);
-        uint32 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(rageQuitEscrow);
+        uint32 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(rageQuitEscrow);
 
-        if (block.timestamp <= rageQuitExtensionPeriodStartedAt + rageQuitEthWithdrawalsDelay) {
+        if (block.timestamp <= rageQuitExtensionPeriodStartedAt + rageQuitExtensionPeriodDuration) {
             assert(dualGovernance.getPersistedState() == State.RageQuit);
         }
     }
