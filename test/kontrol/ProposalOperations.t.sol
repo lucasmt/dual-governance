@@ -107,7 +107,6 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
             address(dualGovernance), 28324487748957058971331294301258181510018269374235438230632061138814754629752, slot
         );
 
-        auxDualGovernance.activateNextState();
         State nextState = auxDualGovernance.getPersistedState();
         vm.assume(nextState != State.Normal);
         vm.assume(nextState != State.VetoSignalling);
