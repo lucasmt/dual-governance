@@ -39,21 +39,28 @@ break-on-cheatcodes        = false
 auto_abstract              = true
 run-constructor            = false
 match-test                 = [
-        #"RageQuitTest.testRageQuitDuration",
-        #"VetoCooldownTest.testVetoCooldownDuration",
+        "RageQuitTest.testRageQuitDuration",
+        "VetoCooldownTest.testVetoCooldownDuration",
         "VetoSignallingTest.testTransitionNormalToVetoSignalling",
         "VetoSignallingTest.testVetoSignallingInvariantsHoldInitially",
         "VetoSignallingTest.testVetoSignallingInvariantsArePreserved",
         "VetoSignallingTest.testDeactivationNotCancelled",
-        #"EscrowAccountingTest.testRageQuitSupport",
-        #"EscrowAccountingTest.testEscrowInvariantsHoldInitially",
+        "EscrowAccountingTest.testRageQuitSupport",
+        "EscrowAccountingTest.testEscrowInvariantsHoldInitially",
+        "EscrowAccountingTest.testRequestWithdrawals",
+        "EscrowAccountingTest.testClaimNextWithdrawalsBatch",
         #"EscrowLockUnlockTest.testLockStEth",
         #"EscrowAccountingTest.testUnlockStEth",
-        #"EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
-        #"EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
+        "EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
+        "EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
         #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
         #"ProposalOperationsTest.testOnlyAdminProposersCanCancelProposals",
-        #"ProposalOperationsTest.testCannotProposeInInvalidState",
+        "ProposalOperationsTest.testCannotProposeInInvalidState",
+        #"ProposalOperationsTest.testCannotScheduleInInvalidStates",
+        #"ProposalOperationsTest.testCannotScheduleSubmissionAfterLastVetoSignalling",
+        #"ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
+        #"ProposalOperationsTest.testCannotScheduleBeforeMinTimelock",
+        #"ProposalOperationsTest.testCannotExecuteBeforeEmergencyProtectionTimelock",
         #"ActivateNextStateTest.testEscrowStateTransition"
     ]
 # bug-report               = disabled by default
