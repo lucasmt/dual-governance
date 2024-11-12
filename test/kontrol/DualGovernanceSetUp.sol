@@ -88,7 +88,7 @@ contract DualGovernanceSetUp is StorageSetup {
         // ?WORD: totalPooledEther
         // ?WORD0: totalShares
         // ?WORD1: shares[signallingEscrow]
-        this.stEthStorageSetup(stEth, signallingEscrow);
+        this.stEthStorageSetup(stEth, signallingEscrow, withdrawalQueue);
 
         // ?STORAGE0
         // ?WORD2: currentState

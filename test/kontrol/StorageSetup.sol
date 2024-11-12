@@ -10,6 +10,7 @@ import {State as WithdrawalBatchesQueueState} from "contracts/libraries/Withdraw
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
 
 import "contracts/model/StETHModel.sol";
+import "contracts/model/WithdrawalQueueModel.sol";
 import "contracts/model/WstETHAdapted.sol";
 
 import "test/kontrol/KontrolTest.sol";
@@ -18,7 +19,7 @@ contract StorageSetup is KontrolTest {
     //
     //  STETH
     //
-    function stEthStorageSetup(StETHModel _stEth, IEscrow _escrow) external {
+    function stEthStorageSetup(StETHModel _stEth, IEscrow _escrow, IWithdrawalQueue _withdrawalQueue) external {
         kevm.symbolicStorage(address(_stEth));
         // Slot 0
         uint256 totalPooledEther = kevm.freshUInt(32);
@@ -31,10 +32,25 @@ contract StorageSetup is KontrolTest {
         vm.assume(totalShares < ethUpperBound);
         _stEth.setTotalShares(totalShares);
         // Slot 2
-        uint256 shares = kevm.freshUInt(32);
-        vm.assume(shares < totalShares);
-        vm.assume(shares < ethUpperBound);
-        _stEth.setShares(address(_escrow), shares);
+        uint256 escrowShares = kevm.freshUInt(32);
+        vm.assume(escrowShares < totalShares);
+        vm.assume(escrowShares < ethUpperBound);
+        _stEth.setShares(address(_escrow), escrowShares);
+        //
+        uint256 queueShares = kevm.freshUInt(32);
+        vm.assume(queueShares < totalShares);
+        vm.assume(queueShares < ethUpperBound);
+        _stEth.setShares(address(_withdrawalQueue), queueShares);
+        //
+        uint256 queueAllowance = kevm.freshUInt(32);
+        _stEth.setAllowances(address(_escrow), address(_withdrawalQueue), queueAllowance);
+    }
+
+    function stEthUserSetup(StETHModel _stEth, address _user) external {
+        uint256 userShares = kevm.freshUInt(32);
+        vm.assume(userShares < _stEth.getTotalShares());
+        vm.assume(userShares < ethUpperBound);
+        _stEth.setShares(_user, userShares);
     }
 
     function stEthStorageInvariants(Mode mode, StETHModel _stEth, IEscrow _escrow) external {
@@ -181,6 +197,10 @@ contract StorageSetup is KontrolTest {
         return uint8(_loadData(address(_escrow), 0, 0, 1));
     }
 
+    function _getMinAssetsLockDuration(IEscrow _escrow) internal view returns (uint32) {
+        return uint32(_loadData(address(_escrow), 0, 1, 4));
+    }
+
     function _getRageQuitExtensionPeriodDuration(IEscrow _escrow) internal view returns (uint32) {
         return uint32(_loadData(address(_escrow), 0, 5, 4));
     }
@@ -209,12 +229,9 @@ contract StorageSetup is KontrolTest {
         return uint128(_loadData(address(_escrow), 2, 16, 16));
     }
 
-    function _getLastAssetsLockTimestamp(IEscrow _escrow, address _vetoer) internal view returns (uint256) {
-        uint256 assetsSlot = 2;
-        uint256 vetoerAddressPadded = uint256(uint160(_vetoer));
-        bytes32 vetoerAssetsSlot = keccak256(abi.encodePacked(vetoerAddressPadded, assetsSlot));
-        uint256 lastAssetsLockTimestampSlot = uint256(vetoerAssetsSlot) + 1;
-        return _loadUInt256(address(_escrow), lastAssetsLockTimestampSlot);
+    function _getLastAssetsLockTimestamp(IEscrow _escrow, address _vetoer) internal view returns (uint40) {
+        uint256 key = uint256(uint160(_vetoer));
+        return uint40(_loadMappingData(address(_escrow), 3, key, 0, 5));
     }
 
     function _getBatchesQueueStatus(IEscrow _escrow) internal view returns (uint8) {
@@ -222,7 +239,6 @@ contract StorageSetup is KontrolTest {
     }
 
     struct AccountingRecord {
-        EscrowSt escrowState;
         uint256 allowance;
         uint256 userBalance;
         uint256 escrowBalance;
@@ -346,6 +362,14 @@ contract StorageSetup is KontrolTest {
         } else {
             _storeData(address(_escrow), 6, 0, 32, 0);
         }
+    }
+
+    function escrowUserSetup(IEscrow _escrow, address _user) external {
+        uint256 key = uint256(uint160(_user));
+        uint256 lastAssetsLockTimestamp = kevm.freshUInt(5);
+        vm.assume(lastAssetsLockTimestamp <= block.timestamp);
+        vm.assume(lastAssetsLockTimestamp < timeUpperBound);
+        _storeMappingData(address(_escrow), 3, key, 0, 5, lastAssetsLockTimestamp);
     }
 
     function escrowStorageInvariants(Mode mode, IEscrow _escrow) external {
