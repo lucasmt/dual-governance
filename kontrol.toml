@@ -56,11 +56,11 @@ match-test                 = [
         #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
         #"ProposalOperationsTest.testOnlyAdminProposersCanCancelProposals",
         "ProposalOperationsTest.testCannotProposeInInvalidState",
-        #"ProposalOperationsTest.testCannotScheduleInInvalidStates",
-        #"ProposalOperationsTest.testCannotScheduleSubmissionAfterLastVetoSignalling",
-        #"ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
-        #"ProposalOperationsTest.testCannotScheduleBeforeMinTimelock",
-        #"ProposalOperationsTest.testCannotExecuteBeforeEmergencyProtectionTimelock",
+        "ProposalOperationsTest.testCannotScheduleInInvalidStates",
+        "ProposalOperationsTest.testCannotScheduleSubmissionAfterLastVetoSignalling",
+        "ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
+        "ProposalOperationsTest.testCannotScheduleBeforeMinTimelock",
+        "ProposalOperationsTest.testCannotExecuteBeforeEmergencyProtectionTimelock",
         #"ActivateNextStateTest.testEscrowStateTransition"
     ]
 # bug-report               = disabled by default
