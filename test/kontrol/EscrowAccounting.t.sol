@@ -86,7 +86,7 @@ contract EscrowAccountingTest is EscrowInvariants {
         // ?WORD: totalPooledEther
         // ?WORD0: totalShares
         // ?WORD1: shares[escrow]
-        this.stEthStorageSetup(stEth, escrow);
+        this.stEthStorageSetup(stEth, escrow, withdrawalQueue);
     }
 
     function _setUpGenericState() public {
@@ -133,17 +133,29 @@ contract EscrowAccountingTest is EscrowInvariants {
 
     function testRequestWithdrawals(uint256 stEthAmount) public {
         _setUpGenericState();
+        // TODO: Simplifying assumption that there is no rageQuitEscrow
+        this.dualGovernanceStorageSetup(dualGovernance, escrow, IEscrow(address(0)), config);
+        vm.assume(EscrowSt(_getCurrentState(escrow)) == EscrowSt.SignallingEscrow);
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
-        vm.assume(stEth.sharesOf(sender) < ethUpperBound);
+        this.stEthUserSetup(stEth, sender);
+        this.escrowUserSetup(escrow, sender);
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
+        uint256 preRageQuitSupport = PercentD16.unwrap(escrow.getRageQuitSupport());
 
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
+        // TODO: Remove later
+        vm.assume(dualGovernance.getPersistedState() == State.Normal);
+        vm.assume(dualGovernance.getEffectiveState() != State.RageQuit);
 
         // Only request one withdrawal for simplicity
+        vm.assume(stEthAmount >= withdrawalQueue.MIN_STETH_WITHDRAWAL_AMOUNT());
+        vm.assume(stEthAmount <= withdrawalQueue.MAX_STETH_WITHDRAWAL_AMOUNT());
+        vm.assume(stEthAmount <= stEth.allowance(address(escrow), address(withdrawalQueue)));
+        vm.assume(stEth.getSharesByPooledEth(stEthAmount) <= stEth.sharesOf(address(escrow)));
         uint256[] memory stEthAmounts = new uint256[](1);
         stEthAmounts[0] = stEthAmount;
 
@@ -155,11 +167,16 @@ contract EscrowAccountingTest is EscrowInvariants {
         this.escrowUserInvariants(Mode.Assert, escrow, sender);
 
         AccountingRecord memory post = this.saveAccountingRecord(sender, escrow);
+        uint256 postRageQuitSupport = PercentD16.unwrap(escrow.getRageQuitSupport());
+
         assert(post.userSharesLocked == pre.userSharesLocked - stEthAmount);
         assert(post.totalSharesLocked == pre.totalSharesLocked - stEthAmount);
         assert(post.userLastLockedTime == Timestamps.now());
         assert(post.userUnstEthLockedShares == pre.userUnstEthLockedShares + stEthAmount);
         assert(post.unfinalizedShares == pre.unfinalizedShares + stEthAmount);
+
+        // Rage quit support is not affected
+        assert(postRageQuitSupport == preRageQuitSupport);
     }
 
     function testRequestNextWithdrawalsBatch(uint256 maxBatchSize) public {
