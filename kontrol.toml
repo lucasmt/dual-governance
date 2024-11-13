@@ -50,7 +50,7 @@ match-test                 = [
         "EscrowAccountingTest.testRequestWithdrawals",
         "EscrowAccountingTest.testClaimNextWithdrawalsBatch",
         "EscrowLockUnlockTest.testLockStEth",
-        "EscrowAccountingTest.testUnlockStEth",
+        "EscrowLockUnlockTest.testUnlockStEth",
         "EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
         "EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
         #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
