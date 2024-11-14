@@ -116,9 +116,9 @@ contract DualGovernanceModel {
      * ranging from immediate to maximum delay based on the specified thresholds.
      */
     function calculateDynamicTimelock(uint256 rageQuitSupport) public pure returns (uint256) {
-        if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+        if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
             return 0;
-        } else if (rageQuitSupport <= SECOND_SEAL_RAGE_QUIT_SUPPORT) {
+        } else if (rageQuitSupport < SECOND_SEAL_RAGE_QUIT_SUPPORT) {
             return linearInterpolation(rageQuitSupport);
         } else {
             return DYNAMIC_TIMELOCK_MAX_DURATION;
@@ -134,7 +134,7 @@ contract DualGovernanceModel {
         uint256 L_min = DYNAMIC_TIMELOCK_MIN_DURATION;
         uint256 L_max = DYNAMIC_TIMELOCK_MAX_DURATION;
         // Assumption: No underflow
-        require(rageQuitSupport > FIRST_SEAL_RAGE_QUIT_SUPPORT);
+        require(rageQuitSupport >= FIRST_SEAL_RAGE_QUIT_SUPPORT);
         // Assumption: No overflow
         require(
             ((rageQuitSupport - FIRST_SEAL_RAGE_QUIT_SUPPORT) * (L_max - L_min)) / (L_max - L_min)
@@ -222,7 +222,7 @@ contract DualGovernanceModel {
     function fromNormal(uint256 rageQuitSupport) private {
         require(currentState == State.Normal, "Must be in Normal state.");
 
-        if (rageQuitSupport > FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+        if (rageQuitSupport >= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
             transitionState(State.VetoSignalling);
         }
     }
@@ -239,7 +239,7 @@ contract DualGovernanceModel {
         if (
             block.timestamp != lastStateChangeTime
                 && block.timestamp - lastStateChangeTime > DYNAMIC_TIMELOCK_MAX_DURATION
-                && rageQuitSupport > SECOND_SEAL_RAGE_QUIT_SUPPORT
+                && rageQuitSupport >= SECOND_SEAL_RAGE_QUIT_SUPPORT
         ) {
             transitionState(State.RageQuit);
         } else if (
@@ -264,7 +264,7 @@ contract DualGovernanceModel {
         if (
             block.timestamp == lastStateChangeTime
                 || block.timestamp - lastStateChangeTime <= calculateDynamicTimelock(rageQuitSupport)
-                || rageQuitSupport > SECOND_SEAL_RAGE_QUIT_SUPPORT
+                || rageQuitSupport >= SECOND_SEAL_RAGE_QUIT_SUPPORT
         ) {
             exitSubState(State.VetoSignalling);
         } else if (elapsed > VETO_SIGNALLING_DEACTIVATION_MAX_DURATION) {
@@ -282,7 +282,7 @@ contract DualGovernanceModel {
         // Ensure the Veto Cooldown has lasted for at least the minimum duration.
         if (block.timestamp != lastStateChangeTime && block.timestamp - lastStateChangeTime > VETO_COOLDOWN_DURATION) {
             // Depending on the level of rage quit support, transition to Normal or Veto Signalling.
-            if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+            if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
                 transitionState(State.Normal);
             } else {
                 transitionState(State.VetoSignalling);
@@ -306,7 +306,7 @@ contract DualGovernanceModel {
             // Depending on the level of rage quit support, transition to Veto Cooldown or Veto Signalling.
             // Transition to Veto Cooldown if support has decreased below the critical threshold.
             // Otherwise, return to Veto Signalling if support is still above a lower threshold.
-            if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+            if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
                 transitionState(State.VetoCooldown);
             } else {
                 transitionState(State.VetoSignalling);

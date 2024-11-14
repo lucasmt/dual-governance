@@ -115,7 +115,7 @@ contract DualGovernance {
      * ranging from immediate to maximum delay based on the specified thresholds.
      */
     function calculateDynamicTimelock(uint256 rageQuitSupport) public pure returns (uint256) {
-        if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+        if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
             return 0;
         } else if (rageQuitSupport < SECOND_SEAL_RAGE_QUIT_SUPPORT) {
             return linearInterpolation(rageQuitSupport);
@@ -209,7 +209,7 @@ contract DualGovernance {
     function fromNormal(uint256 rageQuitSupport) private {
         require(currentState == State.Normal, "Must be in Normal state.");
 
-        if (rageQuitSupport > FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+        if (rageQuitSupport >= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
             transitionState(State.VetoSignalling);
         }
     }
@@ -225,7 +225,7 @@ contract DualGovernance {
         // Check the conditions for transitioning to RageQuit or Veto Deactivation based on the time elapsed and support level.
         if (
             block.timestamp - lastStateChangeTime > DYNAMIC_TIMELOCK_MAX_DURATION
-                && rageQuitSupport > SECOND_SEAL_RAGE_QUIT_SUPPORT
+                && rageQuitSupport >= SECOND_SEAL_RAGE_QUIT_SUPPORT
         ) {
             transitionState(State.RageQuit);
         } else if (
@@ -248,7 +248,7 @@ contract DualGovernance {
         // Check the conditions for transitioning to VetoCooldown or back to VetoSignalling
         if (
             block.timestamp - lastStateChangeTime <= calculateDynamicTimelock(rageQuitSupport)
-                || rageQuitSupport > SECOND_SEAL_RAGE_QUIT_SUPPORT
+                || rageQuitSupport >= SECOND_SEAL_RAGE_QUIT_SUPPORT
         ) {
             exitSubState(State.VetoSignalling);
         } else if (elapsed > VETO_SIGNALLING_DEACTIVATION_MAX_DURATION) {
@@ -266,7 +266,7 @@ contract DualGovernance {
         // Ensure the Veto Cooldown has lasted for at least the minimum duration.
         if (block.timestamp - lastStateChangeTime > VETO_COOLDOWN_DURATION) {
             // Depending on the level of rage quit support, transition to Normal or Veto Signalling.
-            if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+            if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
                 transitionState(State.Normal);
             } else {
                 transitionState(State.VetoSignalling);
@@ -290,7 +290,7 @@ contract DualGovernance {
             // Depending on the level of rage quit support, transition to Veto Cooldown or Veto Signalling.
             // Transition to Veto Cooldown if support has decreased below the critical threshold.
             // Otherwise, return to Veto Signalling if support is still above a lower threshold.
-            if (rageQuitSupport <= FIRST_SEAL_RAGE_QUIT_SUPPORT) {
+            if (rageQuitSupport < FIRST_SEAL_RAGE_QUIT_SUPPORT) {
                 transitionState(State.VetoCooldown);
             } else {
                 transitionState(State.VetoSignalling);

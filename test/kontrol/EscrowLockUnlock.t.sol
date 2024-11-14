@@ -111,7 +111,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         vm.assume(initialState != State.Normal);
         vm.assume(initialState != State.VetoCooldown);
         vm.assume(initialState != State.RageQuit);
-        vm.assume(rageQuitSupport <= config.SECOND_SEAL_RAGE_QUIT_SUPPORT());
+        vm.assume(rageQuitSupport < config.SECOND_SEAL_RAGE_QUIT_SUPPORT());
 
         testUnlockStEth();
     }
@@ -124,7 +124,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         vm.assume(initialState != State.Normal);
         vm.assume(initialState != State.VetoCooldown);
         vm.assume(initialState != State.RageQuit);
-        vm.assume(rageQuitSupport > config.SECOND_SEAL_RAGE_QUIT_SUPPORT());
+        vm.assume(rageQuitSupport >= config.SECOND_SEAL_RAGE_QUIT_SUPPORT());
         vm.assume(Timestamps.now() <= config.DYNAMIC_TIMELOCK_MAX_DURATION().addTo(vetoSignallingActivationTime));
 
         testUnlockStEth();
@@ -193,7 +193,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
 
             transitionToRageQuit = (
                 initialState == State.VetoSignalling || initialState == State.VetoSignallingDeactivation
-            ) && rageQuitSupport > config.SECOND_SEAL_RAGE_QUIT_SUPPORT()
+            ) && rageQuitSupport >= config.SECOND_SEAL_RAGE_QUIT_SUPPORT()
                 && Timestamps.now() > config.VETO_SIGNALLING_MAX_DURATION().addTo(vetoSignallingActivationTime);
         }
 
