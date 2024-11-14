@@ -134,7 +134,7 @@ contract DualGovernanceModel {
         uint256 L_min = DYNAMIC_TIMELOCK_MIN_DURATION;
         uint256 L_max = DYNAMIC_TIMELOCK_MAX_DURATION;
         // Assumption: No underflow
-        require(FIRST_SEAL_RAGE_QUIT_SUPPORT <= rageQuitSupport);
+        require(rageQuitSupport > FIRST_SEAL_RAGE_QUIT_SUPPORT);
         // Assumption: No overflow
         require(
             ((rageQuitSupport - FIRST_SEAL_RAGE_QUIT_SUPPORT) * (L_max - L_min)) / (L_max - L_min)
