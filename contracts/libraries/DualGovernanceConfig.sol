@@ -60,14 +60,14 @@ library DualGovernanceConfig {
         Context memory self,
         PercentD16 rageQuitSupport
     ) internal pure returns (bool) {
-        return rageQuitSupport > self.firstSealRageQuitSupport;
+        return rageQuitSupport >= self.firstSealRageQuitSupport;
     }
 
     function isSecondSealRageQuitSupportCrossed(
         Context memory self,
         PercentD16 rageQuitSupport
     ) internal pure returns (bool) {
-        return rageQuitSupport > self.secondSealRageQuitSupport;
+        return rageQuitSupport >= self.secondSealRageQuitSupport;
     }
 
     function isVetoSignallingDurationPassed(
@@ -109,7 +109,7 @@ library DualGovernanceConfig {
         Duration vetoSignallingMinDuration = self.vetoSignallingMinDuration;
         Duration vetoSignallingMaxDuration = self.vetoSignallingMaxDuration;
 
-        if (rageQuitSupport <= firstSealRageQuitSupport) {
+        if (rageQuitSupport < firstSealRageQuitSupport) {
             return Durations.ZERO;
         }
 
