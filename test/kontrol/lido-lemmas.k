@@ -45,6 +45,8 @@ module LIDO-LEMMAS [symbolic]
     rule [notBool-or]:  notBool ( A  orBool B ) => ( notBool A ) andBool ( notBool B ) [simplification]
     rule [notBool-and]: notBool ( A andBool B ) => ( notBool A )  orBool ( notBool B ) [simplification]
 
+    rule 0 <Int X => true requires 0 <=Int X andBool notBool (X ==Int 0) [simplification(60)]
+
     //
     // Rules
     //

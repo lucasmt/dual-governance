@@ -71,7 +71,7 @@ contract VetoSignallingTest is DualGovernanceSetUp {
     function _vetoSignallingRageQuitInvariant(Mode mode, StateRecord memory sr) internal view returns (bool) {
         return (
             _establish(mode, sr.rageQuitSupport <= sr.maxRageQuitSupport)
-                && _establish(mode, config.FIRST_SEAL_RAGE_QUIT_SUPPORT() <= sr.maxRageQuitSupport)
+                && _establish(mode, sr.maxRageQuitSupport > config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
         );
     }
 
