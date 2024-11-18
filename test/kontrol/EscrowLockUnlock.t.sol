@@ -48,33 +48,9 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         // This assumption means that senderAllowance != INFINITE_ALLOWANCE,
         // which doubles the execution effort without any added vaue
         vm.assume(senderAllowance < ethUpperBound);
-        // Hardcoded for "sender"
-        _storeUInt256(
-            address(stEth),
-            74992941968319547325319283905569341819227548318746972755481050864341498730161,
-            senderAllowance
-        );
+        stEth.setAllowances(sender, address(signallingEscrow), senderAllowance);
 
-        uint128 senderLockedShares = uint128(kevm.freshUInt(16));
-        uint128 senderUnlockedShares = uint128(kevm.freshUInt(16));
-        bytes memory slotAbi = abi.encodePacked(uint128(senderUnlockedShares), uint128(senderLockedShares));
-        bytes32 slot;
-        assembly {
-            slot := mload(add(slotAbi, 0x20))
-        }
-        _storeBytes32(
-            address(signallingEscrow),
-            93842437974268059396725027201531251382101332839645030345425397622830526343272,
-            slot
-        );
-
-        uint256 senderLastAssetsLockTimestamp = kevm.freshUInt(32);
-        vm.assume(senderLastAssetsLockTimestamp < timeUpperBound);
-        _storeUInt256(
-            address(signallingEscrow),
-            93842437974268059396725027201531251382101332839645030345425397622830526343273,
-            senderLastAssetsLockTimestamp
-        );
+        this.escrowUserSetup(signallingEscrow, sender);
 
         vm.assume(0 < amount);
         vm.assume(amount <= stEth.balanceOf(sender));
