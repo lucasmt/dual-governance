@@ -14,6 +14,7 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
 
     struct WithdrawalRequest {
         uint256 amountOfStETH;
+        uint256 amountOfShares;
         address owner;
         uint256 timestamp;
         bool isFinalized;
@@ -43,6 +44,7 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
             _lastRequestId++;
             _requests[_lastRequestId] = WithdrawalRequest({
                 amountOfStETH: _amounts[i],
+                amountOfShares: stETH.getSharesByPooledEth(_amounts[i]), // assumes this matches the calculation in real code
                 owner: _owner,
                 timestamp: block.timestamp,
                 isFinalized: false,
@@ -90,7 +92,7 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
             WithdrawalRequest storage request = _requests[requestId];
             statuses[i] = WithdrawalRequestStatus({
                 amountOfStETH: request.amountOfStETH,
-                amountOfShares: 0, // add real calculation if needed
+                amountOfShares: request.amountOfShares,
                 owner: request.owner,
                 timestamp: request.timestamp,
                 isFinalized: request.isFinalized,
