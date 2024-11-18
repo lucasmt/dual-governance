@@ -81,6 +81,24 @@ contract StorageSetup is KontrolTest {
     }
 
     //
+    // WithdrawalQueue
+    //
+    function _getLastRequestId(WithdrawalQueueModel _withdrawalQueue) internal view returns (uint256) {
+        return _loadData(address(_withdrawalQueue), 7, 0, 32);
+    }
+
+    function withdrawalQueueStorageSetup(WithdrawalQueueModel _withdrawalQueue, IStETH _stEth) external {
+        kevm.symbolicStorage(address(_withdrawalQueue));
+        _storeData(address(_withdrawalQueue), 6, 0, 20, uint256(uint160(address(_stEth))));
+        // Assuming 0 for simplicity
+        uint256 lastRequestId = 0;
+        //vm.assume(lastRequestId < type(uint256).max);
+        _storeData(address(_withdrawalQueue), 7, 0, 32, lastRequestId);
+        uint256 owner = 0;
+        _storeMappingData(address(_withdrawalQueue), 2, lastRequestId + 1, 0, 0, 20, owner);
+    }
+
+    //
     //  DUAL GOVERNANCE
     //
     function _getCurrentState(DualGovernance _dualGovernance) internal view returns (uint8) {
@@ -231,11 +249,15 @@ contract StorageSetup is KontrolTest {
 
     function _getLastAssetsLockTimestamp(IEscrow _escrow, address _vetoer) internal view returns (uint40) {
         uint256 key = uint256(uint160(_vetoer));
-        return uint40(_loadMappingData(address(_escrow), 3, key, 0, 5));
+        return uint40(_loadMappingData(address(_escrow), 3, key, 0, 0, 5));
     }
 
     function _getBatchesQueueStatus(IEscrow _escrow) internal view returns (uint8) {
         return uint8(_loadData(address(_escrow), 5, 0, 1));
+    }
+
+    function _getUnstEthRecordStatus(IEscrow _escrow, uint256 _requestId) internal view returns (uint8) {
+        return uint8(_loadMappingData(address(_escrow), 4, _requestId, 0, 0, 1));
     }
 
     struct AccountingRecord {
@@ -369,7 +391,23 @@ contract StorageSetup is KontrolTest {
         uint256 lastAssetsLockTimestamp = kevm.freshUInt(5);
         vm.assume(lastAssetsLockTimestamp <= block.timestamp);
         vm.assume(lastAssetsLockTimestamp < timeUpperBound);
-        _storeMappingData(address(_escrow), 3, key, 0, 5, lastAssetsLockTimestamp);
+        _storeMappingData(address(_escrow), 3, key, 0, 0, 5, lastAssetsLockTimestamp);
+        uint256 stETHLockedShares = kevm.freshUInt(16);
+        vm.assume(stETHLockedShares < ethUpperBound);
+        _storeMappingData(address(_escrow), 3, key, 0, 5, 16, stETHLockedShares);
+        uint256 unstEthIdsLength = kevm.freshUInt(32);
+        vm.assume(unstEthIdsLength < type(uint32).max);
+        _storeMappingData(address(_escrow), 3, key, 2, 0, 32, unstEthIdsLength);
+        uint256 unstEthLockedShares = kevm.freshUInt(16);
+        vm.assume(unstEthLockedShares < ethUpperBound);
+        _storeMappingData(address(_escrow), 3, key, 1, 0, 16, unstEthLockedShares);
+    }
+
+    function escrowWithdrawalQueueSetup(IEscrow _escrow, WithdrawalQueueModel _withdrawalQueue) external {
+        uint256 lastRequestId = _getLastRequestId(_withdrawalQueue);
+        uint256 unstEthRecordStatus = kevm.freshUInt(1);
+        vm.assume(unstEthRecordStatus < 5);
+        _storeMappingData(address(_escrow), 4, lastRequestId + 1, 0, 0, 1, unstEthRecordStatus);
     }
 
     function escrowStorageInvariants(Mode mode, IEscrow _escrow) external {
