@@ -87,23 +87,25 @@ contract KontrolTest is Test, KontrolCheats {
         address contractAddress,
         uint256 mappingSlot,
         uint256 key,
+        uint256 subSlot,
         uint256 offset,
         uint256 width
     ) internal view returns (uint256) {
         bytes32 hashedSlot = keccak256(abi.encodePacked(key, mappingSlot));
-        return _loadData(contractAddress, uint256(hashedSlot), offset, width);
+        return _loadData(contractAddress, uint256(hashedSlot) + subSlot, offset, width);
     }
 
     function _storeMappingData(
         address contractAddress,
         uint256 mappingSlot,
         uint256 key,
+        uint256 subSlot,
         uint256 offset,
         uint256 width,
         uint256 value
     ) internal {
         bytes32 hashedSlot = keccak256(abi.encodePacked(key, mappingSlot));
-        _storeData(contractAddress, uint256(hashedSlot), offset, width, value);
+        _storeData(contractAddress, uint256(hashedSlot) + subSlot, offset, width, value);
     }
 
     function _loadUInt256(address contractAddress, uint256 slot) internal view returns (uint256) {
