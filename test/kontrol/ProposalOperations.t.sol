@@ -89,8 +89,6 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
     }
 
     function testCannotProposeInInvalidState() external {
-        _initializeAuxDualGovernance();
-
         _timelockStorageSetup(dualGovernance, timelock);
         uint256 newProposalIndex = timelock.getProposalsCount();
 
@@ -107,7 +105,7 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
             address(dualGovernance), 28324487748957058971331294301258181510018269374235438230632061138814754629752, slot
         );
 
-        State nextState = auxDualGovernance.getPersistedState();
+        State nextState = dualGovernance.getEffectiveState();
         vm.assume(nextState != State.Normal);
         vm.assume(nextState != State.VetoSignalling);
         vm.assume(nextState != State.RageQuit);
