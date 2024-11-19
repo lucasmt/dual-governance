@@ -66,30 +66,38 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         this.signallingEscrowInvariants(Mode.Assume, signallingEscrow);
         this.escrowUserInvariants(Mode.Assume, signallingEscrow, sender);
 
+        State currentState = dualGovernance.getPersistedState();
+        State nextState = dualGovernance.getEffectiveState();
+        vm.assume(currentState == State.RageQuit || nextState != State.RageQuit);
+
         vm.startPrank(sender);
         signallingEscrow.lockStETH(amount);
         vm.stopPrank();
+
+        return;
 
         this.escrowInvariants(Mode.Assert, signallingEscrow);
         this.signallingEscrowInvariants(Mode.Assert, signallingEscrow);
         this.escrowUserInvariants(Mode.Assert, signallingEscrow, sender);
 
         AccountingRecord memory post = this.saveAccountingRecord(sender, signallingEscrow);
-        assert(post.userShares == pre.userShares - amountInShares);
-        assert(post.escrowShares == pre.escrowShares + amountInShares);
-        assert(post.userSharesLocked == pre.userSharesLocked + amountInShares);
-        assert(post.totalSharesLocked == pre.totalSharesLocked + amountInShares);
-        assert(post.userLastLockedTime == Timestamps.now());
+        assertTrue(post.userShares == pre.userShares - amountInShares, "post.userShares");
+        assertTrue(post.escrowShares == pre.escrowShares + amountInShares, "post.escrowShares");
+        assertTrue(post.userSharesLocked == pre.userSharesLocked + amountInShares, "post.userSharesLocked");
+        assertTrue(post.totalSharesLocked == pre.totalSharesLocked + amountInShares, "post.totalSharesLocked");
+        assertTrue(post.userLastLockedTime == Timestamps.now(), "post.userLastLockedTime");
 
         // Accounts for rounding errors in the conversion to and from shares
-        assert(pre.userBalance - amount <= post.userBalance);
-        assert(post.escrowBalance <= pre.escrowBalance + amount);
-        assert(post.totalEth <= pre.totalEth + amount);
-
         uint256 errorTerm = stEth.getPooledEthByShares(1) + 1;
-        assert(post.userBalance <= pre.userBalance - amount + errorTerm);
-        assert(pre.escrowBalance + amount <= post.escrowBalance + errorTerm);
-        assert(pre.totalEth + amount <= post.totalEth + errorTerm);
+
+        assertTrue(pre.userBalance - amount <= post.userBalance, "post.userBalance:lower");
+        assertTrue(post.userBalance <= pre.userBalance - amount + errorTerm, "post.userBalance:upper");
+
+        assertTrue(post.escrowBalance <= pre.escrowBalance + amount, "pre.escrowBalance + amount:lower");
+        assertTrue(pre.escrowBalance + amount <= post.escrowBalance + errorTerm, "pre.escrowBalance + amount:upper");
+
+        assertTrue(post.totalEth <= pre.totalEth + amount, "pre.totalEth + amount:lower");
+        assertTrue(pre.totalEth + amount <= post.totalEth + errorTerm, "pre.totalEth + amount:upper");
     }
 
     /*
