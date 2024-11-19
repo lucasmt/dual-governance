@@ -51,7 +51,7 @@ module LIDO-LEMMAS [symbolic]
       requires 0 <Int X andBool 0 <=Int Z andBool Z modInt X ==Int 0
       [simplification, concrete(X, Z), preserves-definedness]
 
-    rule [mask-b-and]:
+    rule [multimask-b-and]:
       MASK:Int &Int SLOT:Int =>
         ( MASK |Int ( 2 ^Int ( 8 *Int ( #getMaskShiftBytes(MASK) +Int #getMaskWidthBytes(MASK) ) ) -Int 1 ) )
           &Int
