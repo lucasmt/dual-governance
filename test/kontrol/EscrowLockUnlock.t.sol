@@ -74,8 +74,6 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         signallingEscrow.lockStETH(amount);
         vm.stopPrank();
 
-        return;
-
         this.escrowInvariants(Mode.Assert, signallingEscrow);
         this.signallingEscrowInvariants(Mode.Assert, signallingEscrow);
         this.escrowUserInvariants(Mode.Assert, signallingEscrow, sender);
