@@ -47,6 +47,18 @@ module LIDO-LEMMAS [symbolic]
 
     rule 0 <Int X => true requires 0 <=Int X andBool notBool (X ==Int 0) [simplification(60)]
 
+    rule X *Int Y <Int Z => Y <Int Z /Int X
+      requires 0 <Int X andBool 0 <=Int Z andBool Z modInt X ==Int 0
+      [simplification, concrete(X, Z), preserves-definedness]
+
+    rule [mask-b-and]:
+      MASK:Int &Int SLOT:Int =>
+        ( MASK |Int ( 2 ^Int ( 8 *Int ( #getMaskShiftBytes(MASK) +Int #getMaskWidthBytes(MASK) ) ) -Int 1 ) )
+          &Int
+        #asWord ( #buf ( 32, SLOT ) [ 32 -Int ( #getMaskShiftBytes(MASK) +Int #getMaskWidthBytes(MASK) ) := #buf ( #getMaskWidthBytes(MASK), 0 ) ] )
+        requires 0 <=Int #getMaskShiftBytes(MASK) andBool 0 <=Int #getMaskWidthBytes(MASK) andBool #rangeUInt(256, SLOT)
+        [simplification(60), concrete(MASK), preserves-definedness]
+
     //
     // Rules
     //
