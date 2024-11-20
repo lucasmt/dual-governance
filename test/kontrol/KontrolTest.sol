@@ -151,7 +151,7 @@ contract KontrolTest is Test, KontrolCheats {
 
     function _assumeNoOverflow(uint256 augend, uint256 addend) internal {
         unchecked {
-            vm.assume(augend < augend + addend);
+            vm.assume(augend + addend <= type(uint256).max);
         }
     }
 }

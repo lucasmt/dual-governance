@@ -59,6 +59,8 @@ module LIDO-LEMMAS [symbolic]
         requires 0 <=Int #getMaskShiftBytes(MASK) andBool 0 <=Int #getMaskWidthBytes(MASK) andBool #rangeUInt(256, SLOT)
         [simplification(60), concrete(MASK), preserves-definedness]
 
+    rule X <=Int maxUInt256 => X <Int pow256 [simplification]
+
     //
     // Rules
     //

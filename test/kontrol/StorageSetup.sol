@@ -286,12 +286,12 @@ contract StorageSetup is KontrolTest {
     }
 
     function saveAccountingRecord(address user, Escrow escrow) external view returns (AccountingRecord memory ar) {
-        IStETH stEth = escrow.ST_ETH();
+        StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
         ar.allowance = stEth.allowance(user, address(escrow));
         ar.userBalance = stEth.balanceOf(user);
         ar.escrowBalance = stEth.balanceOf(address(escrow));
-        //ar.userShares = stEth.sharesOf(user);
-        //ar.escrowShares = stEth.sharesOf(address(escrow));
+        ar.userShares = stEth.sharesOf(user);
+        ar.escrowShares = stEth.sharesOf(address(escrow));
         ar.userSharesLocked = escrow.getVetoerState(user).stETHLockedShares;
         ar.totalSharesLocked = escrow.getLockedAssetsTotals().stETHLockedShares;
         ar.totalEth = stEth.getPooledEthByShares(ar.totalSharesLocked);
