@@ -89,13 +89,13 @@ contract StorageSetup is KontrolTest {
 
     function withdrawalQueueStorageSetup(WithdrawalQueueModel _withdrawalQueue, IStETH _stEth) external {
         kevm.symbolicStorage(address(_withdrawalQueue));
-        _storeData(address(_withdrawalQueue), 6, 0, 20, uint256(uint160(address(_stEth))));
+        _storeUInt256(address(_withdrawalQueue), 6, uint256(uint160(address(_stEth))));
         // Assuming 0 for simplicity
         uint256 lastRequestId = 0;
         //vm.assume(lastRequestId < type(uint256).max);
-        _storeData(address(_withdrawalQueue), 7, 0, 32, lastRequestId);
+        _storeUInt256(address(_withdrawalQueue), 7, lastRequestId);
         uint256 owner = 0;
-        _storeMappingData(address(_withdrawalQueue), 2, lastRequestId + 1, 0, 0, 20, owner);
+        _storeMappingUInt256(address(_withdrawalQueue), 2, lastRequestId + 1, 0, owner);
     }
 
     //
@@ -162,10 +162,10 @@ contract StorageSetup is KontrolTest {
 
         _storeData(address(_dualGovernance), 7, 0, 5, vetoSignallingReactivationTime);
         _storeData(address(_dualGovernance), 7, 5, 5, normalOrVetoCooldownExitedAt);
-        _storeData(address(_dualGovernance), 7, 10, 20, uint256(uint160(address(_rageQuitEscrow))));
+        _storeData(address(_dualGovernance), 7, 10, 22, uint256(uint160(address(_rageQuitEscrow))));
 
         // Slot 8
-        _storeData(address(_dualGovernance), 8, 0, 20, uint256(uint160(address(_config))));
+        _storeUInt256(address(_dualGovernance), 8, uint256(uint160(address(_config))));
     }
 
     function dualGovernanceStorageInvariants(Mode mode, DualGovernance _dualGovernance) external {
@@ -330,6 +330,11 @@ contract StorageSetup is KontrolTest {
         {
             _storeData(address(_escrow), 0, 0, 1, uint256(_currentState));
 
+            uint256 minAssetsLockDuration = kevm.freshUInt(4);
+            vm.assume(minAssetsLockDuration <= block.timestamp);
+            vm.assume(minAssetsLockDuration < timeUpperBound);
+            _storeData(address(_escrow), 0, 1, 4, minAssetsLockDuration);
+
             if (_currentState == EscrowSt.RageQuitEscrow) {
                 uint256 rageQuitExtensionPeriodDuration = kevm.freshUInt(4);
                 vm.assume(rageQuitExtensionPeriodDuration <= block.timestamp);
@@ -343,9 +348,9 @@ contract StorageSetup is KontrolTest {
 
                 _storeData(address(_escrow), 0, 5, 4, rageQuitExtensionPeriodDuration);
                 _storeData(address(_escrow), 0, 9, 5, rageQuitExtensionPeriodStartedAt);
-                _storeData(address(_escrow), 0, 14, 4, rageQuitEthWithdrawalsDelay);
+                _storeData(address(_escrow), 0, 14, 18, rageQuitEthWithdrawalsDelay);
             } else {
-                _storeData(address(_escrow), 0, 5, 13, uint256(0));
+                _storeData(address(_escrow), 0, 5, 27, uint256(0));
             }
         }
         // Slot 1
@@ -380,9 +385,9 @@ contract StorageSetup is KontrolTest {
         if (_currentState == EscrowSt.RageQuitEscrow) {
             uint256 batchesQueueLength = uint256(kevm.freshUInt(32));
             vm.assume(batchesQueueLength < 2 ** 64);
-            _storeData(address(_escrow), 6, 0, 32, batchesQueueLength);
+            _storeUInt256(address(_escrow), 6, batchesQueueLength);
         } else {
-            _storeData(address(_escrow), 6, 0, 32, 0);
+            _storeUInt256(address(_escrow), 6, 0);
         }
     }
 
@@ -394,13 +399,13 @@ contract StorageSetup is KontrolTest {
         _storeMappingData(address(_escrow), 3, key, 0, 0, 5, lastAssetsLockTimestamp);
         uint256 stETHLockedShares = kevm.freshUInt(16);
         vm.assume(stETHLockedShares < ethUpperBound);
-        _storeMappingData(address(_escrow), 3, key, 0, 5, 16, stETHLockedShares);
-        uint256 unstEthIdsLength = kevm.freshUInt(32);
-        vm.assume(unstEthIdsLength < type(uint32).max);
-        _storeMappingData(address(_escrow), 3, key, 2, 0, 32, unstEthIdsLength);
+        _storeMappingData(address(_escrow), 3, key, 0, 5, 27, stETHLockedShares);
         uint256 unstEthLockedShares = kevm.freshUInt(16);
         vm.assume(unstEthLockedShares < ethUpperBound);
-        _storeMappingData(address(_escrow), 3, key, 1, 0, 16, unstEthLockedShares);
+        _storeMappingUInt256(address(_escrow), 3, key, 1, unstEthLockedShares);
+        uint256 unstEthIdsLength = kevm.freshUInt(32);
+        vm.assume(unstEthIdsLength < type(uint32).max);
+        _storeMappingUInt256(address(_escrow), 3, key, 2, unstEthIdsLength);
     }
 
     function escrowWithdrawalQueueSetup(IEscrow _escrow, WithdrawalQueueModel _withdrawalQueue) external {
