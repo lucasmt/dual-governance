@@ -88,37 +88,23 @@ contract DualGovernanceSetUp is StorageSetup {
         // ?WORD: totalPooledEther
         // ?WORD0: totalShares
         // ?WORD1: shares[signallingEscrow]
+        // ?WORD2: shares[withdrawalQueue]
+        // ?WORD3: allowances[withdrawalQueue]
         this.stEthStorageSetup(stEth, signallingEscrow, withdrawalQueue);
 
         // ?STORAGE0
-        // ?WORD2: currentState
-        // ?WORD3: enteredAt
-        // ?WORD4: vetoSignallingActivationTime
-        // ?WORD5: vetoSignallingReactivationTime
-        // ?WORD6: normalOrVetoCooldownExitedAt
+        // ?WORD4: currentState
+        // ?WORD5: enteredAt
+        // ?WORD6: vetoSignallingActivationTime
         // ?WORD7: rageQuitRound
+        // ?WORD8: vetoSignallingReactivationTime
+        // ?WORD9: normalOrVetoCooldownExitedAt
         this.dualGovernanceInitializeStorage(dualGovernance, signallingEscrow, rageQuitEscrow, config);
 
         // ?STORAGE1
-        // ?WORD8: lockedShares
-        // ?WORD9: claimedETH
-        // ?WORD10: unfinalizedShares
-        // ?WORD11: finalizedETH
-        // ?WORD12: batchesQueue
-        // ?WORD13: rageQuitExtensionDelay
-        // ?WORD14: rageQuitWithdrawalsTimelock
-        // ?WORD15: rageQuitTimelockStartedAt
         this.signallingEscrowInitializeStorage(signallingEscrow);
 
         // ?STORAGE2
-        // ?WORD16: lockedShares
-        // ?WORD17: claimedETH
-        // ?WORD18: unfinalizedShares
-        // ?WORD19: finalizedETH
-        // ?WORD20: batchesQueue
-        // ?WORD21: rageQuitExtensionDelay
-        // ?WORD22: rageQuitWithdrawalsTimelock
-        // ?WORD23: rageQuitTimelockStartedAt
         this.rageQuitEscrowInitializeStorage(rageQuitEscrow);
 
         // ?STORAGE3
