@@ -59,8 +59,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         AccountingRecord memory pre = this.saveAccountingRecord(sender, signallingEscrow);
 
         uint256 amountInShares = stEth.getSharesByPooledEth(amount);
-        _assumeNoOverflow(pre.userSharesLocked, amountInShares);
-        _assumeNoOverflow(pre.totalSharesLocked, amountInShares);
+        vm.assume(0 < amountInShares);
 
         this.escrowInvariants(Mode.Assume, signallingEscrow);
         this.signallingEscrowInvariants(Mode.Assume, signallingEscrow);

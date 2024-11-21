@@ -65,8 +65,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         vm.assume(amount <= pre.allowance);
 
         uint256 amountInShares = stEth.getSharesByPooledEth(amount);
-        _assumeNoOverflow(pre.userSharesLocked, amountInShares);
-        _assumeNoOverflow(pre.totalSharesLocked, amountInShares);
+        vm.assume(0 < amountInShares);
 
         this.escrowInvariants(Mode.Assume, escrow);
         this.signallingEscrowInvariants(Mode.Assume, escrow);
