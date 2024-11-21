@@ -6,7 +6,7 @@ import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 import "test/kontrol/EscrowAccounting.t.sol";
 
 contract EscrowOperationsTest is EscrowAccountingTest {
-    function _tryLockStETH(uint256 amount) internal returns (bool) {
+    function _tryLockStETH(Escrow escrow, uint256 amount) internal returns (bool) {
         try escrow.lockStETH(amount) {
             return true;
         } catch {
@@ -14,7 +14,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         }
     }
 
-    function _tryUnlockStETH() internal returns (bool) {
+    function _tryUnlockStETH(Escrow escrow) internal returns (bool) {
         try escrow.unlockStETH() {
             return true;
         } catch {
@@ -26,7 +26,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
      * Test that a staker cannot unlock funds from the escrow until SignallingEscrowMinLockTime has passed since the last time that user has locked tokens.
      */
     function testCannotUnlockBeforeMinLockTime() external {
-        _setUpGenericState();
+        Escrow escrow = signallingEscrow;
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
@@ -34,7 +34,6 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         vm.assume(_getLastAssetsLockTimestamp(escrow, sender) < timeUpperBound);
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
-        vm.assume(EscrowSt(_getCurrentState(escrow)) == EscrowSt.SignallingEscrow);
         vm.assume(pre.userSharesLocked <= pre.totalSharesLocked);
 
         Timestamp lockPeriod = addTo(config.MIN_ASSETS_LOCK_DURATION(), pre.userLastLockedTime);
@@ -51,12 +50,13 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     /**
      * Test that funds cannot be locked and unlocked if the escrow is in the RageQuitEscrow state.
      */
-    function testCannotLockUnlockInRageQuitEscrowState(uint256 amount) external {
-        _setUpGenericState();
+    function testCannotLockUnlockInRageQuitEscrowState(uint256 amount, bool isRageQuitEscrow) external {
+        Escrow escrow = isRageQuitEscrow ? rageQuitEscrow : signallingEscrow;
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
-        vm.assume(stEth.sharesOf(sender) < ethUpperBound);
+        this.stEthUserSetup(stEth, sender);
+        this.escrowUserSetup(escrow, sender);
         vm.assume(stEth.balanceOf(sender) < ethUpperBound);
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
@@ -72,16 +72,16 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         this.signallingEscrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
 
-        if (EscrowSt(_getCurrentState(escrow)) == EscrowSt.RageQuitEscrow) {
+        if (isRageQuitEscrow) {
             vm.startPrank(sender);
             //vm.expectRevert("Cannot lock in current state.");
-            bool lockSuccess = _tryLockStETH(amount);
+            bool lockSuccess = _tryLockStETH(escrow, amount);
             assertTrue(lockSuccess, "Cannot lock in current state.");
             vm.stopPrank;
 
             vm.startPrank(sender);
             //vm.expectRevert("Cannot unlock in current state.");
-            bool unlockSuccess = _tryUnlockStETH();
+            bool unlockSuccess = _tryUnlockStETH(escrow);
             assertTrue(unlockSuccess, "Cannot unlock in current state.");
             vm.stopPrank;
         } else {

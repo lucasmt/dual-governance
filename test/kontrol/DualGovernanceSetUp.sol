@@ -111,6 +111,6 @@ contract DualGovernanceSetUp is StorageSetup {
         kevm.symbolicStorage(address(timelock));
 
         // ?STORAGE4
-        kevm.symbolicStorage(address(withdrawalQueue));
+        this.withdrawalQueueStorageSetup(withdrawalQueue, stEth);
     }
 }
