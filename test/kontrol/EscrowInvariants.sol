@@ -31,6 +31,10 @@ contract EscrowInvariants is StorageSetup {
         EscrowSt currentState = EscrowSt(_getCurrentState(escrow));
         _establish(mode, 0 <= uint8(currentState));
         _establish(mode, uint8(currentState) <= 2);
+        // WithdrawalQueue has infinite allowance
+        address withdrawalQueue = address(escrow.WITHDRAWAL_QUEUE());
+        uint256 allowance = stEth.allowance(address(escrow), withdrawalQueue);
+        _establish(mode, allowance == type(uint256).max);
     }
 
     function signallingEscrowInvariants(Mode mode, Escrow escrow) external view {
