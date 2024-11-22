@@ -30,21 +30,23 @@ contract EscrowOperationsTest is EscrowAccountingTest {
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
-        vm.assume(stEth.sharesOf(sender) < ethUpperBound);
-        vm.assume(_getLastAssetsLockTimestamp(escrow, sender) < timeUpperBound);
+        this.stEthUserSetup(stEth, sender);
+        this.escrowUserSetup(escrow, sender);
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
         vm.assume(pre.userSharesLocked <= pre.totalSharesLocked);
+        vm.assume(
+            dualGovernance.getPersistedState() == State.RageQuit || dualGovernance.getEffectiveState() != State.RageQuit
+        );
 
-        Timestamp lockPeriod = addTo(config.MIN_ASSETS_LOCK_DURATION(), pre.userLastLockedTime);
+        Duration lockDuration = Duration.wrap(_getMinAssetsLockDuration(escrow));
+        Timestamp lockPeriod = addTo(lockDuration, pre.userLastLockedTime);
 
-        if (Timestamps.now() < lockPeriod) {
-            vm.prank(sender);
-            vm.expectRevert(
-                abi.encodeWithSelector(AssetsAccounting.MinAssetsLockDurationNotPassed.selector, lockPeriod)
-            );
-            escrow.unlockStETH();
-        }
+        vm.assume(Timestamps.now() < lockPeriod);
+
+        vm.prank(sender);
+        vm.expectRevert(abi.encodeWithSelector(AssetsAccounting.MinAssetsLockDurationNotPassed.selector, lockPeriod));
+        escrow.unlockStETH();
     }
 
     /**
