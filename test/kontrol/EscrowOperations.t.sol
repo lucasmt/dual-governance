@@ -2,6 +2,7 @@ pragma solidity 0.8.26;
 
 import {Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
+import {EscrowState} from "contracts/libraries/EscrowState.sol";
 
 import "test/kontrol/EscrowAccounting.t.sol";
 
@@ -116,18 +117,16 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     /**
      * Test that a user cannot withdraw funds from the escrow until the RageQuitEthClaimTimelock has elapsed after the RageQuitExtensionDelay period.
      */
-    // TODO: Uncomment this test and adapt it to the client code
-    /*
     function testCannotWithdrawBeforeEthClaimTimelockElapsed() external {
-        _setUpGenericState();
+        Escrow escrow = rageQuitEscrow;
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
-        vm.assume(stEth.sharesOf(sender) < ethUpperBound);
+        this.stEthUserSetup(stEth, sender);
+        this.escrowUserSetup(escrow, sender);
         vm.assume(stEth.balanceOf(sender) < ethUpperBound);
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
-        vm.assume(pre.escrowState == EscrowState.RageQuitEscrow);
         vm.assume(pre.userSharesLocked > 0);
         vm.assume(pre.userSharesLocked <= pre.totalSharesLocked);
         uint256 userEth = stEth.getPooledEthByShares(pre.userSharesLocked);
@@ -137,31 +136,32 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
 
-        vm.assume(escrow.lastWithdrawalRequestSubmitted());
-        vm.assume(escrow.claimedWithdrawalRequests() == escrow.withdrawalRequestCount());
-        vm.assume(escrow.getIsWithdrawalsClaimed());
-        vm.assume(escrow.rageQuitExtensionDelayPeriodEnd() < block.timestamp);
+        //vm.assume(escrow.lastWithdrawalRequestSubmitted());
+        //vm.assume(escrow.claimedWithdrawalRequests() == escrow.withdrawalRequestCount());
+        //vm.assume(escrow.getIsWithdrawalsClaimed());
+        vm.assume(escrow.isRageQuitFinalized());
         // Assumption for simplicity
-        vm.assume(escrow.rageQuitSequenceNumber() < 2);
+        //vm.assume(escrow.rageQuitSequenceNumber() < 2);
 
-        uint256 timelockStart = escrow.rageQuitEthClaimTimelockStart();
-        uint256 ethClaimTimelock = escrow.rageQuitEthClaimTimelock();
-        vm.assume(timelockStart + ethClaimTimelock < timeUpperBound);
+        uint256 rageQuitExtensionPeriodStartedAt = _getRageQuitExtensionPeriodStartedAt(escrow);
+        uint256 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(escrow);
+        uint256 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(escrow);
+        uint256 ethWithdrawalsDelayEnd =
+            rageQuitExtensionPeriodStartedAt + rageQuitExtensionPeriodDuration + rageQuitEthWithdrawalsDelay;
 
-        if (block.timestamp <= timelockStart + ethClaimTimelock) {
+        if (block.timestamp <= ethWithdrawalsDelayEnd) {
             vm.prank(sender);
-            vm.expectRevert("Rage quit ETH claim timelock has not elapsed.");
-            escrow.withdraw();
+            vm.expectRevert(EscrowState.EthWithdrawalsDelayNotPassed.selector);
+            escrow.withdrawETH();
         } else {
             vm.prank(sender);
-            escrow.withdraw();
+            escrow.withdrawETH();
 
-            this.escrowInvariants(Mode.Assert);
-            this.escrowUserInvariants(Mode.Assert, sender);
+            this.escrowInvariants(Mode.Assert, escrow);
+            this.escrowUserInvariants(Mode.Assert, escrow, sender);
 
             AccountingRecord memory post = this.saveAccountingRecord(sender, escrow);
             assert(post.userSharesLocked == 0);
         }
     }
-    */
 }

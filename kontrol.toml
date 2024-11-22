@@ -53,7 +53,7 @@ match-test                 = [
         "EscrowLockUnlockTest.testUnlockStEth",
         "EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
         "EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
-        #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
+        "EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
         #"ProposalOperationsTest.testOnlyAdminProposersCanCancelProposals",
         "ProposalOperationsTest.testCannotProposeInInvalidState",
         "ProposalOperationsTest.testCannotScheduleInInvalidStates",
