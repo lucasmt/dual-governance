@@ -129,8 +129,11 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
         _validPendingProposal(Mode.Assume, pre);
         vm.assume(timelock.canSchedule(proposalId));
         //vm.assume(!dualGovernance.isSchedulingEnabled());
+        State state = dualGovernance.getEffectiveState();
+        vm.assume(state != State.Normal);
+        vm.assume(state != State.VetoCooldown);
 
-        vm.expectRevert(DualGovernance.ProposalSchedulingBlocked.selector);
+        vm.expectRevert(abi.encodeWithSelector(DualGovernance.ProposalSchedulingBlocked.selector, proposalId));
         dualGovernance.scheduleProposal(proposalId);
 
         ProposalRecord memory post = _recordProposal(proposalId);

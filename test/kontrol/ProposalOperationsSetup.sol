@@ -26,35 +26,37 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     // ?WORD23: protectedTill
     // ?WORD24: emergencyModeEndsAfter
     function _timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) public {
-        // Slot 0
-        _storeAddress(address(_timelock), 0, address(_dualGovernance));
-        // Slot 1
-        uint256 lastCancelledProposalId = kevm.freshUInt(32);
-        vm.assume(lastCancelledProposalId < type(uint256).max);
-        _storeUInt256(address(timelock), 1, lastCancelledProposalId);
-        // Slot 2
-        uint256 proposalsLength = kevm.freshUInt(32);
-        vm.assume(proposalsLength < type(uint64).max);
-        vm.assume(lastCancelledProposalId <= proposalsLength);
-        _storeUInt256(address(_timelock), 2, proposalsLength);
-        // Slot 3
+        //
+        uint256 governance = uint256(uint160(address(_dualGovernance)));
+        _storeData(address(_timelock), 0, 0, 20, governance);
+        //
+        uint256 afterSubmitDelay = kevm.freshUInt(4);
+        _storeData(address(_timelock), 0, 20, 4, afterSubmitDelay);
+        //
+        uint256 afterScheduleDelay = kevm.freshUInt(4);
+        _storeData(address(_timelock), 0, 24, 4, afterScheduleDelay);
+        //
+        uint256 proposalsCount = kevm.freshUInt(8);
+        vm.assume(proposalsCount < type(uint64).max);
+        _storeData(address(_timelock), 1, 0, 8, proposalsCount);
+        //
+        uint256 lastCancelledProposalId = kevm.freshUInt(8);
+        vm.assume(lastCancelledProposalId <= proposalsCount);
+        _storeData(address(timelock), 1, 8, 8, lastCancelledProposalId);
+        //
         {
-            address activationCommittee = address(uint160(uint256(keccak256("activationCommittee"))));
-            uint40 protectedTill = uint40(kevm.freshUInt(5));
-            vm.assume(protectedTill < timeUpperBound);
-            vm.assume(protectedTill <= block.timestamp);
-            bytes memory slot3Abi = abi.encodePacked(uint56(0), uint40(protectedTill), uint160(activationCommittee));
-            bytes32 slot3;
-            assembly {
-                slot3 := mload(add(slot3Abi, 0x20))
-            }
-            _storeBytes32(address(_timelock), 3, slot3);
+            uint160 activationCommittee = uint160(uint256(keccak256("activationCommittee")));
+            uint256 protectionEndsAfter = kevm.freshUInt(5);
+            vm.assume(protectionEndsAfter < timeUpperBound);
+            vm.assume(protectionEndsAfter <= block.timestamp);
+            _storeData(address(_timelock), 3, 5, 20, uint256(activationCommittee));
+            _storeData(address(_timelock), 3, 25, 5, protectionEndsAfter);
         }
-        // Slot 4
-        uint40 emergencyModeEndsAfter = uint40(kevm.freshUInt(5));
+        //
+        uint256 emergencyModeEndsAfter = kevm.freshUInt(5);
         vm.assume(emergencyModeEndsAfter < timeUpperBound);
         vm.assume(emergencyModeEndsAfter <= block.timestamp);
-        _storeUInt256(address(_timelock), 4, emergencyModeEndsAfter);
+        _storeData(address(_timelock), 3, 0, 5, emergencyModeEndsAfter);
     }
 
     // Set up the storage for a proposal.
@@ -63,24 +65,24 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     // ?WORD27: executedAt
     // ?WORD28: numCalls
     function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) public {
-        uint256 baseSlot = _getProposalsSlot(_proposalId);
         // slot 1
         {
-            address executor = address(uint160(uint256(keccak256("executor"))));
-            uint40 submittedAt = uint40(kevm.freshUInt(5));
+            uint256 status = kevm.freshUInt(1);
+            vm.assume(status <= 4);
+            _storeMappingData(address(_timelock), 2, _proposalId, 0, 0, 1, status);
+            uint256 executor = uint256(uint160(uint256(keccak256("executor"))));
+            _storeMappingData(address(_timelock), 2, _proposalId, 0, 1, 20, executor);
+            uint256 submittedAt = kevm.freshUInt(5);
             vm.assume(submittedAt < timeUpperBound);
             vm.assume(submittedAt <= block.timestamp);
-            uint40 scheduledAt = uint40(kevm.freshUInt(5));
+            _storeMappingData(address(_timelock), 2, _proposalId, 0, 21, 5, submittedAt);
+            uint256 scheduledAt = kevm.freshUInt(5);
             vm.assume(scheduledAt < timeUpperBound);
             vm.assume(scheduledAt <= block.timestamp);
-            bytes memory slot1Abi =
-                abi.encodePacked(uint16(0), uint40(scheduledAt), uint40(submittedAt), uint160(executor));
-            bytes32 slot1;
-            assembly {
-                slot1 := mload(add(slot1Abi, 0x20))
-            }
-            _storeBytes32(address(_timelock), baseSlot, slot1);
+            _storeMappingData(address(_timelock), 2, _proposalId, 0, 26, 5, scheduledAt);
         }
+        // TODO: uncomment and adapt this if it becomes necessary
+        /*
         // slot 2
         {
             uint40 executedAt = uint40(kevm.freshUInt(5));
@@ -95,23 +97,23 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
             vm.assume(numCalls > 0);
             _storeUInt256(address(_timelock), baseSlot + 2, numCalls);
         }
+        */
     }
 
     function _storeExecutorCalls(EmergencyProtectedTimelock _timelock, uint256 _proposalId) public {
-        uint256 baseSlot = _getProposalsSlot(_proposalId);
         uint256 numCalls = _getCallsCount(_timelock, _proposalId);
-        uint256 callsSlot = uint256(keccak256(abi.encodePacked(baseSlot + 2)));
+        uint256 callsSlot = _getCallsSlot(_proposalId);
 
         for (uint256 j = 0; j < numCalls; j++) {
-            uint256 callSlot = callsSlot + j * 3;
-            vm.assume(callSlot < type(uint256).max);
-            address target = address(uint160(uint256(keccak256(abi.encodePacked(j, "target")))));
-            _storeAddress(address(_timelock), callSlot, target);
-            uint96 value = uint96(kevm.freshUInt(12));
+            uint256 callSlot = callsSlot + j * 2;
+            uint256 target = uint256(uint160(uint256(keccak256(abi.encodePacked(j, "target")))));
+            _storeData(address(_timelock), callSlot, 0, 20, target);
+            uint256 value = kevm.freshUInt(12);
             vm.assume(value != 0);
-            _storeUInt256(address(_timelock), callSlot + 1, uint256(value));
-            bytes memory payload = abi.encodePacked(j, "payload");
-            _storeBytes32(address(_timelock), callSlot + 2, keccak256(payload));
+            _storeData(address(_timelock), callSlot, 20, 12, value);
+            // TODO: Fix this if it becomes necessary (careful about how bytes need to be encoded)
+            //bytes memory payload = abi.encodePacked(j, "payload");
+            //_storeBytes32(address(_timelock), callSlot + 2, keccak256(payload));
         }
     }
 
@@ -123,9 +125,12 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     }
 
     function _getProposalsSlot(uint256 _proposalId) internal returns (uint256 baseSlot) {
-        uint256 startSlot = uint256(keccak256(abi.encodePacked(uint256(2))));
-        uint256 offset = 3 * (_proposalId - 1);
-        baseSlot = startSlot + offset;
+        return uint256(keccak256(abi.encodePacked(_proposalId, uint256(2))));
+    }
+
+    function _getCallsSlot(uint256 _proposalId) internal returns (uint256) {
+        uint256 proposalsSlot = _getProposalsSlot(_proposalId);
+        return uint256(keccak256(abi.encodePacked(proposalsSlot + 1)));
     }
 
     function _getProtectedTill(EmergencyProtectedTimelock _timelock) internal view returns (uint40) {
@@ -156,7 +161,10 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         return uint40(_loadUInt256(address(_timelock), baseSlot + 1));
     }
 
-    function _getCallsCount(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint256) {
-        return _loadUInt256(address(_timelock), baseSlot + 2);
+    function _getCallsCount(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId
+    ) internal view returns (uint256) {
+        return _loadMappingData(address(_timelock), 2, _proposalId, 1, 0, 32);
     }
 }
