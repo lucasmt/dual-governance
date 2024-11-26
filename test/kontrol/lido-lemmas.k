@@ -107,6 +107,11 @@ module LIDO-LEMMAS [symbolic]
 
     // rule notBool (A ==Int B) => true requires B <Int A [simplification, concrete(B), syntactic(1)]
 
+    // Removing function selector from #abiCallData
+    rule #range ( #abiCallData ( FNAME , ARGS ) , 4 , LENGTH ) => #encodeArgs ( ARGS )
+        requires LENGTH ==Int lengthBytes ( #abiCallData ( FNAME , ARGS ) ) -Int 4
+        [simplification]
+
 endmodule
 
 module LIDO-LEMMAS-SPEC
