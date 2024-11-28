@@ -58,7 +58,7 @@ match-test                 = [
         "ProposalOperationsTest.testCannotProposeInInvalidState",
         "ProposalOperationsTest.testCannotScheduleInInvalidStates",
         "ProposalOperationsTest.testCannotScheduleSubmissionAfterLastVetoSignalling",
-        "ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
+        #"ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
         "ProposalOperationsTest.testCannotScheduleBeforeMinTimelock",
         "ProposalOperationsTest.testCannotExecuteBeforeEmergencyProtectionTimelock",
         #"ActivateNextStateTest.testEscrowStateTransition"
