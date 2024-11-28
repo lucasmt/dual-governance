@@ -41,9 +41,14 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         Escrow initialEscrow = Escrow(payable(Clones.clone(address(escrowMasterCopy))));
         vm.prank(address(dualGovernance));
         initialEscrow.initialize(Duration.wrap(minAssetsLockDuration));
+        // TODO: Avoid reinitializing everything in stETH just for the escrow shares
+        this.stEthStorageSetup(stEth, initialEscrow, withdrawalQueue);
+        // TODO: Assume stETH invariants instead
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
+        this.stEthUserSetup(stEth, sender);
+
         this.escrowInvariants(Mode.Assert, initialEscrow);
         this.signallingEscrowInvariants(Mode.Assert, initialEscrow);
         this.escrowUserInvariants(Mode.Assert, initialEscrow, sender);

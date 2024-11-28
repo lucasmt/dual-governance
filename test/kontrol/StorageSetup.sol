@@ -42,7 +42,7 @@ contract StorageSetup is KontrolTest {
         vm.assume(queueShares < ethUpperBound);
         _stEth.setShares(address(_withdrawalQueue), queueShares);
         //
-        uint256 queueAllowance = kevm.freshUInt(32);
+        uint256 queueAllowance = type(uint256).max;
         _stEth.setAllowances(address(_escrow), address(_withdrawalQueue), queueAllowance);
     }
 
