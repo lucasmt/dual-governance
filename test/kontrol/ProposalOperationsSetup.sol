@@ -133,33 +133,31 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         return uint256(keccak256(abi.encodePacked(proposalsSlot + 1)));
     }
 
-    function _getProtectedTill(EmergencyProtectedTimelock _timelock) internal view returns (uint40) {
-        return uint40(_loadUInt256(address(_timelock), 3) >> 160);
-    }
-
     function _getLastCancelledProposalId(EmergencyProtectedTimelock _timelock) internal view returns (uint256) {
-        return _loadUInt256(address(_timelock), 1);
+        return _loadData(address(_timelock), 1, 8, 8);
     }
 
     function _getProposalsCount(EmergencyProtectedTimelock _timelock) internal view returns (uint256) {
-        return _loadUInt256(address(_timelock), 2);
+        return _loadData(address(_timelock), 1, 0, 8);
     }
 
     function _getEmergencyModeEndsAfter(EmergencyProtectedTimelock _timelock) internal view returns (uint40) {
-        return uint40(_loadUInt256(address(_timelock), 4));
+        return uint40(_loadData(address(_timelock), 3, 0, 5));
     }
 
     function _getSubmittedAt(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint40) {
-        return uint40(_loadUInt256(address(_timelock), baseSlot) >> 160);
+        return uint40(_loadData(address(_timelock), baseSlot, 21, 5));
     }
 
     function _getScheduledAt(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint40) {
-        return uint40(_loadUInt256(address(_timelock), baseSlot) >> 200);
+        return uint40(_loadData(address(_timelock), baseSlot, 26, 5));
     }
 
+    /*
     function _getExecutedAt(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint40) {
         return uint40(_loadUInt256(address(_timelock), baseSlot + 1));
     }
+    */
 
     function _getCallsCount(
         EmergencyProtectedTimelock _timelock,
