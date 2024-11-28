@@ -110,7 +110,7 @@ module LIDO-LEMMAS [symbolic]
     // Removing function selector from #abiCallData
     rule #range ( #abiCallData ( FNAME , ARGS ) , 4 , LENGTH ) => #encodeArgs ( ARGS )
         requires LENGTH ==Int lengthBytes ( #abiCallData ( FNAME , ARGS ) ) -Int 4
-        [simplification]
+        [simplification, preserves-definedness]
 
 endmodule
 
