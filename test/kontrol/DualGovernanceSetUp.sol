@@ -90,7 +90,7 @@ contract DualGovernanceSetUp is StorageSetup {
         // ?WORD1: shares[signallingEscrow]
         // ?WORD2: shares[withdrawalQueue]
         // ?WORD3: allowances[withdrawalQueue]
-        this.stEthStorageSetup(stEth, signallingEscrow, withdrawalQueue);
+        this.stEthInitializeStorage(stEth, signallingEscrow, rageQuitEscrow, withdrawalQueue);
 
         // ?STORAGE0
         // ?WORD4: currentState

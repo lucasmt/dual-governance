@@ -19,7 +19,7 @@ contract StorageSetup is KontrolTest {
     //
     //  STETH
     //
-    function stEthStorageSetup(StETHModel _stEth, IEscrow _escrow, IWithdrawalQueue _withdrawalQueue) external {
+    function stEthStorageSetup(StETHModel _stEth, IWithdrawalQueue _withdrawalQueue) external {
         kevm.symbolicStorage(address(_stEth));
         // Slot 0
         uint256 totalPooledEther = kevm.freshUInt(32);
@@ -31,16 +31,19 @@ contract StorageSetup is KontrolTest {
         vm.assume(0 < totalShares);
         vm.assume(totalShares < ethUpperBound);
         _stEth.setTotalShares(totalShares);
-        // Slot 2
-        uint256 escrowShares = kevm.freshUInt(32);
-        vm.assume(escrowShares < totalShares);
-        vm.assume(escrowShares < ethUpperBound);
-        _stEth.setShares(address(_escrow), escrowShares);
         //
         uint256 queueShares = kevm.freshUInt(32);
         vm.assume(queueShares < totalShares);
         vm.assume(queueShares < ethUpperBound);
         _stEth.setShares(address(_withdrawalQueue), queueShares);
+    }
+
+    function stEthEscrowSetup(StETHModel _stEth, IEscrow _escrow, IWithdrawalQueue _withdrawalQueue) external {
+        //
+        uint256 escrowShares = kevm.freshUInt(32);
+        vm.assume(escrowShares < _stEth.getTotalShares());
+        vm.assume(escrowShares < ethUpperBound);
+        _stEth.setShares(address(_escrow), escrowShares);
         //
         uint256 queueAllowance = type(uint256).max;
         _stEth.setAllowances(address(_escrow), address(_withdrawalQueue), queueAllowance);
@@ -71,6 +74,19 @@ contract StorageSetup is KontrolTest {
         vm.assume(totalPooledEther < ethUpperBound);
         vm.assume(totalShares < ethUpperBound);
         vm.assume(escrowShares < ethUpperBound);
+    }
+
+    function stEthInitializeStorage(
+        StETHModel _stEth,
+        IEscrow _signallingEscrow,
+        IEscrow _rageQuitEscrow,
+        IWithdrawalQueue _withdrawalQueue
+    ) external {
+        this.stEthStorageSetup(_stEth, _withdrawalQueue);
+        this.stEthEscrowSetup(_stEth, _signallingEscrow, _withdrawalQueue);
+        this.stEthEscrowSetup(_stEth, _rageQuitEscrow, _withdrawalQueue);
+        this.stEthStorageInvariants(Mode.Assume, _stEth, _signallingEscrow);
+        this.stEthStorageInvariants(Mode.Assume, _stEth, _rageQuitEscrow);
     }
 
     //
