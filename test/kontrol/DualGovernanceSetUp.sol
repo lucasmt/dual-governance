@@ -67,7 +67,20 @@ contract DualGovernanceSetUp is StorageSetup {
         });
 
         config = new ImmutableDualGovernanceConfigProvider(governanceConfig);
-        timelock = new EmergencyProtectedTimelock(timelockSanityCheckParams, adminExecutor);
+
+        timelockSanityCheckParams = EmergencyProtectedTimelock.SanityCheckParams({
+            minExecutionDelay: Durations.from(4 days),
+            maxAfterSubmitDelay: Durations.from(14 days),
+            maxAfterScheduleDelay: Durations.from(7 days),
+            maxEmergencyModeDuration: Durations.from(365 days),
+            maxEmergencyProtectionDuration: Durations.from(365 days)
+        });
+        Duration afterSubmitDelay = Durations.from(3 days);
+        Duration afterScheduleDelay = Durations.from(2 days);
+
+        timelock = new EmergencyProtectedTimelock(
+            timelockSanityCheckParams, adminExecutor, afterSubmitDelay, afterScheduleDelay
+        );
         resealManager = new ResealManager(timelock);
 
         //DualGovernance.ExternalDependencies memory dependencies;
