@@ -110,10 +110,10 @@ contract StETHModel is IStETH {
         return _sharesAmount * totalPooledEther / totalShares;
     }
 
-    function transferShares(address _recipient, uint256 _sharesAmount) external {
+    function transferShares(address _recipient, uint256 _sharesAmount) external returns (uint256) {
         _transferShares(msg.sender, _recipient, _sharesAmount);
-        //uint256 tokensAmount = getPooledEthByShares(_sharesAmount);
-        //return tokensAmount;
+        uint256 tokensAmount = getPooledEthByShares(_sharesAmount);
+        return tokensAmount;
     }
 
     function transferSharesFrom(

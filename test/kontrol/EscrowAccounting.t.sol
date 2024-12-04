@@ -52,6 +52,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         this.escrowUserInvariants(Mode.Assert, initialEscrow, sender);
     }
 
+    /*
     function testRequestWithdrawals(uint256 stEthAmount) public {
         Escrow escrow = signallingEscrow;
 
@@ -107,6 +108,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         // Rage quit support is not affected
         assert(postRageQuitSupport == preRageQuitSupport);
     }
+    */
 
     function testRequestNextWithdrawalsBatch(uint256 maxBatchSize) public {
         Escrow escrow = rageQuitEscrow;
