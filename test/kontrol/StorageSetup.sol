@@ -6,7 +6,7 @@ import "contracts/EmergencyProtectedTimelock.sol";
 import "contracts/Escrow.sol";
 
 import {Timestamp} from "contracts/types/Timestamp.sol";
-import {State as WithdrawalBatchesQueueState} from "contracts/libraries/WithdrawalBatchesQueue.sol";
+import {State as WithdrawalsBatchesQueueState} from "contracts/libraries/WithdrawalsBatchesQueue.sol";
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
 
 import "contracts/model/StETHModel.sol";
@@ -14,6 +14,9 @@ import "contracts/model/WithdrawalQueueModel.sol";
 import "contracts/model/WstETHAdapted.sol";
 
 import "test/kontrol/KontrolTest.sol";
+import "test/kontrol/storage/DualGovernanceStorageConstants.sol";
+import "test/kontrol/storage/EscrowStorageConstants.sol";
+import "test/kontrol/storage/WithdrawalQueueStorageConstants.sol";
 
 contract StorageSetup is KontrolTest {
     //
@@ -99,46 +102,96 @@ contract StorageSetup is KontrolTest {
     //
     // WithdrawalQueue
     //
+    uint256 constant LASTREQUESTID_SLOT = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_SLOT;
+    uint256 constant LASTREQUESTID_OFFSET = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_OFFSET;
+    uint256 constant LASTREQUESTID_SIZE = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_SIZE;
+    uint256 constant STETH_SLOT = WithdrawalQueueStorageConstants.STORAGE_STETH_SLOT;
+    uint256 constant STETH_OFFSET = WithdrawalQueueStorageConstants.STORAGE_STETH_OFFSET;
+    uint256 constant STETH_SIZE = WithdrawalQueueStorageConstants.STORAGE_STETH_SIZE;
+    uint256 constant OWNERS_SLOT = WithdrawalQueueStorageConstants.STORAGE_OWNERS_SLOT;
+
     function _getLastRequestId(WithdrawalQueueModel _withdrawalQueue) internal view returns (uint256) {
-        return _loadData(address(_withdrawalQueue), 7, 0, 32);
+        return _loadData(address(_withdrawalQueue), LASTREQUESTID_SLOT, LASTREQUESTID_OFFSET, LASTREQUESTID_SIZE);
     }
 
     function withdrawalQueueStorageSetup(WithdrawalQueueModel _withdrawalQueue, IStETH _stEth) external {
         kevm.symbolicStorage(address(_withdrawalQueue));
-        _storeUInt256(address(_withdrawalQueue), 6, uint256(uint160(address(_stEth))));
+
+        _storeData(address(_withdrawalQueue), STETH_SLOT, STETH_OFFSET, STETH_SIZE, uint256(uint160(address(_stEth))));
+
         // Assuming 0 for simplicity
         uint256 lastRequestId = 0;
         //vm.assume(lastRequestId < type(uint256).max);
-        _storeUInt256(address(_withdrawalQueue), 7, lastRequestId);
+        _storeData(
+            address(_withdrawalQueue), LASTREQUESTID_SLOT, LASTREQUESTID_OFFSET, LASTREQUESTID_SIZE, lastRequestId
+        );
+
         uint256 owner = 0;
-        _storeMappingUInt256(address(_withdrawalQueue), 2, lastRequestId + 1, 0, owner);
+        _storeMappingData(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0, 0, 20, owner);
     }
 
     //
     //  DUAL GOVERNANCE
     //
+    uint256 constant STATE_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_STATE_SLOT;
+    uint256 constant STATE_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_STATE_OFFSET;
+    uint256 constant STATE_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_STATE_SIZE;
+    uint256 constant ENTEREDAT_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_ENTEREDAT_SLOT;
+    uint256 constant ENTEREDAT_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_ENTEREDAT_OFFSET;
+    uint256 constant ENTEREDAT_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_ENTEREDAT_SIZE;
+    uint256 constant ACTIVATEDAT_SLOT =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGACTIVATEDAT_SLOT;
+    uint256 constant ACTIVATEDAT_OFFSET =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGACTIVATEDAT_OFFSET;
+    uint256 constant ACTIVATEDAT_SIZE =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGACTIVATEDAT_SIZE;
+    uint256 constant RAGEQUITROUND_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITROUND_SLOT;
+    uint256 constant RAGEQUITROUND_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITROUND_OFFSET;
+    uint256 constant RAGEQUITROUND_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITROUND_SIZE;
+    uint256 constant REACTIVATIONTIME_SLOT =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGREACTIVATIONTIME_SLOT;
+    uint256 constant REACTIVATIONTIME_OFFSET =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGREACTIVATIONTIME_OFFSET;
+    uint256 constant REACTIVATIONTIME_SIZE =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_VETOSIGNALLINGREACTIVATIONTIME_SIZE;
+    uint256 constant EXITEDAT_SLOT =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_NORMALORVETOCOOLDOWNEXITEDAT_SLOT;
+    uint256 constant EXITEDAT_OFFSET =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_NORMALORVETOCOOLDOWNEXITEDAT_OFFSET;
+    uint256 constant EXITEDAT_SIZE =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_NORMALORVETOCOOLDOWNEXITEDAT_SIZE;
+    uint256 constant SIGNALLINGESCROW_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_SIGNALLINGESCROW_SLOT;
+    uint256 constant SIGNALLINGESCROW_OFFSET =
+        DualGovernanceStorageConstants.STORAGE_STATEMACHINE_SIGNALLINGESCROW_OFFSET;
+    uint256 constant SIGNALLINGESCROW_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_SIGNALLINGESCROW_SIZE;
+    uint256 constant RAGEQUITESCROW_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_SLOT;
+    uint256 constant RAGEQUITESCROW_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_OFFSET;
+    uint256 constant RAGEQUITESCROW_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_SIZE;
+
     function _getCurrentState(DualGovernance _dualGovernance) internal view returns (uint8) {
-        return uint8(_loadData(address(_dualGovernance), 6, 0, 1));
+        return uint8(_loadData(address(_dualGovernance), STATE_SLOT, STATE_OFFSET, STATE_SIZE));
     }
 
     function _getEnteredAt(DualGovernance _dualGovernance) internal view returns (uint40) {
-        return uint40(_loadData(address(_dualGovernance), 6, 1, 5));
+        return uint40(_loadData(address(_dualGovernance), ENTEREDAT_SLOT, ENTEREDAT_OFFSET, ENTEREDAT_SIZE));
     }
 
     function _getVetoSignallingActivationTime(DualGovernance _dualGovernance) internal view returns (uint40) {
-        return uint40(_loadData(address(_dualGovernance), 6, 6, 5));
+        return uint40(_loadData(address(_dualGovernance), ACTIVATEDAT_SLOT, ACTIVATEDAT_OFFSET, ACTIVATEDAT_SIZE));
     }
 
     function _getRageQuitRound(DualGovernance _dualGovernance) internal view returns (uint8) {
-        return uint8(_loadData(address(_dualGovernance), 6, 31, 1));
+        return uint8(_loadData(address(_dualGovernance), RAGEQUITROUND_SLOT, RAGEQUITROUND_OFFSET, RAGEQUITROUND_SIZE));
     }
 
     function _getVetoSignallingReactivationTime(DualGovernance _dualGovernance) internal view returns (uint40) {
-        return uint40(_loadData(address(_dualGovernance), 7, 0, 5));
+        return uint40(
+            _loadData(address(_dualGovernance), REACTIVATIONTIME_SLOT, REACTIVATIONTIME_OFFSET, REACTIVATIONTIME_SIZE)
+        );
     }
 
     function _getNormalOrVetoCooldownExitedAt(DualGovernance _dualGovernance) internal view returns (uint40) {
-        return uint40(_loadData(address(_dualGovernance), 7, 5, 5));
+        return uint40(_loadData(address(_dualGovernance), EXITEDAT_SLOT, EXITEDAT_OFFSET, EXITEDAT_SIZE));
     }
 
     function dualGovernanceStorageSetup(
@@ -162,11 +215,25 @@ contract StorageSetup is KontrolTest {
         uint256 rageQuitRound = kevm.freshUInt(1);
         vm.assume(rageQuitRound < type(uint8).max);
 
-        _storeData(address(_dualGovernance), 6, 0, 1, currentState);
-        _storeData(address(_dualGovernance), 6, 1, 5, enteredAt);
-        _storeData(address(_dualGovernance), 6, 6, 5, vetoSignallingActivationTime);
-        _storeData(address(_dualGovernance), 6, 11, 20, uint256(uint160(address(_signallingEscrow))));
-        _storeData(address(_dualGovernance), 6, 31, 1, rageQuitRound);
+        _storeData(address(_dualGovernance), STATE_SLOT, STATE_OFFSET, STATE_SIZE, currentState);
+        _storeData(address(_dualGovernance), ENTEREDAT_SLOT, ENTEREDAT_OFFSET, ENTEREDAT_SIZE, enteredAt);
+        _storeData(
+            address(_dualGovernance),
+            ACTIVATEDAT_SLOT,
+            ACTIVATEDAT_OFFSET,
+            ACTIVATEDAT_SIZE,
+            vetoSignallingActivationTime
+        );
+        _storeData(
+            address(_dualGovernance),
+            SIGNALLINGESCROW_SLOT,
+            SIGNALLINGESCROW_OFFSET,
+            SIGNALLINGESCROW_SIZE,
+            uint256(uint160(address(_signallingEscrow)))
+        );
+        _storeData(
+            address(_dualGovernance), RAGEQUITROUND_SLOT, RAGEQUITROUND_OFFSET, RAGEQUITROUND_SIZE, rageQuitRound
+        );
 
         // Slot 7
         uint256 vetoSignallingReactivationTime = kevm.freshUInt(5);
@@ -176,12 +243,26 @@ contract StorageSetup is KontrolTest {
         vm.assume(normalOrVetoCooldownExitedAt <= block.timestamp);
         vm.assume(normalOrVetoCooldownExitedAt < timeUpperBound);
 
-        _storeData(address(_dualGovernance), 7, 0, 5, vetoSignallingReactivationTime);
-        _storeData(address(_dualGovernance), 7, 5, 5, normalOrVetoCooldownExitedAt);
-        _storeData(address(_dualGovernance), 7, 10, 22, uint256(uint160(address(_rageQuitEscrow))));
+        _storeData(
+            address(_dualGovernance),
+            REACTIVATIONTIME_SLOT,
+            REACTIVATIONTIME_OFFSET,
+            REACTIVATIONTIME_SIZE,
+            vetoSignallingReactivationTime
+        );
+        _storeData(
+            address(_dualGovernance), EXITEDAT_SLOT, EXITEDAT_OFFSET, EXITEDAT_SIZE, normalOrVetoCooldownExitedAt
+        );
+        _storeData(
+            address(_dualGovernance),
+            RAGEQUITESCROW_SLOT,
+            RAGEQUITESCROW_OFFSET,
+            RAGEQUITESCROW_SIZE,
+            uint256(uint160(address(_rageQuitEscrow)))
+        );
 
         // Slot 8
-        _storeUInt256(address(_dualGovernance), 8, uint256(uint160(address(_config))));
+        //_storeUInt256(address(_dualGovernance), 8, uint256(uint160(address(_config))));
     }
 
     function dualGovernanceStorageInvariants(Mode mode, DualGovernance _dualGovernance) external {
@@ -227,53 +308,135 @@ contract StorageSetup is KontrolTest {
     //
     //  ESCROW
     //
+    uint256 constant ESCROWSTATE_SLOT = EscrowStorageConstants.STORAGE_ESCROWSTATE_STATE_SLOT;
+    uint256 constant ESCROWSTATE_OFFSET = EscrowStorageConstants.STORAGE_ESCROWSTATE_STATE_OFFSET;
+    uint256 constant ESCROWSTATE_SIZE = EscrowStorageConstants.STORAGE_ESCROWSTATE_STATE_SIZE;
+    uint256 constant MINLOCKDURATION_SLOT = EscrowStorageConstants.STORAGE_ESCROWSTATE_MINASSETSLOCKDURATION_SLOT;
+    uint256 constant MINLOCKDURATION_OFFSET = EscrowStorageConstants.STORAGE_ESCROWSTATE_MINASSETSLOCKDURATION_OFFSET;
+    uint256 constant MINLOCKDURATION_SIZE = EscrowStorageConstants.STORAGE_ESCROWSTATE_MINASSETSLOCKDURATION_SIZE;
+    uint256 constant EXTENSIONDURATION_SLOT =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODDURATION_SLOT;
+    uint256 constant EXTENSIONDURATION_OFFSET =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODDURATION_OFFSET;
+    uint256 constant EXTENSIONDURATION_SIZE =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODDURATION_SIZE;
+    uint256 constant EXTENSIONSTARTEDAT_SLOT =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODSTARTEDAT_SLOT;
+    uint256 constant EXTENSIONSTARTEDAT_OFFSET =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODSTARTEDAT_OFFSET;
+    uint256 constant EXTENSIONSTARTEDAT_SIZE =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITEXTENSIONPERIODSTARTEDAT_SIZE;
+    uint256 constant WITHDRAWALSDELAY_SLOT = EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITETHWITHDRAWALSDELAY_SLOT;
+    uint256 constant WITHDRAWALSDELAY_OFFSET =
+        EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITETHWITHDRAWALSDELAY_OFFSET;
+    uint256 constant WITHDRAWALSDELAY_SIZE = EscrowStorageConstants.STORAGE_ESCROWSTATE_RAGEQUITETHWITHDRAWALSDELAY_SIZE;
+    uint256 constant LOCKEDSHARES_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_LOCKEDSHARES_SLOT;
+    uint256 constant LOCKEDSHARES_OFFSET = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_LOCKEDSHARES_OFFSET;
+    uint256 constant LOCKEDSHARES_SIZE = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_LOCKEDSHARES_SIZE;
+    uint256 constant CLAIMEDETH_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_CLAIMEDETH_SLOT;
+    uint256 constant CLAIMEDETH_OFFSET = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_CLAIMEDETH_OFFSET;
+    uint256 constant CLAIMEDETH_SIZE = EscrowStorageConstants.STORAGE_ACCOUNTING_STETHTOTALS_CLAIMEDETH_SIZE;
+    uint256 constant UNFINALIZEDSHARES_SLOT =
+        EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_UNFINALIZEDSHARES_SLOT;
+    uint256 constant UNFINALIZEDSHARES_OFFSET =
+        EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_UNFINALIZEDSHARES_OFFSET;
+    uint256 constant UNFINALIZEDSHARES_SIZE =
+        EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_UNFINALIZEDSHARES_SIZE;
+    uint256 constant FINALIZEDETH_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_FINALIZEDETH_SLOT;
+    uint256 constant FINALIZEDETH_OFFSET = EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_FINALIZEDETH_OFFSET;
+    uint256 constant FINALIZEDETH_SIZE = EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHTOTALS_FINALIZEDETH_SIZE;
+    uint256 constant ASSETS_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_ASSETS_SLOT;
+    uint256 constant LASTASSETSLOCK_SLOT = EscrowStorageConstants.STRUCT_HOLDERASSETS_LASTASSETSLOCKTIMESTAMP_SLOT;
+    uint256 constant LASTASSETSLOCK_OFFSET = EscrowStorageConstants.STRUCT_HOLDERASSETS_LASTASSETSLOCKTIMESTAMP_OFFSET;
+    uint256 constant LASTASSETSLOCK_SIZE = EscrowStorageConstants.STRUCT_HOLDERASSETS_LASTASSETSLOCKTIMESTAMP_SIZE;
+    uint256 constant STETHSHARES_SLOT = EscrowStorageConstants.STRUCT_HOLDERASSETS_STETHLOCKEDSHARES_SLOT;
+    uint256 constant STETHSHARES_OFFSET = EscrowStorageConstants.STRUCT_HOLDERASSETS_STETHLOCKEDSHARES_OFFSET;
+    uint256 constant STETHSHARES_SIZE = EscrowStorageConstants.STRUCT_HOLDERASSETS_STETHLOCKEDSHARES_SIZE;
+    uint256 constant UNSTETHSHARES_SLOT = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHLOCKEDSHARES_SLOT;
+    uint256 constant UNSTETHSHARES_OFFSET = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHLOCKEDSHARES_OFFSET;
+    uint256 constant UNSTETHSHARES_SIZE = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHLOCKEDSHARES_SIZE;
+    uint256 constant UNSTETHIDSLENGTH_SLOT = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHIDS_SLOT;
+    uint256 constant UNSTETHIDSLENGTH_OFFSET = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHIDS_OFFSET;
+    uint256 constant UNSTETHIDSLENGTH_SIZE = EscrowStorageConstants.STRUCT_HOLDERASSETS_UNSTETHIDS_SIZE;
+    uint256 constant BATCHESLENGTH_SLOT = EscrowStorageConstants.STORAGE_BATCHESQUEUE_BATCHES_SLOT;
+    uint256 constant BATCHESLENGTH_OFFSET = EscrowStorageConstants.STORAGE_BATCHESQUEUE_BATCHES_OFFSET;
+    uint256 constant BATCHESLENGTH_SIZE = EscrowStorageConstants.STORAGE_BATCHESQUEUE_BATCHES_SIZE;
+    uint256 constant BATCHESQUEUESTATE_SLOT = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_SLOT;
+    uint256 constant BATCHESQUEUESTATE_OFFSET = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_OFFSET;
+    uint256 constant BATCHESQUEUESTATE_SIZE = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_SIZE;
+    uint256 constant UNSTETHRECORDS_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHRECORDS_SLOT;
+    uint256 constant UNSTETHRECORDSTATUS_SLOT = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_SLOT;
+    uint256 constant UNSTETHRECORDSTATUS_OFFSET = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_OFFSET;
+    uint256 constant UNSTETHRECORDSTATUS_SIZE = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_SIZE;
+
     function _getCurrentState(IEscrow _escrow) internal view returns (uint8) {
-        return uint8(_loadData(address(_escrow), 0, 0, 1));
+        return uint8(_loadData(address(_escrow), ESCROWSTATE_SLOT, ESCROWSTATE_OFFSET, ESCROWSTATE_SIZE));
     }
 
     function _getMinAssetsLockDuration(IEscrow _escrow) internal view returns (uint32) {
-        return uint32(_loadData(address(_escrow), 0, 1, 4));
+        return uint32(_loadData(address(_escrow), MINLOCKDURATION_SLOT, MINLOCKDURATION_OFFSET, MINLOCKDURATION_SIZE));
     }
 
     function _getRageQuitExtensionPeriodDuration(IEscrow _escrow) internal view returns (uint32) {
-        return uint32(_loadData(address(_escrow), 0, 5, 4));
+        return uint32(
+            _loadData(address(_escrow), EXTENSIONDURATION_SLOT, EXTENSIONDURATION_OFFSET, EXTENSIONDURATION_SIZE)
+        );
     }
 
     function _getRageQuitExtensionPeriodStartedAt(IEscrow _escrow) internal view returns (uint40) {
-        return uint40(_loadData(address(_escrow), 0, 9, 5));
+        return uint40(
+            _loadData(address(_escrow), EXTENSIONSTARTEDAT_SLOT, EXTENSIONSTARTEDAT_OFFSET, EXTENSIONSTARTEDAT_SIZE)
+        );
     }
 
     function _getRageQuitEthWithdrawalsDelay(IEscrow _escrow) internal view returns (uint32) {
-        return uint32(_loadData(address(_escrow), 0, 14, 4));
+        return
+            uint32(_loadData(address(_escrow), WITHDRAWALSDELAY_SLOT, WITHDRAWALSDELAY_OFFSET, WITHDRAWALSDELAY_SIZE));
     }
 
     function _getStEthLockedShares(IEscrow _escrow) internal view returns (uint128) {
-        return uint128(_loadData(address(_escrow), 1, 0, 16));
+        return uint128(_loadData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE));
     }
 
     function _getClaimedEth(IEscrow _escrow) internal view returns (uint128) {
-        return uint128(_loadData(address(_escrow), 1, 16, 16));
+        return uint128(_loadData(address(_escrow), CLAIMEDETH_SLOT, CLAIMEDETH_OFFSET, CLAIMEDETH_SIZE));
     }
 
     function _getUnfinalizedShares(IEscrow _escrow) internal view returns (uint128) {
-        return uint128(_loadData(address(_escrow), 2, 0, 16));
+        return uint128(
+            _loadData(address(_escrow), UNFINALIZEDSHARES_SLOT, UNFINALIZEDSHARES_OFFSET, UNFINALIZEDSHARES_SIZE)
+        );
     }
 
     function _getFinalizedEth(IEscrow _escrow) internal view returns (uint128) {
-        return uint128(_loadData(address(_escrow), 2, 16, 16));
+        return uint128(_loadData(address(_escrow), FINALIZEDETH_SLOT, FINALIZEDETH_OFFSET, FINALIZEDETH_SIZE));
     }
 
     function _getLastAssetsLockTimestamp(IEscrow _escrow, address _vetoer) internal view returns (uint40) {
         uint256 key = uint256(uint160(_vetoer));
-        return uint40(_loadMappingData(address(_escrow), 3, key, 0, 0, 5));
+        return uint40(
+            _loadMappingData(
+                address(_escrow), ASSETS_SLOT, key, LASTASSETSLOCK_SLOT, LASTASSETSLOCK_OFFSET, LASTASSETSLOCK_SIZE
+            )
+        );
     }
 
     function _getBatchesQueueStatus(IEscrow _escrow) internal view returns (uint8) {
-        return uint8(_loadData(address(_escrow), 5, 0, 1));
+        return
+            uint8(_loadData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE));
     }
 
     function _getUnstEthRecordStatus(IEscrow _escrow, uint256 _requestId) internal view returns (uint8) {
-        return uint8(_loadMappingData(address(_escrow), 4, _requestId, 0, 0, 1));
+        return uint8(
+            _loadMappingData(
+                address(_escrow),
+                UNSTETHRECORDS_SLOT,
+                _requestId,
+                UNSTETHRECORDSTATUS_SLOT,
+                UNSTETHRECORDSTATUS_OFFSET,
+                UNSTETHRECORDSTATUS_SIZE
+            )
+        );
     }
 
     struct AccountingRecord {
@@ -344,12 +507,18 @@ contract StorageSetup is KontrolTest {
 
         // Slot 0
         {
-            _storeData(address(_escrow), 0, 0, 1, uint256(_currentState));
+            _storeData(address(_escrow), ESCROWSTATE_SLOT, ESCROWSTATE_OFFSET, ESCROWSTATE_SIZE, uint256(_currentState));
 
             uint256 minAssetsLockDuration = kevm.freshUInt(4);
             vm.assume(minAssetsLockDuration <= block.timestamp);
             vm.assume(minAssetsLockDuration < timeUpperBound);
-            _storeData(address(_escrow), 0, 1, 4, minAssetsLockDuration);
+            _storeData(
+                address(_escrow),
+                MINLOCKDURATION_SLOT,
+                MINLOCKDURATION_OFFSET,
+                MINLOCKDURATION_SIZE,
+                minAssetsLockDuration
+            );
 
             if (_currentState == EscrowSt.RageQuitEscrow) {
                 uint256 rageQuitExtensionPeriodDuration = kevm.freshUInt(4);
@@ -362,11 +531,29 @@ contract StorageSetup is KontrolTest {
                 vm.assume(rageQuitEthWithdrawalsDelay <= block.timestamp);
                 vm.assume(rageQuitEthWithdrawalsDelay < timeUpperBound);
 
-                _storeData(address(_escrow), 0, 5, 4, rageQuitExtensionPeriodDuration);
-                _storeData(address(_escrow), 0, 9, 5, rageQuitExtensionPeriodStartedAt);
-                _storeData(address(_escrow), 0, 14, 18, rageQuitEthWithdrawalsDelay);
+                _storeData(
+                    address(_escrow),
+                    EXTENSIONDURATION_SLOT,
+                    EXTENSIONDURATION_OFFSET,
+                    EXTENSIONDURATION_SIZE,
+                    rageQuitExtensionPeriodDuration
+                );
+                _storeData(
+                    address(_escrow),
+                    EXTENSIONSTARTEDAT_SLOT,
+                    EXTENSIONSTARTEDAT_OFFSET,
+                    EXTENSIONSTARTEDAT_SIZE,
+                    rageQuitExtensionPeriodStartedAt
+                );
+                _storeData(
+                    address(_escrow),
+                    WITHDRAWALSDELAY_SLOT,
+                    WITHDRAWALSDELAY_OFFSET,
+                    WITHDRAWALSDELAY_SIZE,
+                    rageQuitEthWithdrawalsDelay
+                );
             } else {
-                _storeData(address(_escrow), 0, 5, 27, uint256(0));
+                //_storeData(address(_escrow), 0, 5, 27, uint256(0));
             }
         }
         // Slot 1
@@ -376,8 +563,8 @@ contract StorageSetup is KontrolTest {
             uint256 claimedEth = kevm.freshUInt(16);
             vm.assume(claimedEth < ethUpperBound);
 
-            _storeData(address(_escrow), 1, 0, 16, lockedShares);
-            _storeData(address(_escrow), 1, 16, 16, claimedEth);
+            _storeData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE, lockedShares);
+            _storeData(address(_escrow), CLAIMEDETH_SLOT, CLAIMEDETH_OFFSET, CLAIMEDETH_SIZE, claimedEth);
         }
         // Slot 2
         {
@@ -386,24 +573,38 @@ contract StorageSetup is KontrolTest {
             uint256 finalizedEth = kevm.freshUInt(16);
             vm.assume(finalizedEth < ethUpperBound);
 
-            _storeData(address(_escrow), 2, 0, 16, unfinalizedShares);
-            _storeData(address(_escrow), 2, 16, 16, finalizedEth);
+            _storeData(
+                address(_escrow),
+                UNFINALIZEDSHARES_SLOT,
+                UNFINALIZEDSHARES_OFFSET,
+                UNFINALIZEDSHARES_SIZE,
+                unfinalizedShares
+            );
+            _storeData(address(_escrow), FINALIZEDETH_SLOT, FINALIZEDETH_OFFSET, FINALIZEDETH_SIZE, finalizedEth);
         }
         // Slot 5
         if (_currentState == EscrowSt.RageQuitEscrow) {
             uint256 batchesQueueStatus = kevm.freshUInt(1);
             vm.assume(batchesQueueStatus <= 2);
-            _storeData(address(_escrow), 5, 0, 1, batchesQueueStatus);
+            _storeData(
+                address(_escrow),
+                BATCHESQUEUESTATE_SLOT,
+                BATCHESQUEUESTATE_OFFSET,
+                BATCHESQUEUESTATE_SIZE,
+                batchesQueueStatus
+            );
         } else {
-            _storeData(address(_escrow), 5, 0, 1, 0);
+            _storeData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE, 0);
         }
         // Slot 6
         if (_currentState == EscrowSt.RageQuitEscrow) {
             uint256 batchesQueueLength = uint256(kevm.freshUInt(32));
             vm.assume(batchesQueueLength < 2 ** 64);
-            _storeUInt256(address(_escrow), 6, batchesQueueLength);
+            _storeData(
+                address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, batchesQueueLength
+            );
         } else {
-            _storeUInt256(address(_escrow), 6, 0);
+            _storeData(address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, 0);
         }
     }
 
@@ -412,23 +613,63 @@ contract StorageSetup is KontrolTest {
         uint256 lastAssetsLockTimestamp = kevm.freshUInt(5);
         vm.assume(lastAssetsLockTimestamp <= block.timestamp);
         vm.assume(lastAssetsLockTimestamp < timeUpperBound);
-        _storeMappingData(address(_escrow), 3, key, 0, 0, 5, lastAssetsLockTimestamp);
+        _storeMappingData(
+            address(_escrow),
+            ASSETS_SLOT,
+            key,
+            LASTASSETSLOCK_SLOT,
+            LASTASSETSLOCK_OFFSET,
+            LASTASSETSLOCK_SIZE,
+            lastAssetsLockTimestamp
+        );
         uint256 stETHLockedShares = kevm.freshUInt(16);
         vm.assume(stETHLockedShares < ethUpperBound);
-        _storeMappingData(address(_escrow), 3, key, 0, 5, 27, stETHLockedShares);
+        _storeMappingData(
+            address(_escrow),
+            ASSETS_SLOT,
+            key,
+            STETHSHARES_SLOT,
+            STETHSHARES_OFFSET,
+            STETHSHARES_SIZE,
+            stETHLockedShares
+        );
         uint256 unstEthLockedShares = kevm.freshUInt(16);
         vm.assume(unstEthLockedShares < ethUpperBound);
-        _storeMappingUInt256(address(_escrow), 3, key, 1, unstEthLockedShares);
+        _storeMappingData(
+            address(_escrow),
+            ASSETS_SLOT,
+            key,
+            UNSTETHSHARES_SLOT,
+            UNSTETHSHARES_OFFSET,
+            UNSTETHSHARES_SIZE,
+            unstEthLockedShares
+        );
         uint256 unstEthIdsLength = kevm.freshUInt(32);
         vm.assume(unstEthIdsLength < type(uint32).max);
-        _storeMappingUInt256(address(_escrow), 3, key, 2, unstEthIdsLength);
+        _storeMappingData(
+            address(_escrow),
+            ASSETS_SLOT,
+            key,
+            UNSTETHIDSLENGTH_SLOT,
+            UNSTETHIDSLENGTH_OFFSET,
+            UNSTETHIDSLENGTH_SIZE,
+            unstEthIdsLength
+        );
     }
 
     function escrowWithdrawalQueueSetup(IEscrow _escrow, WithdrawalQueueModel _withdrawalQueue) external {
         uint256 lastRequestId = _getLastRequestId(_withdrawalQueue);
         uint256 unstEthRecordStatus = kevm.freshUInt(1);
         vm.assume(unstEthRecordStatus < 5);
-        _storeMappingData(address(_escrow), 4, lastRequestId + 1, 0, 0, 1, unstEthRecordStatus);
+        _storeMappingData(
+            address(_escrow),
+            UNSTETHRECORDS_SLOT,
+            lastRequestId + 1,
+            UNSTETHRECORDSTATUS_SLOT,
+            UNSTETHRECORDSTATUS_OFFSET,
+            UNSTETHRECORDSTATUS_SIZE,
+            unstEthRecordStatus
+        );
     }
 
     function escrowStorageInvariants(Mode mode, IEscrow _escrow) external {
@@ -476,7 +717,7 @@ contract StorageSetup is KontrolTest {
         _establish(mode, rageQuitEthWithdrawalsDelay == 0);
         _establish(mode, rageQuitExtensionPeriodDuration == 0);
         _establish(mode, rageQuitExtensionPeriodStartedAt == 0);
-        _establish(mode, batchesQueueStatus == uint8(WithdrawalBatchesQueueState.Absent));
+        _establish(mode, batchesQueueStatus == uint8(WithdrawalsBatchesQueueState.Absent));
     }
 
     function signallingEscrowInitializeStorage(IEscrow _signallingEscrow) external {
@@ -487,7 +728,7 @@ contract StorageSetup is KontrolTest {
     function rageQuitEscrowStorageInvariants(Mode mode, IEscrow _rageQuitEscrow) external {
         uint8 batchesQueueStatus = _getBatchesQueueStatus(_rageQuitEscrow);
 
-        _establish(mode, batchesQueueStatus != uint8(WithdrawalBatchesQueueState.Absent));
+        _establish(mode, batchesQueueStatus != uint8(WithdrawalsBatchesQueueState.Absent));
     }
 
     function rageQuitEscrowInitializeStorage(IEscrow _rageQuitEscrow) external {
