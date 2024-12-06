@@ -167,6 +167,9 @@ contract StorageSetup is KontrolTest {
     uint256 constant RAGEQUITESCROW_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_SLOT;
     uint256 constant RAGEQUITESCROW_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_OFFSET;
     uint256 constant RAGEQUITESCROW_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_RAGEQUITESCROW_SIZE;
+    uint256 constant CONFIGPROVIDER_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_SLOT;
+    uint256 constant CONFIGPROVIDER_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_OFFSET;
+    uint256 constant CONFIGPROVIDER_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_SIZE;
 
     function _getCurrentState(DualGovernance _dualGovernance) internal view returns (uint8) {
         return uint8(_loadData(address(_dualGovernance), STATE_SLOT, STATE_OFFSET, STATE_SIZE));
@@ -262,7 +265,13 @@ contract StorageSetup is KontrolTest {
         );
 
         // Slot 8
-        //_storeUInt256(address(_dualGovernance), 8, uint256(uint160(address(_config))));
+        _storeData(
+            address(_dualGovernance),
+            CONFIGPROVIDER_SLOT,
+            CONFIGPROVIDER_OFFSET,
+            CONFIGPROVIDER_SIZE,
+            uint256(uint160(address(_config)))
+        );
     }
 
     function dualGovernanceStorageInvariants(Mode mode, DualGovernance _dualGovernance) external {
@@ -685,6 +694,7 @@ contract StorageSetup is KontrolTest {
     }
 
     function escrowAssumeBounds(IEscrow _escrow) external {
+        // TODO: Remove bounds that are already assumed during initialization
         uint128 lockedShares = _getStEthLockedShares(_escrow);
         uint128 claimedEth = _getClaimedEth(_escrow);
         uint128 unfinalizedShares = _getUnfinalizedShares(_escrow);
@@ -700,6 +710,13 @@ contract StorageSetup is KontrolTest {
         vm.assume(rageQuitEthWithdrawalsDelay < timeUpperBound);
         vm.assume(rageQuitExtensionPeriodDuration < timeUpperBound);
         vm.assume(rageQuitExtensionPeriodStartedAt < timeUpperBound);
+
+        IStETH stEth = Escrow(payable(address(_escrow))).ST_ETH();
+        uint256 numerator = stEth.getPooledEthByShares(lockedShares + unfinalizedShares) + finalizedEth;
+        uint256 denominator = stEth.totalSupply() + finalizedEth;
+
+        // Assume getRageQuitSupport() doesn´t overflow
+        vm.assume(1e18 * numerator / denominator <= type(uint128).max);
     }
 
     function escrowInitializeStorage(IEscrow _escrow, EscrowSt _currentState) external {
