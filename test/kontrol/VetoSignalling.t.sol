@@ -75,38 +75,6 @@ contract VetoSignallingTest is DualGovernanceSetUp {
         );
     }
 
-    function _calculateDynamicTimelock(
-        ImmutableDualGovernanceConfigProvider _config,
-        PercentD16 rageQuitSupport
-    ) public view returns (Duration) {
-        if (rageQuitSupport < _config.FIRST_SEAL_RAGE_QUIT_SUPPORT()) {
-            return Durations.ZERO;
-        } else if (rageQuitSupport < _config.SECOND_SEAL_RAGE_QUIT_SUPPORT()) {
-            return _linearInterpolation(_config, rageQuitSupport);
-        } else {
-            return _config.VETO_SIGNALLING_MAX_DURATION();
-        }
-    }
-
-    function _linearInterpolation(
-        ImmutableDualGovernanceConfigProvider _config,
-        PercentD16 rageQuitSupport
-    ) private view returns (Duration) {
-        uint32 L_min = Duration.unwrap(_config.VETO_SIGNALLING_MIN_DURATION());
-        uint32 L_max = Duration.unwrap(_config.VETO_SIGNALLING_MAX_DURATION());
-        uint256 interpolation = L_min
-            + (
-                (PercentD16.unwrap(rageQuitSupport) - PercentD16.unwrap(_config.FIRST_SEAL_RAGE_QUIT_SUPPORT()))
-                    * (L_max - L_min)
-            )
-                / (
-                    PercentD16.unwrap(_config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
-                        - PercentD16.unwrap(_config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
-                );
-        assert(interpolation <= type(uint32).max);
-        return Duration.wrap(uint32(interpolation));
-    }
-
     function _maxTimestamp(Timestamp t1, Timestamp t2) internal pure returns (Timestamp) {
         return Timestamp.wrap(uint40(Math.max(Timestamp.unwrap(t1), Timestamp.unwrap(t2))));
     }
@@ -118,7 +86,7 @@ contract VetoSignallingTest is DualGovernanceSetUp {
      * in the Deactivation sub-state. Otherwise, it is in the parent state.
      */
     function _vetoSignallingDeactivationInvariant(Mode mode, StateRecord memory sr) internal view returns (bool) {
-        Duration dynamicTimelock = _calculateDynamicTimelock(config, sr.rageQuitSupport);
+        Duration dynamicTimelock = _calculateDynamicTimelock(sr.rageQuitSupport);
 
         // Note: creates three branches in symbolic execution
         if (sr.timestamp <= addTo(dynamicTimelock, sr.activationTime)) {
@@ -155,7 +123,7 @@ contract VetoSignallingTest is DualGovernanceSetUp {
 
     function _maxDeactivationDelayPassed(StateRecord memory sr) internal view returns (bool) {
         Duration maxDeactivationDelay =
-            _calculateDynamicTimelock(config, sr.maxRageQuitSupport) + config.VETO_SIGNALLING_MIN_ACTIVE_DURATION();
+            _calculateDynamicTimelock(sr.maxRageQuitSupport) + config.VETO_SIGNALLING_MIN_ACTIVE_DURATION();
 
         return addTo(maxDeactivationDelay, sr.activationTime) < sr.timestamp;
     }

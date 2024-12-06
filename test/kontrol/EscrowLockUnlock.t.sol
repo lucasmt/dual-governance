@@ -65,13 +65,34 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         this.signallingEscrowInvariants(Mode.Assume, signallingEscrow);
         this.escrowUserInvariants(Mode.Assume, signallingEscrow, sender);
 
-        State currentState = dualGovernance.getPersistedState();
-        State nextState = dualGovernance.getEffectiveState();
-        vm.assume(currentState == State.RageQuit || nextState != State.RageQuit);
+        {
+            State initialState = dualGovernance.getPersistedState();
+            PercentD16 init_rageQuitSupport = signallingEscrow.getRageQuitSupport();
+            Timestamp init_vetoSignallingActivatedAt = Timestamp.wrap(_getVetoSignallingActivationTime(dualGovernance));
+            Timestamp init_vetoSignallingReactivationTime =
+                Timestamp.wrap(_getVetoSignallingReactivationTime(dualGovernance));
+            Timestamp init_enteredAt = Timestamp.wrap(_getEnteredAt(dualGovernance));
+            Timestamp init_rageQuitExtensionPeriodStartedAt =
+                Timestamp.wrap(_getRageQuitExtensionPeriodStartedAt(rageQuitEscrow));
 
-        vm.startPrank(sender);
-        signallingEscrow.lockStETH(amount);
-        vm.stopPrank();
+            State nextState = dualGovernance.getEffectiveState();
+            vm.assume(initialState == State.RageQuit || nextState != State.RageQuit);
+
+            this.forgetStateTransition(
+                initialState,
+                init_rageQuitSupport,
+                init_vetoSignallingActivatedAt,
+                init_vetoSignallingReactivationTime,
+                init_enteredAt,
+                init_rageQuitExtensionPeriodStartedAt
+            );
+
+            return;
+
+            vm.startPrank(sender);
+            signallingEscrow.lockStETH(amount);
+            vm.stopPrank();
+        }
 
         this.escrowInvariants(Mode.Assert, signallingEscrow);
         this.signallingEscrowInvariants(Mode.Assert, signallingEscrow);

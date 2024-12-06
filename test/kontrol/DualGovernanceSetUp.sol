@@ -2,6 +2,8 @@ pragma solidity 0.8.26;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import "kontrol-cheatcodes/KontrolCheats.sol";
+
 import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
@@ -14,6 +16,9 @@ import "contracts/ResealManager.sol";
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";
 import {PercentD16} from "contracts/types/PercentD16.sol";
 import {Duration, Durations} from "contracts/types/Duration.sol";
+import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
+
+import {State} from "contracts/libraries/DualGovernanceStateMachine.sol";
 
 import "test/kontrol/StorageSetup.sol";
 
@@ -33,6 +38,118 @@ contract DualGovernanceSetUp is StorageSetup {
     EmergencyProtectedTimelock.SanityCheckParams timelockSanityCheckParams;
     DualGovernance.ExternalDependencies dependencies;
     DualGovernance.SanityCheckParams dgSanityCheckParams;
+
+    function _calculateDynamicTimelock(PercentD16 rageQuitSupport) public view returns (Duration) {
+        if (rageQuitSupport < config.FIRST_SEAL_RAGE_QUIT_SUPPORT()) {
+            return Durations.ZERO;
+        } else if (rageQuitSupport < config.SECOND_SEAL_RAGE_QUIT_SUPPORT()) {
+            return _linearInterpolation(rageQuitSupport);
+        } else {
+            return config.VETO_SIGNALLING_MAX_DURATION();
+        }
+    }
+
+    function _linearInterpolation(PercentD16 rageQuitSupport) private view returns (Duration) {
+        uint32 L_min = Duration.unwrap(config.VETO_SIGNALLING_MIN_DURATION());
+        uint32 L_max = Duration.unwrap(config.VETO_SIGNALLING_MAX_DURATION());
+        uint256 interpolation = L_min
+            + (
+                (PercentD16.unwrap(rageQuitSupport) - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT()))
+                    * (L_max - L_min)
+            )
+                / (
+                    PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+                        - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+                );
+        assert(interpolation <= type(uint32).max);
+        return Duration.wrap(uint32(interpolation));
+    }
+
+    function forgetStateTransition(
+        State state,
+        PercentD16 rageQuitSupport,
+        Timestamp vetoSignallingActivatedAt,
+        Timestamp vetoSignallingReactivationTime,
+        Timestamp enteredAt,
+        Timestamp rageQuitExtensionPeriodStartedAt
+    ) public {
+        if (state == State.Normal) {
+            // Transitions from Normal
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        } else if (state == State.VetoSignalling) {
+            // Transitions from VetoSignalling
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+            );
+
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(
+                    config.VETO_SIGNALLING_MIN_ACTIVE_DURATION().addTo(
+                        Timestamps.max(vetoSignallingReactivationTime, vetoSignallingActivatedAt)
+                    )
+                )
+            );
+        } else if (state == State.VetoSignallingDeactivation) {
+            // Transitions from VetoSignallingDeactivation
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+            );
+
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(config.VETO_SIGNALLING_DEACTIVATION_MAX_DURATION().addTo(enteredAt))
+            );
+        } else if (state == State.VetoCooldown) {
+            // Transitions from VetoCooldown
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(config.VETO_COOLDOWN_DURATION().addTo(enteredAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        } else if (state == State.RageQuit) {
+            // Transitions from RageQuit
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(config.RAGE_QUIT_EXTENSION_PERIOD_DURATION().addTo(rageQuitExtensionPeriodStartedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        }
+    }
 
     function setUp() public {
         vm.chainId(1); // Set block.chainid so it's not symbolic
