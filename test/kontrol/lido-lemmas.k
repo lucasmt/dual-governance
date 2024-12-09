@@ -61,6 +61,9 @@ module LIDO-LEMMAS [symbolic]
 
     rule X <=Int maxUInt256 => X <Int pow256 [simplification]
 
+    rule [max-plus-255-optim]: maxUInt8 xorInt chop ( bool2Word ( X:Int <Int 254 ) *Int ( maxUInt8 xorInt ( X +Int 1 ) ) ) => X +Int 1
+      requires 0 <=Int X andBool X <Int maxUInt8 [simplification, preserves-definedness]
+
     //
     // Rules
     //

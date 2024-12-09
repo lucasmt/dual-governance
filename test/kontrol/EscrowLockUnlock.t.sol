@@ -78,6 +78,14 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             State nextState = dualGovernance.getEffectiveState();
             vm.assume(initialState == State.RageQuit || nextState != State.RageQuit);
 
+            vm.startPrank(sender);
+            signallingEscrow.lockStETH(amount);
+            vm.stopPrank();
+
+            this.escrowInvariants(Mode.Assert, signallingEscrow);
+            this.signallingEscrowInvariants(Mode.Assert, signallingEscrow);
+            this.escrowUserInvariants(Mode.Assert, signallingEscrow, sender);
+
             this.forgetStateTransition(
                 initialState,
                 init_rageQuitSupport,
@@ -86,17 +94,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
                 init_enteredAt,
                 init_rageQuitExtensionPeriodStartedAt
             );
-
-            return;
-
-            vm.startPrank(sender);
-            signallingEscrow.lockStETH(amount);
-            vm.stopPrank();
         }
-
-        this.escrowInvariants(Mode.Assert, signallingEscrow);
-        this.signallingEscrowInvariants(Mode.Assert, signallingEscrow);
-        this.escrowUserInvariants(Mode.Assert, signallingEscrow, sender);
 
         AccountingRecord memory post = this.saveAccountingRecord(sender, signallingEscrow);
         assertTrue(post.userShares == pre.userShares - amountInShares, "post.userShares");
