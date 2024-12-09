@@ -13,12 +13,97 @@ import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
 import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
+import "test/kontrol/storage/EmergencyProtectedTimelockStorageConstants.sol";
 
 contract ProposalOperationsSetup is DualGovernanceSetUp {
     DualGovernance auxDualGovernance;
     EmergencyProtectedTimelock auxTimelock;
     Escrow auxSignallingEscrow;
     Escrow auxRageQuitEscrow;
+
+    uint256 constant GOVERNANCE_SLOT = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_SLOT;
+    uint256 constant GOVERNANCE_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_OFFSET;
+    uint256 constant GOVERNANCE_SIZE = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_SIZE;
+    uint256 constant AFTERSUBMITDELAY_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSUBMITDELAY_SLOT;
+    uint256 constant AFTERSUBMITDELAY_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSUBMITDELAY_OFFSET;
+    uint256 constant AFTERSUBMITDELAY_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSUBMITDELAY_SIZE;
+    uint256 constant AFTERSCHEDULEDELAY_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSCHEDULEDELAY_SLOT;
+    uint256 constant AFTERSCHEDULEDELAY_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSCHEDULEDELAY_OFFSET;
+    uint256 constant AFTERSCHEDULEDELAY_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSCHEDULEDELAY_SIZE;
+    uint256 constant PROPOSALSCOUNT_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_PROPOSALSCOUNT_SLOT;
+    uint256 constant PROPOSALSCOUNT_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_PROPOSALSCOUNT_OFFSET;
+    uint256 constant PROPOSALSCOUNT_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_PROPOSALSCOUNT_SIZE;
+    uint256 constant LASTCANCELLEDPROPOSALID_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_LASTCANCELLEDPROPOSALID_SLOT;
+    uint256 constant LASTCANCELLEDPROPOSALID_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_LASTCANCELLEDPROPOSALID_OFFSET;
+    uint256 constant LASTCANCELLEDPROPOSALID_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_LASTCANCELLEDPROPOSALID_SIZE;
+    uint256 constant ACTIVATIONCOMMITTEE_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYACTIVATIONCOMMITTEE_SLOT;
+    uint256 constant ACTIVATIONCOMMITTEE_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYACTIVATIONCOMMITTEE_OFFSET;
+    uint256 constant ACTIVATIONCOMMITTEE_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYACTIVATIONCOMMITTEE_SIZE;
+    uint256 constant PROTECTIONENDSAFTER_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYPROTECTIONENDSAFTER_SLOT;
+    uint256 constant PROTECTIONENDSAFTER_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYPROTECTIONENDSAFTER_OFFSET;
+    uint256 constant PROTECTIONENDSAFTER_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYPROTECTIONENDSAFTER_SIZE;
+    uint256 constant EMERGENCYMODEENDSAFTER_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYMODEENDSAFTER_SLOT;
+    uint256 constant EMERGENCYMODEENDSAFTER_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYMODEENDSAFTER_OFFSET;
+    uint256 constant EMERGENCYMODEENDSAFTER_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYMODEENDSAFTER_SIZE;
+    uint256 constant PROPOSALS_SLOT = EmergencyProtectedTimelockStorageConstants.STORAGE_PROPOSALS_PROPOSALS_SLOT;
+    uint256 constant STATUS_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_SLOT;
+    uint256 constant STATUS_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_OFFSET;
+    uint256 constant STATUS_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_SIZE;
+    uint256 constant EXECUTOR_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_EXECUTOR_SLOT;
+    uint256 constant EXECUTOR_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_EXECUTOR_OFFSET;
+    uint256 constant EXECUTOR_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_EXECUTOR_SIZE;
+    uint256 constant SUBMITTEDAT_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SUBMITTEDAT_SLOT;
+    uint256 constant SUBMITTEDAT_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SUBMITTEDAT_OFFSET;
+    uint256 constant SUBMITTEDAT_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SUBMITTEDAT_SIZE;
+    uint256 constant SCHEDULEDAT_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SCHEDULEDAT_SLOT;
+    uint256 constant SCHEDULEDAT_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SCHEDULEDAT_OFFSET;
+    uint256 constant SCHEDULEDAT_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_SCHEDULEDAT_SIZE;
+    uint256 constant TARGET_SLOT = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_TARGET_SLOT;
+    uint256 constant TARGET_OFFSET = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_TARGET_OFFSET;
+    uint256 constant TARGET_SIZE = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_TARGET_SIZE;
+    uint256 constant VALUE_SLOT = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_SLOT;
+    uint256 constant VALUE_OFFSET = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_OFFSET;
+    uint256 constant VALUE_SIZE = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_SIZE;
+    uint256 constant CALLS_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_CALLS_SLOT;
+    uint256 constant CALLS_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_CALLS_OFFSET;
+    uint256 constant CALLS_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_CALLS_SIZE;
 
     // ?STORAGE3
     // ?WORD21: lastCancelledProposalId
@@ -28,35 +113,67 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     function _timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) public {
         //
         uint256 governance = uint256(uint160(address(_dualGovernance)));
-        _storeData(address(_timelock), 0, 0, 20, governance);
+        _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
         //
         uint256 afterSubmitDelay = kevm.freshUInt(4);
-        _storeData(address(_timelock), 0, 20, 4, afterSubmitDelay);
+        _storeData(
+            address(_timelock), AFTERSUBMITDELAY_SLOT, AFTERSUBMITDELAY_OFFSET, AFTERSUBMITDELAY_SIZE, afterSubmitDelay
+        );
         //
         uint256 afterScheduleDelay = kevm.freshUInt(4);
-        _storeData(address(_timelock), 0, 24, 4, afterScheduleDelay);
+        _storeData(
+            address(_timelock),
+            AFTERSCHEDULEDELAY_SLOT,
+            AFTERSCHEDULEDELAY_OFFSET,
+            AFTERSCHEDULEDELAY_SIZE,
+            afterScheduleDelay
+        );
         //
         uint256 proposalsCount = kevm.freshUInt(8);
         vm.assume(proposalsCount < type(uint64).max);
-        _storeData(address(_timelock), 1, 0, 8, proposalsCount);
+        _storeData(address(_timelock), PROPOSALSCOUNT_SLOT, PROPOSALSCOUNT_OFFSET, PROPOSALSCOUNT_SIZE, proposalsCount);
         //
         uint256 lastCancelledProposalId = kevm.freshUInt(8);
         vm.assume(lastCancelledProposalId <= proposalsCount);
-        _storeData(address(timelock), 1, 8, 8, lastCancelledProposalId);
+        _storeData(
+            address(timelock),
+            LASTCANCELLEDPROPOSALID_SLOT,
+            LASTCANCELLEDPROPOSALID_OFFSET,
+            LASTCANCELLEDPROPOSALID_SIZE,
+            lastCancelledProposalId
+        );
         //
         {
             uint160 activationCommittee = uint160(uint256(keccak256("activationCommittee")));
             uint256 protectionEndsAfter = kevm.freshUInt(5);
             vm.assume(protectionEndsAfter < timeUpperBound);
             vm.assume(protectionEndsAfter <= block.timestamp);
-            _storeData(address(_timelock), 3, 5, 20, uint256(activationCommittee));
-            _storeData(address(_timelock), 3, 25, 5, protectionEndsAfter);
+            _storeData(
+                address(_timelock),
+                ACTIVATIONCOMMITTEE_SLOT,
+                ACTIVATIONCOMMITTEE_OFFSET,
+                ACTIVATIONCOMMITTEE_SIZE,
+                uint256(activationCommittee)
+            );
+            _storeData(
+                address(_timelock),
+                PROTECTIONENDSAFTER_SLOT,
+                PROTECTIONENDSAFTER_OFFSET,
+                PROTECTIONENDSAFTER_SIZE,
+                protectionEndsAfter
+            );
         }
         //
         uint256 emergencyModeEndsAfter = kevm.freshUInt(5);
         vm.assume(emergencyModeEndsAfter < timeUpperBound);
         vm.assume(emergencyModeEndsAfter <= block.timestamp);
-        _storeData(address(_timelock), 3, 0, 5, emergencyModeEndsAfter);
+        _storeData(
+            address(_timelock),
+            EMERGENCYMODEENDSAFTER_SLOT,
+            EMERGENCYMODEENDSAFTER_OFFSET,
+            EMERGENCYMODEENDSAFTER_SIZE,
+            emergencyModeEndsAfter
+        );
     }
 
     // Set up the storage for a proposal.
@@ -69,17 +186,37 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         {
             uint256 status = kevm.freshUInt(1);
             vm.assume(status <= 4);
-            _storeMappingData(address(_timelock), 2, _proposalId, 0, 0, 1, status);
+            _storeMappingData(
+                address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE, status
+            );
             uint256 executor = uint256(uint160(uint256(keccak256("executor"))));
-            _storeMappingData(address(_timelock), 2, _proposalId, 0, 1, 20, executor);
+            _storeMappingData(
+                address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, executor
+            );
             uint256 submittedAt = kevm.freshUInt(5);
             vm.assume(submittedAt < timeUpperBound);
             vm.assume(submittedAt <= block.timestamp);
-            _storeMappingData(address(_timelock), 2, _proposalId, 0, 21, 5, submittedAt);
+            _storeMappingData(
+                address(_timelock),
+                PROPOSALS_SLOT,
+                _proposalId,
+                SUBMITTEDAT_SLOT,
+                SUBMITTEDAT_OFFSET,
+                SUBMITTEDAT_SIZE,
+                submittedAt
+            );
             uint256 scheduledAt = kevm.freshUInt(5);
             vm.assume(scheduledAt < timeUpperBound);
             vm.assume(scheduledAt <= block.timestamp);
-            _storeMappingData(address(_timelock), 2, _proposalId, 0, 26, 5, scheduledAt);
+            _storeMappingData(
+                address(_timelock),
+                PROPOSALS_SLOT,
+                _proposalId,
+                SCHEDULEDAT_SLOT,
+                SCHEDULEDAT_OFFSET,
+                SCHEDULEDAT_SIZE,
+                scheduledAt
+            );
         }
         // TODO: uncomment and adapt this if it becomes necessary
         /*
@@ -107,10 +244,10 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         for (uint256 j = 0; j < numCalls; j++) {
             uint256 callSlot = callsSlot + j * 2;
             uint256 target = uint256(uint160(uint256(keccak256(abi.encodePacked(j, "target")))));
-            _storeData(address(_timelock), callSlot, 0, 20, target);
+            _storeData(address(_timelock), callSlot + TARGET_SLOT, TARGET_OFFSET, TARGET_SIZE, target);
             uint256 value = kevm.freshUInt(12);
             vm.assume(value != 0);
-            _storeData(address(_timelock), callSlot, 20, 12, value);
+            _storeData(address(_timelock), callSlot + VALUE_SLOT, VALUE_OFFSET, VALUE_SIZE, value);
             // TODO: Fix this if it becomes necessary (careful about how bytes need to be encoded)
             //bytes memory payload = abi.encodePacked(j, "payload");
             //_storeBytes32(address(_timelock), callSlot + 2, keccak256(payload));
@@ -125,7 +262,7 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     }
 
     function _getProposalsSlot(uint256 _proposalId) internal returns (uint256 baseSlot) {
-        return uint256(keccak256(abi.encodePacked(_proposalId, uint256(2))));
+        return uint256(keccak256(abi.encodePacked(_proposalId, PROPOSALS_SLOT)));
     }
 
     function _getCallsSlot(uint256 _proposalId) internal returns (uint256) {
@@ -134,23 +271,35 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     }
 
     function _getLastCancelledProposalId(EmergencyProtectedTimelock _timelock) internal view returns (uint256) {
-        return _loadData(address(_timelock), 1, 8, 8);
+        return _loadData(
+            address(_timelock),
+            LASTCANCELLEDPROPOSALID_SLOT,
+            LASTCANCELLEDPROPOSALID_OFFSET,
+            LASTCANCELLEDPROPOSALID_SIZE
+        );
     }
 
     function _getProposalsCount(EmergencyProtectedTimelock _timelock) internal view returns (uint256) {
-        return _loadData(address(_timelock), 1, 0, 8);
+        return _loadData(address(_timelock), PROPOSALSCOUNT_SLOT, PROPOSALSCOUNT_OFFSET, PROPOSALSCOUNT_SIZE);
     }
 
     function _getEmergencyModeEndsAfter(EmergencyProtectedTimelock _timelock) internal view returns (uint40) {
-        return uint40(_loadData(address(_timelock), 3, 0, 5));
+        return uint40(
+            _loadData(
+                address(_timelock),
+                EMERGENCYMODEENDSAFTER_SLOT,
+                EMERGENCYMODEENDSAFTER_OFFSET,
+                EMERGENCYMODEENDSAFTER_SIZE
+            )
+        );
     }
 
     function _getSubmittedAt(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint40) {
-        return uint40(_loadData(address(_timelock), baseSlot, 21, 5));
+        return uint40(_loadData(address(_timelock), baseSlot + SUBMITTEDAT_SLOT, SUBMITTEDAT_OFFSET, SUBMITTEDAT_SIZE));
     }
 
     function _getScheduledAt(EmergencyProtectedTimelock _timelock, uint256 baseSlot) internal view returns (uint40) {
-        return uint40(_loadData(address(_timelock), baseSlot, 26, 5));
+        return uint40(_loadData(address(_timelock), baseSlot + SCHEDULEDAT_SLOT, SCHEDULEDAT_OFFSET, SCHEDULEDAT_SIZE));
     }
 
     /*
@@ -163,6 +312,6 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         EmergencyProtectedTimelock _timelock,
         uint256 _proposalId
     ) internal view returns (uint256) {
-        return _loadMappingData(address(_timelock), 2, _proposalId, 1, 0, 32);
+        return _loadMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, CALLS_SLOT, CALLS_OFFSET, CALLS_SIZE);
     }
 }
