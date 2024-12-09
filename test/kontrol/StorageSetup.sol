@@ -100,7 +100,7 @@ contract StorageSetup is KontrolTest {
     }
 
     //
-    // WithdrawalQueue
+    //  WITHDRAWAL QUEUE
     //
     uint256 constant LASTREQUESTID_SLOT = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_SLOT;
     uint256 constant LASTREQUESTID_OFFSET = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_OFFSET;
