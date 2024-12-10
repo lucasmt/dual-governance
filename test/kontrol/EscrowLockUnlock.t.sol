@@ -128,8 +128,6 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             );
         }
 
-        return;
-
         AccountingRecord memory post = this.saveAccountingRecord(sender, signallingEscrow);
         assert(post.userShares == pre.userShares - amountInShares);
         assert(post.escrowShares == pre.escrowShares + amountInShares);
