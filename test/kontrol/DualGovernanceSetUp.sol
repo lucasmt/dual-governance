@@ -71,7 +71,8 @@ contract DualGovernanceSetUp is StorageSetup {
         Timestamp vetoSignallingActivatedAt,
         Timestamp vetoSignallingReactivationTime,
         Timestamp enteredAt,
-        Timestamp rageQuitExtensionPeriodStartedAt
+        Timestamp rageQuitExtensionPeriodStartedAt,
+        Duration rageQuitExtensionPeriodDuration
     ) public {
         if (state == State.Normal) {
             // Transitions from Normal
@@ -140,7 +141,7 @@ contract DualGovernanceSetUp is StorageSetup {
             kevm.forgetBranch(
                 Timestamp.unwrap(Timestamps.now()),
                 KontrolCheatsBase.ComparisonOperator.GreaterThan,
-                Timestamp.unwrap(config.RAGE_QUIT_EXTENSION_PERIOD_DURATION().addTo(rageQuitExtensionPeriodStartedAt))
+                Timestamp.unwrap(rageQuitExtensionPeriodDuration.addTo(rageQuitExtensionPeriodStartedAt))
             );
 
             kevm.forgetBranch(

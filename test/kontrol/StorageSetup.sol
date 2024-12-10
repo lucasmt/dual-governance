@@ -5,6 +5,7 @@ import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
 import "contracts/Escrow.sol";
 
+import {Durations} from "contracts/types/Duration.sol";
 import {Timestamp} from "contracts/types/Timestamp.sol";
 import {State as WithdrawalBatchesQueueState} from "contracts/libraries/WithdrawalBatchesQueue.sol";
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
@@ -320,9 +321,6 @@ contract StorageSetup is KontrolTest {
         _establish(mode, ar1.userLastLockedTime == ar2.userLastLockedTime);
     }
 
-    //
-    //  STUCK HERE
-    //
     function escrowStorageSetup(IEscrow _escrow, EscrowSt _currentState) external {
         kevm.symbolicStorage(address(_escrow));
 
@@ -469,8 +467,14 @@ contract StorageSetup is KontrolTest {
     }
 
     function rageQuitEscrowStorageInvariants(Mode mode, IEscrow _rageQuitEscrow) external {
-        uint8 batchesQueueStatus = _getBatchesQueueStatus(_rageQuitEscrow);
+        uint32 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(_rageQuitEscrow);
+        uint32 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(_rageQuitEscrow);
+        uint40 rageQuitExtensionPeriodStartedAt = _getRageQuitExtensionPeriodStartedAt(_rageQuitEscrow);
+        _establish(mode, Duration.unwrap(Durations.from(30 days)) <= rageQuitExtensionPeriodStartedAt);
+        _establish(mode, rageQuitExtensionPeriodDuration == Duration.unwrap(Durations.from(7 days)));
+        _establish(mode, 0 < rageQuitExtensionPeriodStartedAt);
 
+        uint8 batchesQueueStatus = _getBatchesQueueStatus(_rageQuitEscrow);
         _establish(mode, batchesQueueStatus != uint8(WithdrawalBatchesQueueState.Absent));
     }
 
