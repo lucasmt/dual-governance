@@ -5,14 +5,14 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 import "contracts/model/StETHModel.sol";
 import "contracts/model/WstETHAdapted.sol";
 import "contracts/model/WithdrawalQueueModel.sol";
 import "contracts/ResealManager.sol";
 
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";
-import {PercentD16} from "contracts/types/PercentD16.sol";
+import {PercentD16, PercentsD16} from "contracts/types/PercentD16.sol";
 import {Duration, Durations} from "contracts/types/Duration.sol";
 
 import "test/kontrol/StorageSetup.sol";
@@ -24,14 +24,15 @@ contract DualGovernanceSetUp is StorageSetup {
     StETHModel stEth;
     WstETHAdapted wstEth;
     WithdrawalQueueModel withdrawalQueue;
-    Escrow escrowMasterCopy;
+    IEscrowBase escrowMasterCopy;
     Escrow signallingEscrow;
     Escrow rageQuitEscrow;
     ResealManager resealManager;
 
     DualGovernanceConfig.Context governanceConfig;
     EmergencyProtectedTimelock.SanityCheckParams timelockSanityCheckParams;
-    DualGovernance.ExternalDependencies dependencies;
+    DualGovernance.SignallingTokens signallingTokens;
+    DualGovernance.DualGovernanceComponents components;
     DualGovernance.SanityCheckParams dgSanityCheckParams;
 
     function setUp() public {
@@ -83,18 +84,25 @@ contract DualGovernanceSetUp is StorageSetup {
         );
         resealManager = new ResealManager(timelock);
 
-        //DualGovernance.ExternalDependencies memory dependencies;
-        dependencies.stETH = stEth;
-        dependencies.wstETH = wstEth;
-        dependencies.withdrawalQueue = withdrawalQueue;
-        dependencies.timelock = timelock;
-        dependencies.resealManager = resealManager;
-        dependencies.configProvider = config;
+        signallingTokens.stETH = stEth;
+        signallingTokens.wstETH = wstEth;
+        signallingTokens.withdrawalQueue = withdrawalQueue;
+        components.timelock = timelock;
+        components.resealManager = resealManager;
+        components.configProvider = config;
 
-        dualGovernance = new DualGovernance(dependencies, dgSanityCheckParams);
-        escrowMasterCopy = new Escrow(stEth, wstEth, withdrawalQueue, dualGovernance, 1);
+        dgSanityCheckParams = DualGovernance.SanityCheckParams({
+            minWithdrawalsBatchSize: 4,
+            minTiebreakerActivationTimeout: Durations.from(30 days),
+            maxTiebreakerActivationTimeout: Durations.from(180 days),
+            maxSealableWithdrawalBlockersCount: 128,
+            maxMinAssetsLockDuration: Durations.from(365 days)
+        });
+
+        dualGovernance = new DualGovernance(components, signallingTokens, dgSanityCheckParams);
 
         signallingEscrow = Escrow(payable(dualGovernance.getVetoSignallingEscrow()));
+        escrowMasterCopy = signallingEscrow.ESCROW_MASTER_COPY();
         rageQuitEscrow = Escrow(payable(Clones.clone(address(escrowMasterCopy))));
 
         // ?STORAGE

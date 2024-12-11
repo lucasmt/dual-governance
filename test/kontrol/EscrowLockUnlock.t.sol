@@ -5,9 +5,10 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 //import "contracts/Configuration.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 
 import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
+import {PercentD16} from "contracts/types/PercentD16.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
 import "contracts/model/StETHModel.sol";
@@ -21,7 +22,7 @@ import {EscrowInvariants} from "test/kontrol/EscrowInvariants.sol";
 
 contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
     function _assumeFreshAddress(address account) internal {
-        IEscrow escrow = signallingEscrow;
+        IEscrowBase escrow = signallingEscrow;
         vm.assume(account != address(0));
         vm.assume(account != address(this));
         vm.assume(account != address(vm));

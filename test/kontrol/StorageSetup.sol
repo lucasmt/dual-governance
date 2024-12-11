@@ -3,8 +3,9 @@ pragma solidity 0.8.26;
 import "contracts/DualGovernance.sol";
 //import {State as DualGovernanceState} from "contracts/libraries/DualGovernanceStateMachine.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 
+import {SharesValue} from "contracts/types/SharesValue.sol";
 import {Timestamp} from "contracts/types/Timestamp.sol";
 import {State as WithdrawalsBatchesQueueState} from "contracts/libraries/WithdrawalsBatchesQueue.sol";
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
@@ -41,7 +42,7 @@ contract StorageSetup is KontrolTest {
         _stEth.setShares(address(_withdrawalQueue), queueShares);
     }
 
-    function stEthEscrowSetup(StETHModel _stEth, IEscrow _escrow, IWithdrawalQueue _withdrawalQueue) external {
+    function stEthEscrowSetup(StETHModel _stEth, IEscrowBase _escrow, IWithdrawalQueue _withdrawalQueue) external {
         //
         uint256 escrowShares = kevm.freshUInt(32);
         vm.assume(escrowShares < _stEth.getTotalShares());
@@ -59,7 +60,7 @@ contract StorageSetup is KontrolTest {
         _stEth.setShares(_user, userShares);
     }
 
-    function stEthStorageInvariants(Mode mode, StETHModel _stEth, IEscrow _escrow) external {
+    function stEthStorageInvariants(Mode mode, StETHModel _stEth, IEscrowBase _escrow) external {
         uint256 totalPooledEther = _stEth.getTotalPooledEther();
         uint256 totalShares = _stEth.getTotalShares();
         uint256 escrowShares = _stEth.sharesOf(address(_escrow));
@@ -69,7 +70,7 @@ contract StorageSetup is KontrolTest {
         _establish(mode, escrowShares < totalShares);
     }
 
-    function stEthAssumeBounds(StETHModel _stEth, IEscrow _escrow) external {
+    function stEthAssumeBounds(StETHModel _stEth, IEscrowBase _escrow) external {
         uint256 totalPooledEther = _stEth.getTotalPooledEther();
         uint256 totalShares = _stEth.getTotalShares();
         uint256 escrowShares = _stEth.sharesOf(address(_escrow));
@@ -81,8 +82,8 @@ contract StorageSetup is KontrolTest {
 
     function stEthInitializeStorage(
         StETHModel _stEth,
-        IEscrow _signallingEscrow,
-        IEscrow _rageQuitEscrow,
+        IEscrowBase _signallingEscrow,
+        IEscrowBase _rageQuitEscrow,
         IWithdrawalQueue _withdrawalQueue
     ) external {
         this.stEthStorageSetup(_stEth, _withdrawalQueue);
@@ -199,8 +200,8 @@ contract StorageSetup is KontrolTest {
 
     function dualGovernanceStorageSetup(
         DualGovernance _dualGovernance,
-        IEscrow _signallingEscrow,
-        IEscrow _rageQuitEscrow,
+        IEscrowBase _signallingEscrow,
+        IEscrowBase _rageQuitEscrow,
         IDualGovernanceConfigProvider _config
     ) external {
         kevm.symbolicStorage(address(_dualGovernance));
@@ -305,8 +306,8 @@ contract StorageSetup is KontrolTest {
 
     function dualGovernanceInitializeStorage(
         DualGovernance _dualGovernance,
-        IEscrow _signallingEscrow,
-        IEscrow _rageQuitEscrow,
+        IEscrowBase _signallingEscrow,
+        IEscrowBase _rageQuitEscrow,
         IDualGovernanceConfigProvider _config
     ) external {
         this.dualGovernanceStorageSetup(_dualGovernance, _signallingEscrow, _rageQuitEscrow, _config);
@@ -378,50 +379,50 @@ contract StorageSetup is KontrolTest {
     uint256 constant UNSTETHRECORDSTATUS_OFFSET = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_OFFSET;
     uint256 constant UNSTETHRECORDSTATUS_SIZE = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_SIZE;
 
-    function _getCurrentState(IEscrow _escrow) internal view returns (uint8) {
+    function _getCurrentState(IEscrowBase _escrow) internal view returns (uint8) {
         return uint8(_loadData(address(_escrow), ESCROWSTATE_SLOT, ESCROWSTATE_OFFSET, ESCROWSTATE_SIZE));
     }
 
-    function _getMinAssetsLockDuration(IEscrow _escrow) internal view returns (uint32) {
+    function _getMinAssetsLockDuration(IEscrowBase _escrow) internal view returns (uint32) {
         return uint32(_loadData(address(_escrow), MINLOCKDURATION_SLOT, MINLOCKDURATION_OFFSET, MINLOCKDURATION_SIZE));
     }
 
-    function _getRageQuitExtensionPeriodDuration(IEscrow _escrow) internal view returns (uint32) {
+    function _getRageQuitExtensionPeriodDuration(IEscrowBase _escrow) internal view returns (uint32) {
         return uint32(
             _loadData(address(_escrow), EXTENSIONDURATION_SLOT, EXTENSIONDURATION_OFFSET, EXTENSIONDURATION_SIZE)
         );
     }
 
-    function _getRageQuitExtensionPeriodStartedAt(IEscrow _escrow) internal view returns (uint40) {
+    function _getRageQuitExtensionPeriodStartedAt(IEscrowBase _escrow) internal view returns (uint40) {
         return uint40(
             _loadData(address(_escrow), EXTENSIONSTARTEDAT_SLOT, EXTENSIONSTARTEDAT_OFFSET, EXTENSIONSTARTEDAT_SIZE)
         );
     }
 
-    function _getRageQuitEthWithdrawalsDelay(IEscrow _escrow) internal view returns (uint32) {
+    function _getRageQuitEthWithdrawalsDelay(IEscrowBase _escrow) internal view returns (uint32) {
         return
             uint32(_loadData(address(_escrow), WITHDRAWALSDELAY_SLOT, WITHDRAWALSDELAY_OFFSET, WITHDRAWALSDELAY_SIZE));
     }
 
-    function _getStEthLockedShares(IEscrow _escrow) internal view returns (uint128) {
+    function _getStEthLockedShares(IEscrowBase _escrow) internal view returns (uint128) {
         return uint128(_loadData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE));
     }
 
-    function _getClaimedEth(IEscrow _escrow) internal view returns (uint128) {
+    function _getClaimedEth(IEscrowBase _escrow) internal view returns (uint128) {
         return uint128(_loadData(address(_escrow), CLAIMEDETH_SLOT, CLAIMEDETH_OFFSET, CLAIMEDETH_SIZE));
     }
 
-    function _getUnfinalizedShares(IEscrow _escrow) internal view returns (uint128) {
+    function _getUnfinalizedShares(IEscrowBase _escrow) internal view returns (uint128) {
         return uint128(
             _loadData(address(_escrow), UNFINALIZEDSHARES_SLOT, UNFINALIZEDSHARES_OFFSET, UNFINALIZEDSHARES_SIZE)
         );
     }
 
-    function _getFinalizedEth(IEscrow _escrow) internal view returns (uint128) {
+    function _getFinalizedEth(IEscrowBase _escrow) internal view returns (uint128) {
         return uint128(_loadData(address(_escrow), FINALIZEDETH_SLOT, FINALIZEDETH_OFFSET, FINALIZEDETH_SIZE));
     }
 
-    function _getLastAssetsLockTimestamp(IEscrow _escrow, address _vetoer) internal view returns (uint40) {
+    function _getLastAssetsLockTimestamp(IEscrowBase _escrow, address _vetoer) internal view returns (uint40) {
         uint256 key = uint256(uint160(_vetoer));
         return uint40(
             _loadMappingData(
@@ -430,12 +431,12 @@ contract StorageSetup is KontrolTest {
         );
     }
 
-    function _getBatchesQueueStatus(IEscrow _escrow) internal view returns (uint8) {
+    function _getBatchesQueueStatus(IEscrowBase _escrow) internal view returns (uint8) {
         return
             uint8(_loadData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE));
     }
 
-    function _getUnstEthRecordStatus(IEscrow _escrow, uint256 _requestId) internal view returns (uint8) {
+    function _getUnstEthRecordStatus(IEscrowBase _escrow, uint256 _requestId) internal view returns (uint8) {
         return uint8(
             _loadMappingData(
                 address(_escrow),
@@ -480,11 +481,11 @@ contract StorageSetup is KontrolTest {
         ar.escrowBalance = stEth.balanceOf(address(escrow));
         //ar.userShares = stEth.sharesOf(user);
         //ar.escrowShares = stEth.sharesOf(address(escrow));
-        ar.userSharesLocked = escrow.getVetoerState(user).stETHLockedShares;
-        ar.totalSharesLocked = escrow.getLockedAssetsTotals().stETHLockedShares;
+        ar.userSharesLocked = SharesValue.unwrap(escrow.getVetoerDetails(user).stETHLockedShares);
+        ar.totalSharesLocked = SharesValue.unwrap(escrow.getSignallingEscrowDetails().totalStETHLockedShares);
         ar.totalEth = stEth.getPooledEthByShares(ar.totalSharesLocked);
-        ar.userUnstEthLockedShares = escrow.getVetoerState(user).unstETHLockedShares;
-        ar.unfinalizedShares = escrow.getLockedAssetsTotals().unstETHUnfinalizedShares;
+        ar.userUnstEthLockedShares = SharesValue.unwrap(escrow.getVetoerDetails(user).unstETHLockedShares);
+        ar.unfinalizedShares = SharesValue.unwrap(escrow.getSignallingEscrowDetails().totalUnstETHUnfinalizedShares);
         uint256 lastAssetsLockTimestamp = _getLastAssetsLockTimestamp(escrow, user);
         require(lastAssetsLockTimestamp < timeUpperBound, "lastAssetsLockTimestamp >= timeUpperBound");
         ar.userLastLockedTime = Timestamp.wrap(uint40(lastAssetsLockTimestamp));
@@ -511,7 +512,7 @@ contract StorageSetup is KontrolTest {
     //
     //  STUCK HERE
     //
-    function escrowStorageSetup(IEscrow _escrow, EscrowSt _currentState) external {
+    function escrowStorageSetup(IEscrowBase _escrow, EscrowSt _currentState) external {
         kevm.symbolicStorage(address(_escrow));
 
         // Slot 0
@@ -617,7 +618,7 @@ contract StorageSetup is KontrolTest {
         }
     }
 
-    function escrowUserSetup(IEscrow _escrow, address _user) external {
+    function escrowUserSetup(IEscrowBase _escrow, address _user) external {
         uint256 key = uint256(uint160(_user));
         uint256 lastAssetsLockTimestamp = kevm.freshUInt(5);
         vm.assume(lastAssetsLockTimestamp <= block.timestamp);
@@ -666,7 +667,7 @@ contract StorageSetup is KontrolTest {
         );
     }
 
-    function escrowWithdrawalQueueSetup(IEscrow _escrow, WithdrawalQueueModel _withdrawalQueue) external {
+    function escrowWithdrawalQueueSetup(IEscrowBase _escrow, WithdrawalQueueModel _withdrawalQueue) external {
         uint256 lastRequestId = _getLastRequestId(_withdrawalQueue);
         uint256 unstEthRecordStatus = kevm.freshUInt(1);
         vm.assume(unstEthRecordStatus < 5);
@@ -681,7 +682,7 @@ contract StorageSetup is KontrolTest {
         );
     }
 
-    function escrowStorageInvariants(Mode mode, IEscrow _escrow) external {
+    function escrowStorageInvariants(Mode mode, IEscrowBase _escrow) external {
         uint8 batchesQueueStatus = _getBatchesQueueStatus(_escrow);
         uint32 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(_escrow);
         uint32 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(_escrow);
@@ -693,7 +694,7 @@ contract StorageSetup is KontrolTest {
         _establish(mode, rageQuitExtensionPeriodStartedAt <= block.timestamp);
     }
 
-    function escrowAssumeBounds(IEscrow _escrow) external {
+    function escrowAssumeBounds(IEscrowBase _escrow) external {
         // TODO: Remove bounds that are already assumed during initialization
         uint128 lockedShares = _getStEthLockedShares(_escrow);
         uint128 claimedEth = _getClaimedEth(_escrow);
@@ -719,13 +720,13 @@ contract StorageSetup is KontrolTest {
         vm.assume(1e18 * numerator / denominator <= type(uint128).max);
     }
 
-    function escrowInitializeStorage(IEscrow _escrow, EscrowSt _currentState) external {
+    function escrowInitializeStorage(IEscrowBase _escrow, EscrowSt _currentState) external {
         this.escrowStorageSetup(_escrow, _currentState);
         this.escrowStorageInvariants(Mode.Assume, _escrow);
         this.escrowAssumeBounds(_escrow);
     }
 
-    function signallingEscrowStorageInvariants(Mode mode, IEscrow _signallingEscrow) external {
+    function signallingEscrowStorageInvariants(Mode mode, IEscrowBase _signallingEscrow) external {
         uint32 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(_signallingEscrow);
         uint32 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(_signallingEscrow);
         uint40 rageQuitExtensionPeriodStartedAt = _getRageQuitExtensionPeriodStartedAt(_signallingEscrow);
@@ -734,21 +735,21 @@ contract StorageSetup is KontrolTest {
         _establish(mode, rageQuitEthWithdrawalsDelay == 0);
         _establish(mode, rageQuitExtensionPeriodDuration == 0);
         _establish(mode, rageQuitExtensionPeriodStartedAt == 0);
-        _establish(mode, batchesQueueStatus == uint8(WithdrawalsBatchesQueueState.Absent));
+        _establish(mode, batchesQueueStatus == uint8(WithdrawalsBatchesQueueState.NotInitialized));
     }
 
-    function signallingEscrowInitializeStorage(IEscrow _signallingEscrow) external {
+    function signallingEscrowInitializeStorage(IEscrowBase _signallingEscrow) external {
         this.escrowInitializeStorage(_signallingEscrow, EscrowSt.SignallingEscrow);
         this.signallingEscrowStorageInvariants(Mode.Assume, _signallingEscrow);
     }
 
-    function rageQuitEscrowStorageInvariants(Mode mode, IEscrow _rageQuitEscrow) external {
+    function rageQuitEscrowStorageInvariants(Mode mode, IEscrowBase _rageQuitEscrow) external {
         uint8 batchesQueueStatus = _getBatchesQueueStatus(_rageQuitEscrow);
 
-        _establish(mode, batchesQueueStatus != uint8(WithdrawalsBatchesQueueState.Absent));
+        _establish(mode, batchesQueueStatus != uint8(WithdrawalsBatchesQueueState.NotInitialized));
     }
 
-    function rageQuitEscrowInitializeStorage(IEscrow _rageQuitEscrow) external {
+    function rageQuitEscrowInitializeStorage(IEscrowBase _rageQuitEscrow) external {
         this.escrowInitializeStorage(_rageQuitEscrow, EscrowSt.RageQuitEscrow);
         this.rageQuitEscrowStorageInvariants(Mode.Assume, _rageQuitEscrow);
     }

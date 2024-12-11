@@ -2,6 +2,7 @@ pragma solidity 0.8.26;
 
 import {Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
+import {AssetsAccounting} from "contracts/libraries/AssetsAccounting.sol";
 import {EscrowState} from "contracts/libraries/EscrowState.sol";
 
 import "test/kontrol/EscrowAccounting.t.sol";

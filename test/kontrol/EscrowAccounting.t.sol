@@ -5,10 +5,13 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 
+import {ISignallingEscrow} from "contracts/interfaces/ISignallingEscrow.sol";
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";
+import {ETHValue} from "contracts/types/ETHValue.sol";
 import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
+import {SharesValue} from "contracts/types/SharesValue.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 import {PercentD16} from "contracts/types/PercentD16.sol";
 
@@ -26,10 +29,11 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
     function testRageQuitSupport(bool isRageQuitEscrow) public {
         Escrow escrow = isRageQuitEscrow ? rageQuitEscrow : signallingEscrow;
 
-        uint256 totalSharesLocked = escrow.getLockedAssetsTotals().stETHLockedShares;
-        uint256 unfinalizedShares = totalSharesLocked + escrow.getLockedAssetsTotals().unstETHUnfinalizedShares;
+        ISignallingEscrow.SignallingEscrowDetails memory details = escrow.getSignallingEscrowDetails();
+        uint256 totalSharesLocked = SharesValue.unwrap(details.totalStETHLockedShares);
+        uint256 unfinalizedShares = totalSharesLocked + SharesValue.unwrap(details.totalUnstETHUnfinalizedShares);
         uint256 totalFundsLocked = stEth.getPooledEthByShares(unfinalizedShares);
-        uint256 finalizedETH = escrow.getLockedAssetsTotals().unstETHFinalizedETH;
+        uint256 finalizedETH = ETHValue.unwrap(details.totalUnstETHFinalizedETH);
         uint256 expectedRageQuitSupport =
             (totalFundsLocked + finalizedETH) * 1e18 / (stEth.totalSupply() + finalizedETH);
 

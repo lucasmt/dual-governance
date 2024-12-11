@@ -2,11 +2,13 @@ pragma solidity 0.8.26;
 
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
 
+import {ISignallingEscrow} from "contracts/interfaces/ISignallingEscrow.sol";
 import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
+import {SharesValue} from "contracts/types/SharesValue.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
 import "contracts/model/StETHModel.sol";
@@ -18,11 +20,11 @@ import {StorageSetup} from "test/kontrol/StorageSetup.sol";
 contract EscrowInvariants is StorageSetup {
     function escrowInvariants(Mode mode, Escrow escrow) external view {
         StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
-        IEscrow.LockedAssetsTotals memory totals = escrow.getLockedAssetsTotals();
-        _establish(mode, totals.stETHLockedShares <= stEth.sharesOf(address(escrow)));
+        ISignallingEscrow.SignallingEscrowDetails memory details = escrow.getSignallingEscrowDetails();
+        _establish(mode, SharesValue.unwrap(details.totalStETHLockedShares) <= stEth.sharesOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.sharesFinalized <= totals.stETHLockedShares);
-        uint256 totalPooledEther = stEth.getPooledEthByShares(totals.stETHLockedShares);
+        uint256 totalPooledEther = stEth.getPooledEthByShares(SharesValue.unwrap(details.totalStETHLockedShares));
         _establish(mode, totalPooledEther <= stEth.balanceOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.amountFinalized == stEth.getPooledEthByShares(totals.sharesFinalized));
@@ -50,8 +52,13 @@ contract EscrowInvariants is StorageSetup {
     }
 
     function escrowUserInvariants(Mode mode, Escrow escrow, address user) external view {
+        SharesValue userShares = escrow.getVetoerDetails(user).stETHLockedShares;
+        SharesValue totalShares = escrow.getSignallingEscrowDetails().totalStETHLockedShares;
+
         _establish(
-            mode, escrow.getVetoerState(user).stETHLockedShares <= escrow.getLockedAssetsTotals().stETHLockedShares
+            mode,
+            // Unwrapping because <= is not implemented for SharesValue type
+            SharesValue.unwrap(userShares) <= SharesValue.unwrap(totalShares)
         );
     }
 }

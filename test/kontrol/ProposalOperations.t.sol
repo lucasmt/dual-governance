@@ -5,7 +5,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
-import "contracts/Escrow.sol";
+import {Escrow} from "contracts/Escrow.sol";
 
 import {Status, ExecutableProposals as Proposals} from "contracts/libraries/ExecutableProposals.sol";
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";
