@@ -1,0 +1,301 @@
+{
+  "storage": [
+    {
+      "astId": 1085,
+      "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+      "label": "_timelockState",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_struct(Context)12619_storage"
+    },
+    {
+      "astId": 1089,
+      "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+      "label": "_proposals",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_struct(Context)10640_storage"
+    },
+    {
+      "astId": 1093,
+      "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+      "label": "_emergencyProtection",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_struct(Context)9474_storage"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "encoding": "inplace",
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_struct(ExternalCall)11276_storage)dyn_storage": {
+      "encoding": "dynamic_array",
+      "label": "struct ExternalCall[]",
+      "numberOfBytes": "32",
+      "base": "t_struct(ExternalCall)11276_storage"
+    },
+    "t_bytes_storage": {
+      "encoding": "bytes",
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_enum(Status)10602": {
+      "encoding": "inplace",
+      "label": "enum Status",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_uint256,t_struct(Proposal)10629_storage)": {
+      "encoding": "mapping",
+      "key": "t_uint256",
+      "label": "mapping(uint256 => struct ExecutableProposals.Proposal)",
+      "numberOfBytes": "32",
+      "value": "t_struct(Proposal)10629_storage"
+    },
+    "t_struct(Context)10640_storage": {
+      "encoding": "inplace",
+      "label": "struct ExecutableProposals.Context",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 10632,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "proposalsCount",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 10634,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "lastCancelledProposalId",
+          "offset": 8,
+          "slot": "0",
+          "type": "t_uint64"
+        },
+        {
+          "astId": 10639,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "proposals",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_mapping(t_uint256,t_struct(Proposal)10629_storage)"
+        }
+      ]
+    },
+    "t_struct(Context)12619_storage": {
+      "encoding": "inplace",
+      "label": "struct TimelockState.Context",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 12607,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "governance",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 12611,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "afterSubmitDelay",
+          "offset": 20,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Duration)14831"
+        },
+        {
+          "astId": 12615,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "afterScheduleDelay",
+          "offset": 24,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Duration)14831"
+        },
+        {
+          "astId": 12618,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "adminExecutor",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        }
+      ]
+    },
+    "t_struct(Context)9474_storage": {
+      "encoding": "inplace",
+      "label": "struct EmergencyProtection.Context",
+      "numberOfBytes": "96",
+      "members": [
+        {
+          "astId": 9456,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyModeEndsAfter",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Timestamp)16187"
+        },
+        {
+          "astId": 9459,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyActivationCommittee",
+          "offset": 5,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 9463,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyProtectionEndsAfter",
+          "offset": 25,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Timestamp)16187"
+        },
+        {
+          "astId": 9466,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyExecutionCommittee",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_address"
+        },
+        {
+          "astId": 9470,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyModeDuration",
+          "offset": 20,
+          "slot": "1",
+          "type": "t_userDefinedValueType(Duration)14831"
+        },
+        {
+          "astId": 9473,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "emergencyGovernance",
+          "offset": 0,
+          "slot": "2",
+          "type": "t_address"
+        }
+      ]
+    },
+    "t_struct(ExternalCall)11276_storage": {
+      "encoding": "inplace",
+      "label": "struct ExternalCall",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 11271,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "target",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 11273,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "value",
+          "offset": 20,
+          "slot": "0",
+          "type": "t_uint96"
+        },
+        {
+          "astId": 11275,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "payload",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_bytes_storage"
+        }
+      ]
+    },
+    "t_struct(Proposal)10629_storage": {
+      "encoding": "inplace",
+      "label": "struct ExecutableProposals.Proposal",
+      "numberOfBytes": "64",
+      "members": [
+        {
+          "astId": 10624,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "data",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_struct(ProposalData)10620_storage"
+        },
+        {
+          "astId": 10628,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "calls",
+          "offset": 0,
+          "slot": "1",
+          "type": "t_array(t_struct(ExternalCall)11276_storage)dyn_storage"
+        }
+      ]
+    },
+    "t_struct(ProposalData)10620_storage": {
+      "encoding": "inplace",
+      "label": "struct ExecutableProposals.ProposalData",
+      "numberOfBytes": "32",
+      "members": [
+        {
+          "astId": 10608,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "status",
+          "offset": 0,
+          "slot": "0",
+          "type": "t_enum(Status)10602"
+        },
+        {
+          "astId": 10611,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "executor",
+          "offset": 1,
+          "slot": "0",
+          "type": "t_address"
+        },
+        {
+          "astId": 10615,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "submittedAt",
+          "offset": 21,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Timestamp)16187"
+        },
+        {
+          "astId": 10619,
+          "contract": "contracts/EmergencyProtectedTimelock.sol:EmergencyProtectedTimelock",
+          "label": "scheduledAt",
+          "offset": 26,
+          "slot": "0",
+          "type": "t_userDefinedValueType(Timestamp)16187"
+        }
+      ]
+    },
+    "t_uint256": {
+      "encoding": "inplace",
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "encoding": "inplace",
+      "label": "uint64",
+      "numberOfBytes": "8"
+    },
+    "t_uint96": {
+      "encoding": "inplace",
+      "label": "uint96",
+      "numberOfBytes": "12"
+    },
+    "t_userDefinedValueType(Duration)14831": {
+      "encoding": "inplace",
+      "label": "Duration",
+      "numberOfBytes": "4"
+    },
+    "t_userDefinedValueType(Timestamp)16187": {
+      "encoding": "inplace",
+      "label": "Timestamp",
+      "numberOfBytes": "5"
+    }
+  }
+}
