@@ -1,39 +1,39 @@
 {
   "storage": [
     {
-      "astId": 188,
+      "astId": 195,
       "contract": "contracts/DualGovernance.sol:DualGovernance",
       "label": "_proposers",
       "offset": 0,
       "slot": "0",
-      "type": "t_struct(Context)11397_storage"
+      "type": "t_struct(Context)11681_storage"
     },
     {
-      "astId": 192,
+      "astId": 199,
       "contract": "contracts/DualGovernance.sol:DualGovernance",
       "label": "_tiebreaker",
       "offset": 0,
       "slot": "3",
-      "type": "t_struct(Context)12095_storage"
+      "type": "t_struct(Context)12383_storage"
     },
     {
-      "astId": 196,
+      "astId": 203,
       "contract": "contracts/DualGovernance.sol:DualGovernance",
       "label": "_stateMachine",
       "offset": 0,
       "slot": "6",
-      "type": "t_struct(Context)8387_storage"
+      "type": "t_struct(Context)8670_storage"
     },
     {
-      "astId": 200,
+      "astId": 207,
       "contract": "contracts/DualGovernance.sol:DualGovernance",
       "label": "_resealer",
       "offset": 0,
       "slot": "9",
-      "type": "t_struct(Context)11869_storage"
+      "type": "t_struct(Context)12158_storage"
     },
     {
-      "astId": 203,
+      "astId": 210,
       "contract": "contracts/DualGovernance.sol:DualGovernance",
       "label": "_proposalsCanceller",
       "offset": 0,
@@ -64,32 +64,37 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_contract(IDualGovernanceConfigProvider)5698": {
+    "t_contract(IDualGovernanceConfigProvider)5819": {
       "encoding": "inplace",
       "label": "contract IDualGovernanceConfigProvider",
       "numberOfBytes": "20"
     },
-    "t_contract(IEscrow)6009": {
+    "t_contract(IRageQuitEscrow)6121": {
       "encoding": "inplace",
-      "label": "contract IEscrow",
+      "label": "contract IRageQuitEscrow",
       "numberOfBytes": "20"
     },
-    "t_contract(IResealManager)6083": {
+    "t_contract(IResealManager)6134": {
       "encoding": "inplace",
       "label": "contract IResealManager",
       "numberOfBytes": "20"
     },
-    "t_enum(State)8341": {
+    "t_contract(ISignallingEscrow)6312": {
+      "encoding": "inplace",
+      "label": "contract ISignallingEscrow",
+      "numberOfBytes": "20"
+    },
+    "t_enum(State)8624": {
       "encoding": "inplace",
       "label": "enum State",
       "numberOfBytes": "1"
     },
-    "t_mapping(t_address,t_struct(ExecutorData)11383_storage)": {
+    "t_mapping(t_address,t_struct(ExecutorData)11667_storage)": {
       "encoding": "mapping",
       "key": "t_address",
       "label": "mapping(address => struct Proposers.ExecutorData)",
       "numberOfBytes": "32",
-      "value": "t_struct(ExecutorData)11383_storage"
+      "value": "t_struct(ExecutorData)11667_storage"
     },
     "t_mapping(t_address,t_uint256)": {
       "encoding": "mapping",
@@ -105,28 +110,28 @@
       "numberOfBytes": "32",
       "value": "t_uint256"
     },
-    "t_struct(AddressSet)64810_storage": {
+    "t_struct(AddressSet)65028_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.AddressSet",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 64809,
+          "astId": 65027,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_inner",
           "offset": 0,
           "slot": "0",
-          "type": "t_struct(Set)64495_storage"
+          "type": "t_struct(Set)64713_storage"
         }
       ]
     },
-    "t_struct(Context)11397_storage": {
+    "t_struct(Context)11681_storage": {
       "encoding": "inplace",
       "label": "struct Proposers.Context",
       "numberOfBytes": "96",
       "members": [
         {
-          "astId": 11387,
+          "astId": 11671,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "proposers",
           "offset": 0,
@@ -134,15 +139,15 @@
           "type": "t_array(t_address)dyn_storage"
         },
         {
-          "astId": 11392,
+          "astId": 11676,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "executors",
           "offset": 0,
           "slot": "1",
-          "type": "t_mapping(t_address,t_struct(ExecutorData)11383_storage)"
+          "type": "t_mapping(t_address,t_struct(ExecutorData)11667_storage)"
         },
         {
-          "astId": 11396,
+          "astId": 11680,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "executorRefsCounts",
           "offset": 0,
@@ -151,21 +156,21 @@
         }
       ]
     },
-    "t_struct(Context)11869_storage": {
+    "t_struct(Context)12158_storage": {
       "encoding": "inplace",
       "label": "struct Resealer.Context",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 11866,
+          "astId": 12155,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "resealManager",
           "offset": 0,
           "slot": "0",
-          "type": "t_contract(IResealManager)6083"
+          "type": "t_contract(IResealManager)6134"
         },
         {
-          "astId": 11868,
+          "astId": 12157,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "resealCommittee",
           "offset": 0,
@@ -174,13 +179,13 @@
         }
       ]
     },
-    "t_struct(Context)12095_storage": {
+    "t_struct(Context)12383_storage": {
       "encoding": "inplace",
       "label": "struct Tiebreaker.Context",
       "numberOfBytes": "96",
       "members": [
         {
-          "astId": 12086,
+          "astId": 12374,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "tiebreakerCommittee",
           "offset": 0,
@@ -188,62 +193,62 @@
           "type": "t_address"
         },
         {
-          "astId": 12090,
+          "astId": 12378,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "tiebreakerActivationTimeout",
           "offset": 20,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)14831"
+          "type": "t_userDefinedValueType(Duration)15090"
         },
         {
-          "astId": 12094,
+          "astId": 12382,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "sealableWithdrawalBlockers",
           "offset": 0,
           "slot": "1",
-          "type": "t_struct(AddressSet)64810_storage"
+          "type": "t_struct(AddressSet)65028_storage"
         }
       ]
     },
-    "t_struct(Context)8387_storage": {
+    "t_struct(Context)8670_storage": {
       "encoding": "inplace",
       "label": "struct DualGovernanceStateMachine.Context",
       "numberOfBytes": "96",
       "members": [
         {
-          "astId": 8355,
+          "astId": 8638,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "state",
           "offset": 0,
           "slot": "0",
-          "type": "t_enum(State)8341"
+          "type": "t_enum(State)8624"
         },
         {
-          "astId": 8359,
+          "astId": 8642,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "enteredAt",
           "offset": 1,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16187"
+          "type": "t_userDefinedValueType(Timestamp)16446"
         },
         {
-          "astId": 8363,
+          "astId": 8646,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "vetoSignallingActivatedAt",
           "offset": 6,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16187"
+          "type": "t_userDefinedValueType(Timestamp)16446"
         },
         {
-          "astId": 8367,
+          "astId": 8650,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "signallingEscrow",
           "offset": 11,
           "slot": "0",
-          "type": "t_contract(IEscrow)6009"
+          "type": "t_contract(ISignallingEscrow)6312"
         },
         {
-          "astId": 8370,
+          "astId": 8653,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "rageQuitRound",
           "offset": 31,
@@ -251,54 +256,54 @@
           "type": "t_uint8"
         },
         {
-          "astId": 8374,
+          "astId": 8657,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "vetoSignallingReactivationTime",
           "offset": 0,
           "slot": "1",
-          "type": "t_userDefinedValueType(Timestamp)16187"
+          "type": "t_userDefinedValueType(Timestamp)16446"
         },
         {
-          "astId": 8378,
+          "astId": 8661,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "normalOrVetoCooldownExitedAt",
           "offset": 5,
           "slot": "1",
-          "type": "t_userDefinedValueType(Timestamp)16187"
+          "type": "t_userDefinedValueType(Timestamp)16446"
         },
         {
-          "astId": 8382,
+          "astId": 8665,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "rageQuitEscrow",
           "offset": 10,
           "slot": "1",
-          "type": "t_contract(IEscrow)6009"
+          "type": "t_contract(IRageQuitEscrow)6121"
         },
         {
-          "astId": 8386,
+          "astId": 8669,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "configProvider",
           "offset": 0,
           "slot": "2",
-          "type": "t_contract(IDualGovernanceConfigProvider)5698"
+          "type": "t_contract(IDualGovernanceConfigProvider)5819"
         }
       ]
     },
-    "t_struct(ExecutorData)11383_storage": {
+    "t_struct(ExecutorData)11667_storage": {
       "encoding": "inplace",
       "label": "struct Proposers.ExecutorData",
       "numberOfBytes": "32",
       "members": [
         {
-          "astId": 11379,
+          "astId": 11663,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "proposerIndex",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(IndexOneBased)15550"
+          "type": "t_userDefinedValueType(IndexOneBased)15809"
         },
         {
-          "astId": 11382,
+          "astId": 11666,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "executor",
           "offset": 4,
@@ -307,13 +312,13 @@
         }
       ]
     },
-    "t_struct(Set)64495_storage": {
+    "t_struct(Set)64713_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.Set",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 64490,
+          "astId": 64708,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_values",
           "offset": 0,
@@ -321,7 +326,7 @@
           "type": "t_array(t_bytes32)dyn_storage"
         },
         {
-          "astId": 64494,
+          "astId": 64712,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_positions",
           "offset": 0,
@@ -340,17 +345,17 @@
       "label": "uint8",
       "numberOfBytes": "1"
     },
-    "t_userDefinedValueType(Duration)14831": {
+    "t_userDefinedValueType(Duration)15090": {
       "encoding": "inplace",
       "label": "Duration",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(IndexOneBased)15550": {
+    "t_userDefinedValueType(IndexOneBased)15809": {
       "encoding": "inplace",
       "label": "IndexOneBased",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(Timestamp)16187": {
+    "t_userDefinedValueType(Timestamp)16446": {
       "encoding": "inplace",
       "label": "Timestamp",
       "numberOfBytes": "5"
