@@ -61,8 +61,26 @@ module LIDO-LEMMAS [symbolic]
 
     rule X <=Int maxUInt256 => X <Int pow256 [simplification]
 
-    rule [max-plus-255-optim]: maxUInt8 xorInt chop ( bool2Word ( X:Int <Int 254 ) *Int ( maxUInt8 xorInt ( X +Int 1 ) ) ) => X +Int 1
-      requires 0 <=Int X andBool X <Int maxUInt8 [simplification, preserves-definedness]
+    // Simplifications for the OpenZeppelin ternary operator function
+
+    rule [xorInt-ge-zero]:
+      0 <=Int X xorInt Y => true
+      requires 0 <=Int X andBool 0 <=Int Y
+      [simplification]
+
+    rule [xorInt-lt]:
+      X xorInt Y <Int Z => true
+      requires X <Int Z andBool Y <Int Z
+      [simplification]
+
+    rule [b2w-lt]:
+      bool2Word ( B:Bool ) *Int X <Int Y =>
+        ( ( notBool B ) andBool 0 <=Int Y ) orBool ( B andBool X <Int Y )
+      [simplification, concrete(Y)]
+
+    rule [xorInt-to-if]:
+      X xorInt ( bool2Word ( B ) *Int ( X xorInt Y ) ) => #if B #then Y #else X #fi
+      [simplification]
 
     //
     // Rules
