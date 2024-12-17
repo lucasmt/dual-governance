@@ -12,15 +12,10 @@ import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol
 import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
-import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
+import {KontrolTest} from "test/kontrol/KontrolTest.sol";
 import "test/kontrol/storage/EmergencyProtectedTimelockStorageConstants.sol";
 
-contract ProposalOperationsSetup is DualGovernanceSetUp {
-    DualGovernance auxDualGovernance;
-    EmergencyProtectedTimelock auxTimelock;
-    Escrow auxSignallingEscrow;
-    Escrow auxRageQuitEscrow;
-
+contract ProposalOperationsSetup is KontrolTest {
     uint256 constant GOVERNANCE_SLOT = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_SLOT;
     uint256 constant GOVERNANCE_OFFSET =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_OFFSET;
@@ -110,7 +105,8 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     // ?WORD22: proposalsLength
     // ?WORD23: protectedTill
     // ?WORD24: emergencyModeEndsAfter
-    function _timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) public {
+    function timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) external {
+        kevm.symbolicStorage(address(_timelock));
         //
         uint256 governance = uint256(uint160(address(_dualGovernance)));
         _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
@@ -136,7 +132,7 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         uint256 lastCancelledProposalId = kevm.freshUInt(8);
         vm.assume(lastCancelledProposalId <= proposalsCount);
         _storeData(
-            address(timelock),
+            address(_timelock),
             LASTCANCELLEDPROPOSALID_SLOT,
             LASTCANCELLEDPROPOSALID_OFFSET,
             LASTCANCELLEDPROPOSALID_SIZE,
@@ -181,7 +177,7 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
     // ?WORD26: scheduledAt
     // ?WORD27: executedAt
     // ?WORD28: numCalls
-    function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) public {
+    function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {
         // slot 1
         {
             uint256 status = kevm.freshUInt(1);
@@ -237,7 +233,7 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         */
     }
 
-    function _storeExecutorCalls(EmergencyProtectedTimelock _timelock, uint256 _proposalId) public {
+    function _storeExecutorCalls(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {
         uint256 numCalls = _getCallsCount(_timelock, _proposalId);
         uint256 callsSlot = _getCallsSlot(_proposalId);
 
@@ -254,9 +250,9 @@ contract ProposalOperationsSetup is DualGovernanceSetUp {
         }
     }
 
-    function _proposalIdAssumeBound(uint256 _proposalId) internal view {
+    function _proposalIdAssumeBound(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal view {
         vm.assume(_proposalId > 0);
-        vm.assume(_proposalId < _getProposalsCount(timelock));
+        vm.assume(_proposalId < _getProposalsCount(_timelock));
         uint256 slot2 = uint256(keccak256(abi.encodePacked(uint256(2))));
         vm.assume((_proposalId - 1) <= ((type(uint256).max - 3 - slot2) / 3));
     }

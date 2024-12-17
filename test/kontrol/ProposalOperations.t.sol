@@ -12,16 +12,15 @@ import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol
 import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
-import {ProposalOperationsSetup} from "test/kontrol/ProposalOperationsSetup.sol";
+import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
 
-contract ProposalOperationsTest is ProposalOperationsSetup {
+contract ProposalOperationsTest is DualGovernanceSetUp {
     function _proposalOperationsInitializeStorage(
         DualGovernance _dualGovernance,
         EmergencyProtectedTimelock _timelock,
         uint256 _proposalId
     ) public {
-        _timelockStorageSetup(_dualGovernance, _timelock);
-        _proposalIdAssumeBound(_proposalId);
+        _proposalIdAssumeBound(_timelock, _proposalId);
         _proposalStorageSetup(_timelock, _proposalId);
         _storeExecutorCalls(_timelock, _proposalId);
     }
@@ -91,7 +90,7 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
     }
 
     function testCannotProposeInInvalidState() external {
-        _timelockStorageSetup(dualGovernance, timelock);
+        //_timelockStorageSetup(dualGovernance, timelock);
         uint256 newProposalIndex = timelock.getProposalsCount();
 
         address proposer = address(uint160(uint256(keccak256("proposer"))));
@@ -123,8 +122,8 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
      * Test that a proposal cannot be scheduled for execution if the Dual Governance state is not Normal or VetoCooldown.
      */
     function testCannotScheduleInInvalidStates(uint256 proposalId) external {
-        _timelockStorageSetup(dualGovernance, timelock);
-        _proposalIdAssumeBound(proposalId);
+        //_timelockStorageSetup(dualGovernance, timelock);
+        _proposalIdAssumeBound(timelock, proposalId);
         _proposalStorageSetup(timelock, proposalId);
 
         ProposalRecord memory pre = _recordProposal(proposalId);
@@ -146,8 +145,8 @@ contract ProposalOperationsTest is ProposalOperationsSetup {
      * Test that a proposal cannot be scheduled for execution if it was submitted after the last time the VetoSignalling state was entered.
      */
     function testCannotScheduleSubmissionAfterLastVetoSignalling(uint256 proposalId) external {
-        _timelockStorageSetup(dualGovernance, timelock);
-        _proposalIdAssumeBound(proposalId);
+        //_timelockStorageSetup(dualGovernance, timelock);
+        _proposalIdAssumeBound(timelock, proposalId);
         _proposalStorageSetup(timelock, proposalId);
 
         ProposalRecord memory pre = _recordProposal(proposalId);

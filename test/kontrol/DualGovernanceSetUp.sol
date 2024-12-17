@@ -15,9 +15,10 @@ import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol
 import {PercentD16, PercentsD16} from "contracts/types/PercentD16.sol";
 import {Duration, Durations} from "contracts/types/Duration.sol";
 
+import "test/kontrol/ProposalOperationsSetup.sol";
 import "test/kontrol/StorageSetup.sol";
 
-contract DualGovernanceSetUp is StorageSetup {
+contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
     ImmutableDualGovernanceConfigProvider config;
     DualGovernance dualGovernance;
     EmergencyProtectedTimelock timelock;
@@ -129,7 +130,7 @@ contract DualGovernanceSetUp is StorageSetup {
         this.rageQuitEscrowInitializeStorage(rageQuitEscrow);
 
         // ?STORAGE3
-        kevm.symbolicStorage(address(timelock));
+        this.timelockStorageSetup(dualGovernance, timelock);
 
         // ?STORAGE4
         this.withdrawalQueueStorageSetup(withdrawalQueue, stEth);
