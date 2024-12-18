@@ -51,13 +51,28 @@ module LIDO-LEMMAS [symbolic]
       requires 0 <Int X andBool 0 <=Int Z andBool Z modInt X ==Int 0
       [simplification, concrete(X, Z), preserves-definedness]
 
-    rule [multimask-b-and]:
-      MASK:Int &Int SLOT:Int =>
-        ( MASK |Int ( 2 ^Int ( 8 *Int ( #getMaskShiftBytes(MASK) +Int #getMaskWidthBytes(MASK) ) ) -Int 1 ) )
-          &Int
-        #asWord ( #buf ( 32, SLOT ) [ 32 -Int ( #getMaskShiftBytes(MASK) +Int #getMaskWidthBytes(MASK) ) := #buf ( #getMaskWidthBytes(MASK), 0 ) ] )
-        requires 0 <=Int #getMaskShiftBytes(MASK) andBool 0 <=Int #getMaskWidthBytes(MASK) andBool #rangeUInt(256, SLOT)
-        [simplification(60), concrete(MASK), preserves-definedness]
+    rule X <=Int maxUInt256 => X <Int pow256 [simplification]
+
+    // Simplifications for the OpenZeppelin ternary operator function
+
+    rule [xorInt-ge-zero]:
+      0 <=Int X xorInt Y => true
+      requires 0 <=Int X andBool 0 <=Int Y
+      [simplification]
+
+    rule [xorInt-lt]:
+      X xorInt Y <Int Z => true
+      requires X <Int ( 2 ^Int log2Int ( Z ) ) andBool Y <Int ( 2 ^Int log2Int ( Z ) )
+      [simplification, concrete(Z)]
+
+    rule [b2w-lt]:
+      bool2Word ( B:Bool ) *Int X <Int Y =>
+        ( ( notBool B ) andBool 0 <=Int Y ) orBool ( B andBool X <Int Y )
+      [simplification, concrete(Y)]
+
+    rule [xorInt-to-if]:
+      X xorInt ( bool2Word ( B ) *Int ( X xorInt Y ) ) => #if B #then Y #else X #fi
+      [simplification]
 
     //
     // Rules
