@@ -31,11 +31,17 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
     function testCancelAllNonExecutedProposals(uint256 proposalId) external {
         vm.assume(proposalId < timelock.getProposalsCount());
 
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
         vm.prank(timelock.getGovernance());
         timelock.cancelAllNonExecutedProposals();
 
-        Status proposalStatus = timelock.getProposalDetails(proposalId).status;
-        assert(proposalStatus == Status.Cancelled);
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
     }
 
     /**
@@ -46,6 +52,10 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
         vm.assume(proposalId < timelock.getProposalsCount());
         vm.assume(timelock.isEmergencyModeActive());
 
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
         Timestamp emergencyModeEndsAfter = timelock.getEmergencyProtectionDetails().emergencyModeEndsAfter;
 
         if (Timestamps.now() <= emergencyModeEndsAfter) {
@@ -54,8 +64,10 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
 
         timelock.deactivateEmergencyMode();
 
-        Status proposalStatus = timelock.getProposalDetails(proposalId).status;
-        assert(proposalStatus == Status.Cancelled);
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
     }
 
     /**
@@ -66,11 +78,17 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
         vm.assume(proposalId < timelock.getProposalsCount());
         vm.assume(timelock.isEmergencyModeActive());
 
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
         vm.prank(timelock.getEmergencyActivationCommittee());
         timelock.emergencyReset();
 
-        Status proposalStatus = timelock.getProposalDetails(proposalId).status;
-        assert(proposalStatus == Status.Cancelled);
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
     }
 
     /**
@@ -78,6 +96,8 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
      */
     function testCancelledProposalsCannotBeScheduled(uint256 proposalId) external {
         vm.assume(proposalId < timelock.getProposalsCount());
+
+        _proposalStorageSetup(timelock, proposalId);
 
         Status proposalStatus = timelock.getProposalDetails(proposalId).status;
         vm.assume(proposalStatus == Status.Cancelled);
@@ -100,6 +120,8 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
         vm.assume(proposalId < timelock.getProposalsCount());
         vm.assume(!timelock.isEmergencyModeActive());
 
+        _proposalStorageSetup(timelock, proposalId);
+
         Status proposalStatus = timelock.getProposalDetails(proposalId).status;
         vm.assume(proposalStatus == Status.Cancelled);
 
@@ -117,10 +139,12 @@ contract CancellingProposalsTest is DualGovernanceSetUp {
         vm.assume(proposalId < timelock.getProposalsCount());
         vm.assume(timelock.isEmergencyModeActive());
 
+        _proposalStorageSetup(timelock, proposalId);
+
         Status proposalStatus = timelock.getProposalDetails(proposalId).status;
         vm.assume(proposalStatus == Status.Cancelled);
 
-        vm.startPrank(timelock.getEmergencyActivationCommittee());
+        vm.startPrank(timelock.getEmergencyExecutionCommittee());
 
         bytes4 errorSelector = ExecutableProposals.UnexpectedProposalStatus.selector;
 

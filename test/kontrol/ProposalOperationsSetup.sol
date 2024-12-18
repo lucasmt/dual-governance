@@ -50,6 +50,12 @@ contract ProposalOperationsSetup is KontrolTest {
         EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYACTIVATIONCOMMITTEE_OFFSET;
     uint256 constant ACTIVATIONCOMMITTEE_SIZE =
         EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYACTIVATIONCOMMITTEE_SIZE;
+    uint256 constant EXECUTIONCOMMITTEE_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYEXECUTIONCOMMITTEE_SLOT;
+    uint256 constant EXECUTIONCOMMITTEE_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYEXECUTIONCOMMITTEE_OFFSET;
+    uint256 constant EXECUTIONCOMMITTEE_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYEXECUTIONCOMMITTEE_SIZE;
     uint256 constant PROTECTIONENDSAFTER_SLOT =
         EmergencyProtectedTimelockStorageConstants.STORAGE_EMERGENCYPROTECTION_EMERGENCYPROTECTIONENDSAFTER_SLOT;
     uint256 constant PROTECTIONENDSAFTER_OFFSET =
@@ -160,6 +166,17 @@ contract ProposalOperationsSetup is KontrolTest {
             );
         }
         //
+        {
+            uint160 executionCommittee = uint160(kevm.freshUInt(20));
+            _storeData(
+                address(_timelock),
+                EXECUTIONCOMMITTEE_SLOT,
+                EXECUTIONCOMMITTEE_OFFSET,
+                EXECUTIONCOMMITTEE_SIZE,
+                uint256(executionCommittee)
+            );
+        }
+        //
         uint256 emergencyModeEndsAfter = kevm.freshUInt(5);
         vm.assume(emergencyModeEndsAfter < timeUpperBound);
         vm.assume(emergencyModeEndsAfter <= block.timestamp);
@@ -177,10 +194,15 @@ contract ProposalOperationsSetup is KontrolTest {
     // ?WORD26: scheduledAt
     // ?WORD27: executedAt
     // ?WORD28: numCalls
-    function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {
+    function _proposalStorageSetup(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId,
+        address executor
+    ) internal {
         // slot 1
         {
             uint256 status = kevm.freshUInt(1);
+            vm.assume(status != 0);
             vm.assume(status <= 4);
             _storeMappingData(
                 address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE, status
@@ -231,6 +253,11 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeUInt256(address(_timelock), baseSlot + 2, numCalls);
         }
         */
+    }
+
+    function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {
+        address executor = address(uint160(uint256(keccak256("executor"))));
+        _proposalStorageSetup(_timelock, _proposalId, executor);
     }
 
     function _storeExecutorCalls(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {
