@@ -21,10 +21,12 @@ contract EscrowInvariants is StorageSetup {
     function escrowInvariants(Mode mode, Escrow escrow) external view {
         StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
         ISignallingEscrow.SignallingEscrowDetails memory details = escrow.getSignallingEscrowDetails();
-        _establish(mode, SharesValue.unwrap(details.totalStETHLockedShares) <= stEth.sharesOf(address(escrow)));
+        uint128 totalLockedShares = SharesValue.unwrap(details.totalStETHLockedShares);
+        uint128 totalUnfinalizedShares = SharesValue.unwrap(details.totalUnstETHUnfinalizedShares);
+        _establish(mode, totalLockedShares + totalUnfinalizedShares <= stEth.sharesOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.sharesFinalized <= totals.stETHLockedShares);
-        uint256 totalPooledEther = stEth.getPooledEthByShares(SharesValue.unwrap(details.totalStETHLockedShares));
+        uint256 totalPooledEther = stEth.getPooledEthByShares(totalLockedShares);
         _establish(mode, totalPooledEther <= stEth.balanceOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.amountFinalized == stEth.getPooledEthByShares(totals.sharesFinalized));
