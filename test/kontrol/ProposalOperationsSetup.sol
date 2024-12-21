@@ -99,6 +99,9 @@ contract ProposalOperationsSetup is KontrolTest {
     uint256 constant VALUE_SLOT = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_SLOT;
     uint256 constant VALUE_OFFSET = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_OFFSET;
     uint256 constant VALUE_SIZE = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_VALUE_SIZE;
+    uint256 constant PAYLOAD_SLOT = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_PAYLOAD_SLOT;
+    uint256 constant PAYLOAD_OFFSET = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_PAYLOAD_OFFSET;
+    uint256 constant PAYLOAD_SIZE = EmergencyProtectedTimelockStorageConstants.STRUCT_EXTERNALCALL_PAYLOAD_SIZE;
     uint256 constant CALLS_SLOT =
         EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_CALLS_SLOT;
     uint256 constant CALLS_OFFSET =

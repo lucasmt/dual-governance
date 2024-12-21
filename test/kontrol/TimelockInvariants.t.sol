@@ -1,0 +1,482 @@
+pragma solidity 0.8.26;
+
+import {EmergencyProtectedTimelock} from "contracts/EmergencyProtectedTimelock.sol";
+import {IEmergencyProtectedTimelock} from "contracts/interfaces/IEmergencyProtectedTimelock.sol";
+import {ITimelock} from "contracts/interfaces/ITimelock.sol";
+import {EmergencyProtection} from "contracts/libraries/EmergencyProtection.sol";
+import {ExecutableProposals, Status} from "contracts/libraries/ExecutableProposals.sol";
+import {ExternalCall} from "contracts/libraries/ExternalCalls.sol";
+import {TimelockState} from "contracts/libraries/TimelockState.sol";
+import {Duration} from "contracts/types/Duration.sol";
+import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
+
+import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
+
+/**
+ * Simple example contract to use for the proposal execution tests.
+ */
+contract FlagSetter {
+    bool public flag;
+
+    function setFlag(bool value) external {
+        flag = value;
+    }
+}
+
+/**
+ * Test postconditions for all EmergencyProtectedTimelock functions, including
+ * that they don't modify storage variables that they shouldn't.
+ */
+contract TimelockInvariantsTest is DualGovernanceSetUp {
+    function _saveTimelockState(EmergencyProtectedTimelock timelock)
+        internal
+        returns (TimelockState.Context memory state)
+    {
+        state.governance = timelock.getGovernance();
+        state.afterSubmitDelay = timelock.getAfterSubmitDelay();
+        state.afterScheduleDelay = timelock.getAfterScheduleDelay();
+        state.adminExecutor = timelock.getAdminExecutor();
+    }
+
+    function _saveEmergencyProtection(EmergencyProtectedTimelock timelock)
+        internal
+        returns (EmergencyProtection.Context memory state)
+    {
+        IEmergencyProtectedTimelock.EmergencyProtectionDetails memory details = timelock.getEmergencyProtectionDetails();
+        state.emergencyModeEndsAfter = details.emergencyModeEndsAfter;
+        state.emergencyActivationCommittee = timelock.getEmergencyActivationCommittee();
+        state.emergencyProtectionEndsAfter = details.emergencyProtectionEndsAfter;
+        state.emergencyExecutionCommittee = timelock.getEmergencyExecutionCommittee();
+        state.emergencyModeDuration = details.emergencyModeDuration;
+        state.emergencyGovernance = timelock.getEmergencyGovernance();
+    }
+
+    /**
+     * This modifier is added to the tests for each EmergencyProtectedTimelock
+     * function to check that any variables that the function shouldn't modify
+     * remain unchanged.
+     */
+    modifier _checkStateRemainsUnchanged(bytes4 selector) {
+        TimelockState.Context memory preTS = _saveTimelockState(timelock);
+        EmergencyProtection.Context memory preEP = _saveEmergencyProtection(timelock);
+
+        _;
+
+        TimelockState.Context memory postTS = _saveTimelockState(timelock);
+        EmergencyProtection.Context memory postEP = _saveEmergencyProtection(timelock);
+
+        if (selector != EmergencyProtectedTimelock.setAdminExecutor.selector) {
+            assert(preTS.adminExecutor == postTS.adminExecutor);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.setGovernance.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preTS.governance == postTS.governance);
+        }
+
+        if (selector != EmergencyProtectedTimelock.setAfterSubmitDelay.selector) {
+            assert(preTS.afterSubmitDelay == postTS.afterSubmitDelay);
+        }
+
+        if (selector != EmergencyProtectedTimelock.setAfterScheduleDelay.selector) {
+            assert(preTS.afterScheduleDelay == postTS.afterScheduleDelay);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.activateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preEP.emergencyModeEndsAfter == postEP.emergencyModeEndsAfter);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.setEmergencyProtectionActivationCommittee.selector)
+                && (selector != EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preEP.emergencyActivationCommittee == postEP.emergencyActivationCommittee);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.setEmergencyProtectionEndDate.selector)
+                && (selector != EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preEP.emergencyProtectionEndsAfter == postEP.emergencyProtectionEndsAfter);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.setEmergencyProtectionExecutionCommittee.selector)
+                && (selector != EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preEP.emergencyExecutionCommittee == postEP.emergencyExecutionCommittee);
+        }
+
+        if (
+            (selector != EmergencyProtectedTimelock.setEmergencyModeDuration.selector)
+                && (selector != EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+                && (selector != EmergencyProtectedTimelock.emergencyReset.selector)
+        ) {
+            assert(preEP.emergencyModeDuration == postEP.emergencyModeDuration);
+        }
+
+        if (selector != EmergencyProtectedTimelock.setEmergencyGovernance.selector) {
+            assert(preEP.emergencyGovernance == postEP.emergencyGovernance);
+        }
+    }
+
+    function testSubmit(
+        address executor,
+        address target,
+        uint96 value,
+        bytes4 selector,
+        bytes32 argument
+    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.submit.selector) {
+        ExternalCall[] memory calls = new ExternalCall[](1);
+        calls[0].target = target;
+        calls[0].value = value;
+        calls[0].payload = abi.encodeWithSelector(selector, argument);
+
+        vm.prank(timelock.getGovernance());
+        uint256 proposalId = timelock.submit(executor, calls);
+
+        assert(timelock.getProposalDetails(proposalId).status == Status.Submitted);
+    }
+
+    function testSchedule(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.schedule.selector)
+    {
+        vm.assume(proposalId < timelock.getProposalsCount());
+        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
+        vm.assume(details.status == Status.Submitted);
+        uint256 afterSubmitDelay = Duration.unwrap(timelock.getAfterSubmitDelay());
+        uint256 submittedAt = Timestamp.unwrap(details.submittedAt);
+        vm.assume(afterSubmitDelay + submittedAt <= block.timestamp);
+
+        vm.prank(timelock.getGovernance());
+        timelock.schedule(proposalId);
+
+        assert(timelock.getProposalDetails(proposalId).status == Status.Scheduled);
+    }
+
+    /**
+     * When execute is called for a proposalId,
+     * 1) the proposal is marked as executed, and
+     * 2) the calls are made to the target contract.
+     * The test uses a simplified example proposal that sets a flag in the
+     * target contract.
+     */
+    function testExecute(
+        uint256 proposalId,
+        address executor
+    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.execute.selector) {
+        FlagSetter target = new FlagSetter();
+        assert(target.flag() == false);
+        _createDummyProposal(timelock, proposalId, executor, target);
+
+        vm.assume(proposalId < timelock.getProposalsCount());
+
+        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
+        Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
+        Timestamp scheduledAt = details.scheduledAt;
+
+        vm.assume(details.status == Status.Scheduled);
+        vm.assume(afterScheduleDelay.addTo(scheduledAt) <= Timestamps.now());
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        timelock.execute(proposalId);
+
+        assert(timelock.getProposalDetails(proposalId).status == Status.Executed);
+        assert(target.flag() == true);
+    }
+
+    /**
+     * After cancelAllNonExecutedProposals is called, any previously-submitted
+     * proposal will be marked as cancelled.
+     */
+    function testCancelAllNonExecutedProposals(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.cancelAllNonExecutedProposals.selector)
+    {
+        vm.assume(proposalId < timelock.getProposalsCount());
+
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
+        vm.prank(timelock.getGovernance());
+        timelock.cancelAllNonExecutedProposals();
+
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
+    }
+
+    function testSetGovernance(address newGovernance)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setGovernance.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setGovernance(newGovernance);
+
+        assert(timelock.getGovernance() == newGovernance);
+    }
+
+    function testSetAfterSubmitDelay(Duration newAfterSubmitDelay)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setAfterSubmitDelay.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setAfterSubmitDelay(newAfterSubmitDelay);
+
+        assert(timelock.getAfterSubmitDelay() == newAfterSubmitDelay);
+    }
+
+    function testSetAfterScheduleDelay(Duration newAfterScheduleDelay)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setAfterScheduleDelay.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setAfterScheduleDelay(newAfterScheduleDelay);
+
+        assert(timelock.getAfterScheduleDelay() == newAfterScheduleDelay);
+    }
+
+    function testTransferExecutorOwnership(
+        address executor,
+        address owner
+    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.transferExecutorOwnership.selector) {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.transferExecutorOwnership(executor, owner);
+
+        // TODO: check executor owner has been changed
+    }
+
+    function testSetEmergencyProtectionActivationCommittee(address newEmergencyActivationCommittee)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionActivationCommittee.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setEmergencyProtectionActivationCommittee(newEmergencyActivationCommittee);
+
+        assert(timelock.getEmergencyActivationCommittee() == newEmergencyActivationCommittee);
+    }
+
+    function testSetEmergencyProtectionExecutionCommittee(address newEmergencyExecutionCommittee)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionExecutionCommittee.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setEmergencyProtectionActivationCommittee(newEmergencyExecutionCommittee);
+
+        assert(timelock.getEmergencyExecutionCommittee() == newEmergencyExecutionCommittee);
+    }
+
+    function testSetEmergencyProtectionEndDate(Timestamp newEmergencyProtectionEndDate)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionEndDate.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setEmergencyProtectionEndDate(newEmergencyProtectionEndDate);
+
+        assert(timelock.getEmergencyProtectionDetails().emergencyProtectionEndsAfter == newEmergencyProtectionEndDate);
+    }
+
+    function testSetEmergencyModeDuration(Duration newEmergencyModeDuration)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyModeDuration.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setEmergencyModeDuration(newEmergencyModeDuration);
+
+        assert(timelock.getEmergencyProtectionDetails().emergencyModeDuration == newEmergencyModeDuration);
+    }
+
+    function testSetEmergencyGovernance(address newEmergencyGovernance)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyGovernance.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setEmergencyGovernance(newEmergencyGovernance);
+
+        assert(timelock.getEmergencyGovernance() == newEmergencyGovernance);
+    }
+
+    function testActivateEmergencyMode()
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.activateEmergencyMode.selector)
+    {
+        vm.assume(!timelock.isEmergencyModeActive());
+        vm.prank(timelock.getEmergencyActivationCommittee());
+        timelock.activateEmergencyMode();
+
+        assert(timelock.isEmergencyModeActive());
+    }
+
+    /**
+     * When emergencyExecute is called for a proposalId,
+     * 1) the proposal is marked as executed, and
+     * 2) the calls are made to the target contract.
+     * The test uses a simplified example proposal that sets a flag in the
+     * target contract.
+     */
+    function testEmergencyExecute(
+        uint256 proposalId,
+        address executor
+    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyExecute.selector) {
+        FlagSetter target = new FlagSetter();
+        assert(target.flag() == false);
+        _createDummyProposal(timelock, proposalId, executor, target);
+
+        vm.assume(proposalId < timelock.getProposalsCount());
+
+        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
+
+        vm.assume(details.status == Status.Scheduled);
+        vm.assume(timelock.isEmergencyModeActive());
+        // Unlike in testExecute, we don't need to assume the delay has passed
+
+        vm.prank(timelock.getEmergencyActivationCommittee());
+        timelock.emergencyExecute(proposalId);
+
+        assert(timelock.getProposalDetails(proposalId).status == Status.Executed);
+        assert(target.flag() == true);
+    }
+
+    /**
+     * After deactivateEmergencyMode is called, emergency mode is deactivated
+     * and any previously-submitted proposal will be marked as cancelled.
+     */
+    function testDeactivateEmergencyMode(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.deactivateEmergencyMode.selector)
+    {
+        vm.assume(proposalId < timelock.getProposalsCount());
+        vm.assume(timelock.isEmergencyModeActive());
+
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
+        Timestamp emergencyModeEndsAfter = timelock.getEmergencyProtectionDetails().emergencyModeEndsAfter;
+
+        if (Timestamps.now() <= emergencyModeEndsAfter) {
+            vm.prank(timelock.getAdminExecutor());
+        }
+
+        timelock.deactivateEmergencyMode();
+
+        assert(!timelock.isEmergencyModeActive());
+
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
+    }
+
+    /**
+     * After emergencyReset is called, emergency mode is deactivated
+     * and any previously-submitted proposal will be marked as cancelled.
+     */
+    function testEmergencyReset(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyReset.selector)
+    {
+        vm.assume(proposalId < timelock.getProposalsCount());
+        vm.assume(timelock.isEmergencyModeActive());
+
+        _proposalStorageSetup(timelock, proposalId);
+
+        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+
+        vm.prank(timelock.getEmergencyActivationCommittee());
+        timelock.emergencyReset();
+
+        assert(!timelock.isEmergencyModeActive());
+
+        if (statusBefore != Status.Executed) {
+            Status statusAfter = timelock.getProposalDetails(proposalId).status;
+            assert(statusAfter == Status.Cancelled);
+        }
+    }
+
+    function testSetAdminExecutor(address newAdminExecutor)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setAdminExecutor.selector)
+    {
+        vm.prank(timelock.getAdminExecutor());
+        timelock.setAdminExecutor(newAdminExecutor);
+
+        assert(timelock.getAdminExecutor() == newAdminExecutor);
+    }
+
+    /**
+     * Initializes a simple example proposal at proposalId that sets a flag in
+     * the target contract, initializing the storage appropriately.
+     */
+    function _createDummyProposal(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId,
+        address _executor,
+        FlagSetter _target
+    ) internal {
+        // Calculate storage location of ExecutableCalls array
+        uint256 proposalSlot = uint256(keccak256(abi.encodePacked(_proposalId, PROPOSALS_SLOT)));
+        uint256 callsArraySlot = proposalSlot + CALLS_SLOT;
+
+        // Store array length of 1
+        _storeData(address(_timelock), callsArraySlot, CALLS_OFFSET, CALLS_SIZE, 1);
+
+        // Calculate storage location of array element at index 0
+        uint256 callSlot = uint256(keccak256(abi.encodePacked(callsArraySlot)));
+
+        // Store call target address
+        _storeData(
+            address(_timelock), callSlot + TARGET_SLOT, TARGET_OFFSET, TARGET_SIZE, uint256(uint160(address(_target)))
+        );
+
+        // Store call value of 0
+        _storeData(address(_timelock), callSlot + VALUE_SLOT, VALUE_OFFSET, VALUE_SIZE, 0);
+
+        // Create payload and double-check that it has length 36
+        bytes memory payload = abi.encodeWithSelector(FlagSetter.setFlag.selector, true);
+
+        assert(payload.length == 36);
+
+        // Pad payload with 28 zeros so it fits into a multiple of 32 bytes
+        bytes memory paddedPayload = abi.encodePacked(payload, bytes28(0));
+
+        assert(paddedPayload.length == 64);
+
+        // Split payload into two 32-byte segments
+        bytes32 payloadUpperHalf;
+        assembly {
+            payloadUpperHalf := mload(add(paddedPayload, 32))
+        }
+        bytes32 payloadLowerHalf;
+        assembly {
+            payloadLowerHalf := mload(add(paddedPayload, 64))
+        }
+
+        uint256 payloadLengthSlot = callSlot + PAYLOAD_SLOT;
+
+        // Store payload length according to specification for bytes in storage:
+        // https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html#bytes-and-string
+        _storeData(address(_timelock), payloadLengthSlot, PAYLOAD_OFFSET, PAYLOAD_SIZE, payload.length * 2 + 1);
+
+        // Calculate storage location for bytes data
+        uint256 payloadContentSlot = uint256(keccak256(abi.encodePacked(payloadLengthSlot)));
+
+        // Store first half of payload
+        _storeData(address(_timelock), payloadContentSlot, 0, 32, uint256(payloadUpperHalf));
+
+        // Store second half of payload
+        _storeData(address(_timelock), payloadContentSlot + 1, 0, 32, uint256(payloadLowerHalf));
+    }
+}
