@@ -85,6 +85,9 @@ library EmergencyProtectedTimelockStorageConstants {
     uint256 public constant STRUCT_EXTERNALCALL_VALUE_SLOT = 0;
     uint256 public constant STRUCT_EXTERNALCALL_VALUE_OFFSET = 20;
     uint256 public constant STRUCT_EXTERNALCALL_VALUE_SIZE = 12;
+    uint256 public constant STRUCT_EXTERNALCALL_PAYLOAD_SLOT = 1;
+    uint256 public constant STRUCT_EXTERNALCALL_PAYLOAD_OFFSET = 0;
+    uint256 public constant STRUCT_EXTERNALCALL_PAYLOAD_SIZE = 32;
     uint256 public constant STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_SLOT = 0;
     uint256 public constant STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_OFFSET = 0;
     uint256 public constant STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_DATA_STATUS_SIZE = 1;

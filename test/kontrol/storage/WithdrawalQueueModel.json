@@ -1,7 +1,7 @@
 {
   "storage": [
     {
-      "astId": 59031,
+      "astId": 59072,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_name",
       "offset": 0,
@@ -9,7 +9,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59033,
+      "astId": 59074,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_symbol",
       "offset": 0,
@@ -17,7 +17,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59037,
+      "astId": 59078,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_owners",
       "offset": 0,
@@ -25,7 +25,7 @@
       "type": "t_mapping(t_uint256,t_address)"
     },
     {
-      "astId": 59041,
+      "astId": 59082,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_balances",
       "offset": 0,
@@ -33,7 +33,7 @@
       "type": "t_mapping(t_address,t_uint256)"
     },
     {
-      "astId": 59045,
+      "astId": 59086,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_tokenApprovals",
       "offset": 0,
@@ -41,7 +41,7 @@
       "type": "t_mapping(t_uint256,t_address)"
     },
     {
-      "astId": 59051,
+      "astId": 59092,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_operatorApprovals",
       "offset": 0,

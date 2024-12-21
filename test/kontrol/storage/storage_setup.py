@@ -17,7 +17,7 @@ def print_constants_for_storage_variables_recursive(prefix, slot, var, types):
     updated_slot = slot + int(var['slot'])
     var_type = var['type']
 
-    if is_scalar_type(var_type) or var_type.startswith('t_array') or var_type.startswith('t_mapping'):
+    if is_scalar_type(var_type) or var_type == 't_bytes_storage' or var_type.startswith('t_array') or var_type.startswith('t_mapping'):
         print_constants_for_storage_variable(updated_prefix, updated_slot, var, types)
     elif var_type.startswith('t_struct'):
         for member in types[var_type]['members']:

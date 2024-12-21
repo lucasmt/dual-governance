@@ -110,18 +110,18 @@
       "numberOfBytes": "32",
       "value": "t_uint256"
     },
-    "t_struct(AddressSet)65028_storage": {
+    "t_struct(AddressSet)65069_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.AddressSet",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 65027,
+          "astId": 65068,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_inner",
           "offset": 0,
           "slot": "0",
-          "type": "t_struct(Set)64713_storage"
+          "type": "t_struct(Set)64754_storage"
         }
       ]
     },
@@ -206,7 +206,7 @@
           "label": "sealableWithdrawalBlockers",
           "offset": 0,
           "slot": "1",
-          "type": "t_struct(AddressSet)65028_storage"
+          "type": "t_struct(AddressSet)65069_storage"
         }
       ]
     },
@@ -312,13 +312,13 @@
         }
       ]
     },
-    "t_struct(Set)64713_storage": {
+    "t_struct(Set)64754_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.Set",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 64708,
+          "astId": 64749,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_values",
           "offset": 0,
@@ -326,7 +326,7 @@
           "type": "t_array(t_bytes32)dyn_storage"
         },
         {
-          "astId": 64712,
+          "astId": 64753,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_positions",
           "offset": 0,
