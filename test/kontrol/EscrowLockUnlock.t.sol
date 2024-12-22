@@ -42,12 +42,12 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         address sender = address(uint160(uint256(keccak256("sender"))));
 
         {
-            uint256 senderShares = freshUInt256();
+            uint256 senderShares = freshUInt256("SNDR_SH");
             vm.assume(senderShares < ethUpperBound);
             stEth.setShares(sender, senderShares);
             vm.assume(stEth.balanceOf(sender) < ethUpperBound);
 
-            uint256 senderAllowance = freshUInt256();
+            uint256 senderAllowance = freshUInt256("SNDR_AL");
             // This assumption means that senderAllowance != INFINITE_ALLOWANCE,
             // which doubles the execution effort without any added vaue
             vm.assume(senderAllowance < ethUpperBound);
@@ -159,12 +159,12 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
     function testUnlockStEth() public {
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
-        uint256 senderShares = freshUInt256();
+        uint256 senderShares = freshUInt256("SNDR_SH");
         vm.assume(senderShares < ethUpperBound);
         stEth.setShares(sender, senderShares);
         vm.assume(stEth.balanceOf(sender) < ethUpperBound);
 
-        uint256 senderAllowance = freshUInt256();
+        uint256 senderAllowance = freshUInt256("SNDR_AL");
         // This assumption means that senderAllowance != INFINITE_ALLOWANCE,
         // which doubles the execution effort without any added vaue
         vm.assume(senderAllowance < ethUpperBound);
@@ -175,9 +175,9 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             senderAllowance
         );
 
-        uint256 senderLockedShares = freshUInt256();
+        uint256 senderLockedShares = freshUInt256("SNDR_LSH");
         vm.assume(senderLockedShares < ethUpperBound);
-        uint256 senderUnlockedShares = freshUInt256();
+        uint256 senderUnlockedShares = freshUInt256("SNDR_ULSH");
         bytes memory slotAbi = abi.encodePacked(uint128(senderUnlockedShares), uint128(senderLockedShares));
         bytes32 slot;
         assembly {
@@ -189,7 +189,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             slot
         );
 
-        uint256 senderLastAssetsLockTimestamp = freshUInt256();
+        uint256 senderLastAssetsLockTimestamp = freshUInt256("SNDR_LALT");
         vm.assume(senderLastAssetsLockTimestamp < timeUpperBound);
         _storeUInt256(
             address(signallingEscrow),

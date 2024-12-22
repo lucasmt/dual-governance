@@ -529,7 +529,7 @@ contract StorageSetup is KontrolTest {
 
             if (_currentState == EscrowSt.RageQuitEscrow) {
                 uint256 rageQuitExtensionPeriodDuration = freshUInt256("ES_RQEPD");
-                vm.assume(minAssetsLockDuration < 2 ** 32);
+                vm.assume(rageQuitExtensionPeriodDuration < 2 ** 32);
                 vm.assume(rageQuitExtensionPeriodDuration <= block.timestamp);
                 uint256 rageQuitExtensionPeriodStartedAt = freshUInt256("ES_RQEPS");
                 vm.assume(rageQuitExtensionPeriodStartedAt <= block.timestamp);
