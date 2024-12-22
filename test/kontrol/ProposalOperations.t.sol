@@ -96,7 +96,7 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
         address proposer = address(uint160(uint256(keccak256("proposer"))));
         uint8 proposerIndexOneBased = uint8(kevm.freshUInt(1));
         vm.assume(proposerIndexOneBased != 0);
-        uint160 executor = uint160(kevm.freshUInt(20));
+        uint160 executor = uint160(kevm.freshAddress());
         bytes memory slotAbi = abi.encodePacked(uint88(0), uint160(executor), uint8(proposerIndexOneBased));
         bytes32 slot;
         assembly {

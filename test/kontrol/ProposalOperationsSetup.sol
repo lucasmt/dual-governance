@@ -120,12 +120,14 @@ contract ProposalOperationsSetup is KontrolTest {
         uint256 governance = uint256(uint160(address(_dualGovernance)));
         _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
         //
-        uint256 afterSubmitDelay = kevm.freshUInt(4);
+        uint256 afterSubmitDelay = freshUInt256();
+        vm.assume(afterSubmitDelay < 2 ** 32);
         _storeData(
             address(_timelock), AFTERSUBMITDELAY_SLOT, AFTERSUBMITDELAY_OFFSET, AFTERSUBMITDELAY_SIZE, afterSubmitDelay
         );
         //
-        uint256 afterScheduleDelay = kevm.freshUInt(4);
+        uint256 afterScheduleDelay = freshUInt256();
+        vm.assume(afterSubmitDelay < 2 ** 32);
         _storeData(
             address(_timelock),
             AFTERSCHEDULEDELAY_SLOT,
@@ -134,11 +136,11 @@ contract ProposalOperationsSetup is KontrolTest {
             afterScheduleDelay
         );
         //
-        uint256 proposalsCount = kevm.freshUInt(8);
+        uint256 proposalsCount = freshUInt256();
         vm.assume(proposalsCount < type(uint64).max);
         _storeData(address(_timelock), PROPOSALSCOUNT_SLOT, PROPOSALSCOUNT_OFFSET, PROPOSALSCOUNT_SIZE, proposalsCount);
         //
-        uint256 lastCancelledProposalId = kevm.freshUInt(8);
+        uint256 lastCancelledProposalId = freshUInt256();
         vm.assume(lastCancelledProposalId <= proposalsCount);
         _storeData(
             address(_timelock),
@@ -150,7 +152,7 @@ contract ProposalOperationsSetup is KontrolTest {
         //
         {
             uint160 activationCommittee = uint160(uint256(keccak256("activationCommittee")));
-            uint256 protectionEndsAfter = kevm.freshUInt(5);
+            uint256 protectionEndsAfter = freshUInt256();
             vm.assume(protectionEndsAfter < timeUpperBound);
             vm.assume(protectionEndsAfter <= block.timestamp);
             _storeData(
@@ -170,7 +172,7 @@ contract ProposalOperationsSetup is KontrolTest {
         }
         //
         {
-            uint160 executionCommittee = uint160(kevm.freshUInt(20));
+            uint256 executionCommittee = uint160(kevm.freshUInt(20));
             _storeData(
                 address(_timelock),
                 EXECUTIONCOMMITTEE_SLOT,
@@ -180,7 +182,7 @@ contract ProposalOperationsSetup is KontrolTest {
             );
         }
         //
-        uint256 emergencyModeEndsAfter = kevm.freshUInt(5);
+        uint256 emergencyModeEndsAfter = freshUInt256();
         vm.assume(emergencyModeEndsAfter < timeUpperBound);
         vm.assume(emergencyModeEndsAfter <= block.timestamp);
         _storeData(
@@ -204,7 +206,7 @@ contract ProposalOperationsSetup is KontrolTest {
     ) internal {
         // slot 1
         {
-            uint256 status = kevm.freshUInt(1);
+            uint256 status = freshUInt256();
             vm.assume(status != 0);
             vm.assume(status <= 4);
             _storeMappingData(
@@ -214,7 +216,7 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeMappingData(
                 address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, executor
             );
-            uint256 submittedAt = kevm.freshUInt(5);
+            uint256 submittedAt = freshUInt256();
             vm.assume(submittedAt < timeUpperBound);
             vm.assume(submittedAt <= block.timestamp);
             _storeMappingData(
@@ -226,7 +228,7 @@ contract ProposalOperationsSetup is KontrolTest {
                 SUBMITTEDAT_SIZE,
                 submittedAt
             );
-            uint256 scheduledAt = kevm.freshUInt(5);
+            uint256 scheduledAt = freshUInt256();
             vm.assume(scheduledAt < timeUpperBound);
             vm.assume(scheduledAt <= block.timestamp);
             _storeMappingData(
@@ -250,7 +252,7 @@ contract ProposalOperationsSetup is KontrolTest {
         }
         // slot 3
         {
-            uint256 numCalls = kevm.freshUInt(32);
+            uint256 numCalls = freshUInt256();
             vm.assume(numCalls < type(uint256).max);
             vm.assume(numCalls > 0);
             _storeUInt256(address(_timelock), baseSlot + 2, numCalls);

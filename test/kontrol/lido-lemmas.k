@@ -1,7 +1,7 @@
 requires "evm.md"
 requires "foundry.md"
 
-module LIDO-LEMMAS [symbolic]
+module LIDO-LEMMAS
     imports EVM
     imports FOUNDRY
     imports INT-SYMBOLIC
@@ -73,6 +73,36 @@ module LIDO-LEMMAS [symbolic]
     rule [xorInt-to-if]:
       X xorInt ( bool2Word ( B ) *Int ( X xorInt Y ) ) => #if B #then Y #else X #fi
       [simplification]
+
+    //
+    //  Different approach to #lookup
+    //
+
+    rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => V            requires         K1 ==K K2 [simplification(45), preserves-definedness]
+    rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => M:Map [ K2 ] requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
+
+    rule K1 in_keys( M [ K2 <- _ ] ) => true          requires         K1 ==K K2 [simplification(45), preserves-definedness]
+    rule K1 in_keys( M [ K2 <- _ ] ) => K1 in_keys(M) requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
+
+    rule #lookup( M:Map, K:Int ) => #if isInt( M:Map [ K ] ) #then { M:Map [ K ] }:>Int modInt pow256 #else 0 #fi
+      requires K in_keys( M:Map )
+      [priority(20), preserves-definedness]
+
+    rule #lookup( M:Map, K:Int ) => 0
+      requires notBool K in_keys( M:Map )
+      [priority(25), preserves-definedness]
+
+    //
+    //  KEVM Improvements
+    //
+
+    rule #addrBytes(ACCT) => #buf(20, ACCT) requires #rangeAddress(ACCT)   [priority(40), preserves-definedness]
+    rule #wordBytes(WORD) => #buf(32, WORD) requires #rangeUInt(256, WORD) [priority(40), preserves-definedness]
+
+    rule <k> MSTORE INDEX VALUE => .K ... </k>
+         <localMem> LM => LM [ INDEX := #buf(32, VALUE) ] </localMem>
+         requires #rangeUInt(256, VALUE)
+         [priority(40), preserves-definedness]
 
     //
     // Rules

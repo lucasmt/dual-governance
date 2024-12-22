@@ -20,14 +20,12 @@ import {StorageSetup} from "test/kontrol/StorageSetup.sol";
 contract EscrowInvariants is StorageSetup {
     function escrowInvariants(Mode mode, Escrow escrow) external view {
         StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
-        ISignallingEscrow.SignallingEscrowDetails memory details = escrow.getSignallingEscrowDetails();
-        uint128 totalLockedShares = SharesValue.unwrap(details.totalStETHLockedShares);
-        uint128 totalUnfinalizedShares = SharesValue.unwrap(details.totalUnstETHUnfinalizedShares);
-        _establish(mode, totalLockedShares + totalUnfinalizedShares <= stEth.sharesOf(address(escrow)));
+        uint128 totalLockedShares = _getStEthLockedShares(escrow);
+        _establish(mode, totalLockedShares + _getUnfinalizedShares(escrow) <= stEth.sharesOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.sharesFinalized <= totals.stETHLockedShares);
-        uint256 totalPooledEther = stEth.getPooledEthByShares(totalLockedShares);
-        _establish(mode, totalPooledEther <= stEth.balanceOf(address(escrow)));
+        uint256 totalLockedEther = stEth.getPooledEthByShares(totalLockedShares);
+        _establish(mode, totalLockedEther <= stEth.balanceOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.amountFinalized == stEth.getPooledEthByShares(totals.sharesFinalized));
         //_establish(mode, totals.amountFinalized <= totalPooledEther);
@@ -54,13 +52,13 @@ contract EscrowInvariants is StorageSetup {
     }
 
     function escrowUserInvariants(Mode mode, Escrow escrow, address user) external view {
-        SharesValue userShares = escrow.getVetoerDetails(user).stETHLockedShares;
-        SharesValue totalShares = escrow.getSignallingEscrowDetails().totalStETHLockedShares;
+        SharesValue userLockedShares = escrow.getVetoerDetails(user).stETHLockedShares;
+        uint128 totalLockedShares = _getStEthLockedShares(escrow);
 
         _establish(
             mode,
             // Unwrapping because <= is not implemented for SharesValue type
-            SharesValue.unwrap(userShares) <= SharesValue.unwrap(totalShares)
+            SharesValue.unwrap(userLockedShares) <= totalLockedShares
         );
     }
 }

@@ -135,4 +135,117 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
         // ?STORAGE4
         this.withdrawalQueueStorageSetup(withdrawalQueue, stEth);
     }
+
+    function _calculateDynamicTimelock(PercentD16 rageQuitSupport) public view returns (Duration) {
+        if (rageQuitSupport < config.FIRST_SEAL_RAGE_QUIT_SUPPORT()) {
+            return Durations.ZERO;
+        } else if (rageQuitSupport < config.SECOND_SEAL_RAGE_QUIT_SUPPORT()) {
+            return _linearInterpolation(rageQuitSupport);
+        } else {
+            return config.VETO_SIGNALLING_MAX_DURATION();
+        }
+    }
+
+    function _linearInterpolation(PercentD16 rageQuitSupport) private view returns (Duration) {
+        uint32 L_min = Duration.unwrap(config.VETO_SIGNALLING_MIN_DURATION());
+        uint32 L_max = Duration.unwrap(config.VETO_SIGNALLING_MAX_DURATION());
+        uint256 interpolation = L_min
+            + (
+                (PercentD16.unwrap(rageQuitSupport) - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT()))
+                    * (L_max - L_min)
+            )
+                / (
+                    PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+                        - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+                );
+        assert(interpolation <= type(uint32).max);
+        return Duration.wrap(uint32(interpolation));
+    }
+
+    function forgetStateTransition(
+        State state,
+        PercentD16 rageQuitSupport,
+        Timestamp vetoSignallingActivatedAt,
+        Timestamp vetoSignallingReactivationTime,
+        Timestamp enteredAt,
+        Timestamp rageQuitExtensionPeriodStartedAt,
+        Duration rageQuitExtensionPeriodDuration
+    ) public {
+        if (state == State.Normal) {
+            // Transitions from Normal
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        } else if (state == State.VetoSignalling) {
+            // Transitions from VetoSignalling
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+            );
+
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(
+                    config.VETO_SIGNALLING_MIN_ACTIVE_DURATION().addTo(
+                        Timestamps.max(vetoSignallingReactivationTime, vetoSignallingActivatedAt)
+                    )
+                )
+            );
+        } else if (state == State.VetoSignallingDeactivation) {
+            // Transitions from VetoSignallingDeactivation
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
+            );
+
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(config.VETO_SIGNALLING_DEACTIVATION_MAX_DURATION().addTo(enteredAt))
+            );
+        } else if (state == State.VetoCooldown) {
+            // Transitions from VetoCooldown
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(config.VETO_COOLDOWN_DURATION().addTo(enteredAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        } else if (state == State.RageQuit) {
+            // Transitions from RageQuit
+            kevm.forgetBranch(
+                Timestamp.unwrap(Timestamps.now()),
+                KontrolCheatsBase.ComparisonOperator.GreaterThan,
+                Timestamp.unwrap(rageQuitExtensionPeriodDuration.addTo(rageQuitExtensionPeriodStartedAt))
+            );
+
+            kevm.forgetBranch(
+                PercentD16.unwrap(rageQuitSupport),
+                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+            );
+        }
+    }
 }
