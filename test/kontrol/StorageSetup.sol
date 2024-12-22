@@ -26,17 +26,17 @@ contract StorageSetup is KontrolTest {
     function stEthStorageSetup(StETHModel _stEth, IWithdrawalQueue _withdrawalQueue) external {
         kevm.symbolicStorage(address(_stEth));
         // Slot 0
-        uint256 totalPooledEther = freshUInt256();
+        uint256 totalPooledEther = freshUInt256("ST_TPE");
         vm.assume(0 < totalPooledEther);
         vm.assume(totalPooledEther < ethUpperBound);
         _stEth.setTotalPooledEther(totalPooledEther);
         // Slot 1
-        uint256 totalShares = freshUInt256();
+        uint256 totalShares = freshUInt256("ST_TSH");
         vm.assume(0 < totalShares);
         vm.assume(totalShares < ethUpperBound);
         _stEth.setTotalShares(totalShares);
         //
-        uint256 queueShares = freshUInt256();
+        uint256 queueShares = freshUInt256("ST_QSH");
         vm.assume(queueShares < totalShares);
         vm.assume(queueShares < ethUpperBound);
         _stEth.setShares(address(_withdrawalQueue), queueShares);
@@ -44,7 +44,7 @@ contract StorageSetup is KontrolTest {
 
     function stEthEscrowSetup(StETHModel _stEth, IEscrowBase _escrow, IWithdrawalQueue _withdrawalQueue) external {
         //
-        uint256 escrowShares = freshUInt256();
+        uint256 escrowShares = freshUInt256("ST_ESH");
         vm.assume(escrowShares < _stEth.getTotalShares());
         vm.assume(escrowShares < ethUpperBound);
         _stEth.setShares(address(_escrow), escrowShares);
@@ -54,7 +54,7 @@ contract StorageSetup is KontrolTest {
     }
 
     function stEthUserSetup(StETHModel _stEth, address _user) external {
-        uint256 userShares = freshUInt256();
+        uint256 userShares = freshUInt256("ST_USH");
         vm.assume(userShares < _stEth.getTotalShares());
         vm.assume(userShares < ethUpperBound);
         _stEth.setShares(_user, userShares);
@@ -207,16 +207,16 @@ contract StorageSetup is KontrolTest {
         kevm.symbolicStorage(address(_dualGovernance));
 
         // Slot 6:
-        uint256 currentState = freshUInt256();
+        uint256 currentState = freshUInt256("DG_STATE");
         vm.assume(currentState != 0); // Cannot be Unset as dual governance was initialised
         vm.assume(currentState <= 5);
-        uint256 enteredAt = freshUInt256();
+        uint256 enteredAt = freshUInt256("DG_EA");
         vm.assume(enteredAt <= block.timestamp);
         vm.assume(enteredAt < timeUpperBound);
-        uint256 vetoSignallingActivationTime = freshUInt256();
+        uint256 vetoSignallingActivationTime = freshUInt256("DG_VSAT");
         vm.assume(vetoSignallingActivationTime <= block.timestamp);
         vm.assume(vetoSignallingActivationTime < timeUpperBound);
-        uint256 rageQuitRound = freshUInt256();
+        uint256 rageQuitRound = freshUInt256("DG_RQR");
         vm.assume(rageQuitRound < type(uint8).max);
 
         _storeData(address(_dualGovernance), STATE_SLOT, STATE_OFFSET, STATE_SIZE, currentState);
@@ -240,10 +240,10 @@ contract StorageSetup is KontrolTest {
         );
 
         // Slot 7
-        uint256 vetoSignallingReactivationTime = freshUInt256();
+        uint256 vetoSignallingReactivationTime = freshUInt256("DG_VSRT");
         vm.assume(vetoSignallingReactivationTime <= block.timestamp);
         vm.assume(vetoSignallingReactivationTime < timeUpperBound);
-        uint256 normalOrVetoCooldownExitedAt = freshUInt256();
+        uint256 normalOrVetoCooldownExitedAt = freshUInt256("DG_NVCEA");
         vm.assume(normalOrVetoCooldownExitedAt <= block.timestamp);
         vm.assume(normalOrVetoCooldownExitedAt < timeUpperBound);
 
@@ -516,7 +516,7 @@ contract StorageSetup is KontrolTest {
         {
             _storeData(address(_escrow), ESCROWSTATE_SLOT, ESCROWSTATE_OFFSET, ESCROWSTATE_SIZE, uint256(_currentState));
 
-            uint256 minAssetsLockDuration = freshUInt256();
+            uint256 minAssetsLockDuration = freshUInt256("ES_MALD");
             vm.assume(minAssetsLockDuration < 2 ** 32);
             vm.assume(minAssetsLockDuration <= block.timestamp);
             _storeData(
@@ -528,14 +528,14 @@ contract StorageSetup is KontrolTest {
             );
 
             if (_currentState == EscrowSt.RageQuitEscrow) {
-                uint256 rageQuitExtensionPeriodDuration = freshUInt256();
+                uint256 rageQuitExtensionPeriodDuration = freshUInt256("ES_RQEPD");
                 vm.assume(minAssetsLockDuration < 2 ** 32);
                 vm.assume(rageQuitExtensionPeriodDuration <= block.timestamp);
-                uint256 rageQuitExtensionPeriodStartedAt = freshUInt256();
+                uint256 rageQuitExtensionPeriodStartedAt = freshUInt256("ES_RQEPS");
                 vm.assume(rageQuitExtensionPeriodStartedAt <= block.timestamp);
                 vm.assume(rageQuitExtensionPeriodStartedAt < timeUpperBound);
-                uint256 rageQuitEthWithdrawalsDelay = freshUInt256();
-                vm.assume(minAssetsLockDuration < 2 ** 32);
+                uint256 rageQuitEthWithdrawalsDelay = freshUInt256("ES_RQEWD");
+                vm.assume(rageQuitEthWithdrawalsDelay < 2 ** 32);
                 vm.assume(rageQuitEthWithdrawalsDelay <= block.timestamp);
 
                 _storeData(
@@ -571,9 +571,9 @@ contract StorageSetup is KontrolTest {
         }
         // Slot 1
         {
-            uint256 lockedShares = freshUInt256();
+            uint256 lockedShares = freshUInt256("ES_LSH");
             vm.assume(lockedShares < ethUpperBound);
-            uint256 claimedEth = freshUInt256();
+            uint256 claimedEth = freshUInt256("ES_CETH");
             vm.assume(claimedEth < ethUpperBound);
 
             _storeData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE, lockedShares);
@@ -581,9 +581,9 @@ contract StorageSetup is KontrolTest {
         }
         // Slot 2
         {
-            uint256 unfinalizedShares = freshUInt256();
+            uint256 unfinalizedShares = freshUInt256("ES_USH");
             vm.assume(unfinalizedShares < ethUpperBound);
-            uint256 finalizedEth = freshUInt256();
+            uint256 finalizedEth = freshUInt256("ES_FETH");
             vm.assume(finalizedEth < ethUpperBound);
 
             _storeData(
@@ -597,7 +597,7 @@ contract StorageSetup is KontrolTest {
         }
         // Slot 5
         if (_currentState == EscrowSt.RageQuitEscrow) {
-            uint256 batchesQueueStatus = freshUInt256();
+            uint256 batchesQueueStatus = freshUInt256("ES_BQS");
             vm.assume(batchesQueueStatus <= 2);
             _storeData(
                 address(_escrow),
@@ -611,7 +611,7 @@ contract StorageSetup is KontrolTest {
         }
         // Slot 6
         if (_currentState == EscrowSt.RageQuitEscrow) {
-            uint256 batchesQueueLength = uint256(freshUInt256());
+            uint256 batchesQueueLength = freshUInt256("ES_BQL");
             vm.assume(batchesQueueLength < 2 ** 64);
             _storeData(
                 address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, batchesQueueLength
@@ -623,7 +623,7 @@ contract StorageSetup is KontrolTest {
 
     function escrowUserSetup(IEscrowBase _escrow, address _user) external {
         uint256 key = uint256(uint160(_user));
-        uint256 lastAssetsLockTimestamp = freshUInt256();
+        uint256 lastAssetsLockTimestamp = freshUInt256("ES_LALT");
         vm.assume(lastAssetsLockTimestamp <= block.timestamp);
         vm.assume(lastAssetsLockTimestamp < timeUpperBound);
         _storeMappingData(
@@ -635,7 +635,7 @@ contract StorageSetup is KontrolTest {
             LASTASSETSLOCK_SIZE,
             lastAssetsLockTimestamp
         );
-        uint256 stETHLockedShares = freshUInt256();
+        uint256 stETHLockedShares = freshUInt256("ES_ST_LSH");
         vm.assume(stETHLockedShares < ethUpperBound);
         _storeMappingData(
             address(_escrow),
@@ -646,7 +646,7 @@ contract StorageSetup is KontrolTest {
             STETHSHARES_SIZE,
             stETHLockedShares
         );
-        uint256 unstEthLockedShares = freshUInt256();
+        uint256 unstEthLockedShares = freshUInt256("ES_UNST_LSH");
         vm.assume(unstEthLockedShares < ethUpperBound);
         _storeMappingData(
             address(_escrow),
@@ -657,7 +657,7 @@ contract StorageSetup is KontrolTest {
             UNSTETHSHARES_SIZE,
             unstEthLockedShares
         );
-        uint256 unstEthIdsLength = freshUInt256();
+        uint256 unstEthIdsLength = freshUInt256("ES_UNST_IL");
         vm.assume(unstEthIdsLength < type(uint32).max);
         _storeMappingData(
             address(_escrow),
@@ -672,7 +672,7 @@ contract StorageSetup is KontrolTest {
 
     function escrowWithdrawalQueueSetup(IEscrowBase _escrow, WithdrawalQueueModel _withdrawalQueue) external {
         uint256 lastRequestId = _getLastRequestId(_withdrawalQueue);
-        uint256 unstEthRecordStatus = freshUInt256();
+        uint256 unstEthRecordStatus = freshUInt256("ES_UNST_RS");
         vm.assume(unstEthRecordStatus < 5);
         _storeMappingData(
             address(_escrow),
