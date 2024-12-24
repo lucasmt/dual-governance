@@ -79,12 +79,12 @@ module LIDO-LEMMAS
     //
 
     // Symbolic lookup of map update
-    rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => V            requires         K1 ==K K2 [simplification(45), preserves-definedness]
-    rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => M:Map [ K2 ] requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
+    rule ( _:Map [ K1 <- V ] ):Map [ K2 ] => V            requires         K1 ==K K2 [simplification(45), preserves-definedness]
+    rule ( M:Map [ K1 <- _ ] ):Map [ K2 ] => M:Map [ K2 ] requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
 
     // Symbolic membership of map update
-    rule K1 in_keys( M [ K2 <- _ ] ) => true          requires         K1 ==K K2 [simplification(45), preserves-definedness]
-    rule K1 in_keys( M [ K2 <- _ ] ) => K1 in_keys(M) requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
+    rule K1 in_keys( _:Map [ K2 <- _ ] ) => true          requires         K1 ==K K2 [simplification(45), preserves-definedness]
+    rule K1 in_keys( M:Map [ K2 <- _ ] ) => K1 in_keys(M) requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
 
     // #lookup when key is present in map
     rule #lookup( M:Map, K:Int ) => #if isInt( M:Map [ K ] ) #then { M:Map [ K ] }:>Int modInt pow256 #else 0 #fi
