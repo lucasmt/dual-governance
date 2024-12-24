@@ -118,16 +118,20 @@ contract StorageSetup is KontrolTest {
     function withdrawalQueueStorageSetup(WithdrawalQueueModel _withdrawalQueue, IStETH _stEth) external {
         kevm.symbolicStorage(address(_withdrawalQueue));
 
-        _storeData(address(_withdrawalQueue), STETH_SLOT, STETH_OFFSET, STETH_SIZE, uint256(uint160(address(_stEth))));
-
         // Assuming 0 for simplicity
         uint256 lastRequestId = 0;
-        //vm.assume(lastRequestId < type(uint256).max);
+        uint256 owner = 0;
+
+        // TODO: Storage clearance, requires maintenance
+        _clearSlot(address(_withdrawalQueue), 6);
+        _clearMappingSlot(address(_withdrawalQueue), 2, lastRequestId + 1, 0);
+
+        _storeData(address(_withdrawalQueue), STETH_SLOT, STETH_OFFSET, STETH_SIZE, uint256(uint160(address(_stEth))));
+
         _storeData(
             address(_withdrawalQueue), LASTREQUESTID_SLOT, LASTREQUESTID_OFFSET, LASTREQUESTID_SIZE, lastRequestId
         );
 
-        uint256 owner = 0;
         _storeMappingData(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0, 0, 20, owner);
     }
 
@@ -205,6 +209,11 @@ contract StorageSetup is KontrolTest {
         IDualGovernanceConfigProvider _config
     ) external {
         kevm.symbolicStorage(address(_dualGovernance));
+
+        // TODO: Storage clearance, requires maintenance
+        _clearSlot(address(_dualGovernance), 6);
+        _clearSlot(address(_dualGovernance), 7);
+        _clearSlot(address(_dualGovernance), 8);
 
         // Slot 6:
         uint256 currentState = freshUInt256("DG_STATE");
@@ -475,20 +484,21 @@ contract StorageSetup is KontrolTest {
     }
 
     function saveAccountingRecord(address user, Escrow escrow) external view returns (AccountingRecord memory ar) {
+        Escrow.VetoerDetails memory vetoerDetails = escrow.getVetoerDetails(user);
+        Escrow.SignallingEscrowDetails memory signallingEscrowDetails = escrow.getSignallingEscrowDetails();
         StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
+
         ar.allowance = stEth.allowance(user, address(escrow));
         ar.userBalance = stEth.balanceOf(user);
         ar.escrowBalance = stEth.balanceOf(address(escrow));
         ar.userShares = stEth.sharesOf(user);
         ar.escrowShares = stEth.sharesOf(address(escrow));
-        ar.userSharesLocked = SharesValue.unwrap(escrow.getVetoerDetails(user).stETHLockedShares);
-        ar.totalSharesLocked = SharesValue.unwrap(escrow.getSignallingEscrowDetails().totalStETHLockedShares);
+        ar.userSharesLocked = SharesValue.unwrap(vetoerDetails.stETHLockedShares);
+        ar.totalSharesLocked = SharesValue.unwrap(signallingEscrowDetails.totalStETHLockedShares);
         ar.totalEth = stEth.getPooledEthByShares(ar.totalSharesLocked);
-        ar.userUnstEthLockedShares = SharesValue.unwrap(escrow.getVetoerDetails(user).unstETHLockedShares);
-        ar.unfinalizedShares = SharesValue.unwrap(escrow.getSignallingEscrowDetails().totalUnstETHUnfinalizedShares);
-        uint256 lastAssetsLockTimestamp = _getLastAssetsLockTimestamp(escrow, user);
-        require(lastAssetsLockTimestamp < timeUpperBound, "lastAssetsLockTimestamp >= timeUpperBound");
-        ar.userLastLockedTime = Timestamp.wrap(uint40(lastAssetsLockTimestamp));
+        ar.userUnstEthLockedShares = SharesValue.unwrap(vetoerDetails.unstETHLockedShares);
+        ar.unfinalizedShares = SharesValue.unwrap(signallingEscrowDetails.totalUnstETHUnfinalizedShares);
+        ar.userLastLockedTime = Timestamp.wrap(uint40(_getLastAssetsLockTimestamp(escrow, user)));
     }
 
     function establishEqualAccountingRecords(
@@ -511,6 +521,9 @@ contract StorageSetup is KontrolTest {
 
     function escrowStorageSetup(IEscrowBase _escrow, EscrowSt _currentState) external {
         kevm.symbolicStorage(address(_escrow));
+
+        // TODO: Storage clearance, requires maintenance
+        _clearSlot(address(_escrow), 0);
 
         // Slot 0
         {
@@ -569,6 +582,7 @@ contract StorageSetup is KontrolTest {
                 _storeData(address(_escrow), WITHDRAWALSDELAY_SLOT, WITHDRAWALSDELAY_OFFSET, WITHDRAWALSDELAY_SIZE, 0);
             }
         }
+
         // Slot 1
         {
             uint256 lockedShares = freshUInt256("ES_LSH");
@@ -579,6 +593,7 @@ contract StorageSetup is KontrolTest {
             _storeData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE, lockedShares);
             _storeData(address(_escrow), CLAIMEDETH_SLOT, CLAIMEDETH_OFFSET, CLAIMEDETH_SIZE, claimedEth);
         }
+
         // Slot 2
         {
             uint256 unfinalizedShares = freshUInt256("ES_USH");
@@ -609,6 +624,18 @@ contract StorageSetup is KontrolTest {
         } else {
             _storeData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE, 0);
         }
+
+        // TODO: Storage clearance, requires maintenance
+        uint256 batchesQueueStatusRest = freshUInt256("ES_BQS_REST");
+        vm.assume(batchesQueueStatusRest < 2 ** (8 * (32 - BATCHESQUEUESTATE_SIZE)));
+        _storeData(
+            address(_escrow),
+            BATCHESQUEUESTATE_SLOT,
+            BATCHESQUEUESTATE_SIZE,
+            32 - BATCHESQUEUESTATE_SIZE,
+            batchesQueueStatusRest
+        );
+
         // Slot 6
         if (_currentState == EscrowSt.RageQuitEscrow) {
             uint256 batchesQueueLength = freshUInt256("ES_BQL");

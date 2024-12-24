@@ -78,16 +78,20 @@ module LIDO-LEMMAS
     //  Different approach to #lookup
     //
 
+    // Symbolic lookup of map update
     rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => V            requires         K1 ==K K2 [simplification(45), preserves-definedness]
     rule ( M:Map [ K1 <- V ] ):Map [ K2 ] => M:Map [ K2 ] requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
 
+    // Symbolic membership of map update
     rule K1 in_keys( M [ K2 <- _ ] ) => true          requires         K1 ==K K2 [simplification(45), preserves-definedness]
     rule K1 in_keys( M [ K2 <- _ ] ) => K1 in_keys(M) requires notBool K1 ==K K2 [simplification(45), preserves-definedness]
 
+    // #lookup when key is present in map
     rule #lookup( M:Map, K:Int ) => #if isInt( M:Map [ K ] ) #then { M:Map [ K ] }:>Int modInt pow256 #else 0 #fi
       requires K in_keys( M:Map )
       [priority(20), preserves-definedness]
 
+    // #lookup when key is absent in map
     rule #lookup( M:Map, K:Int ) => 0
       requires notBool K in_keys( M:Map )
       [priority(25), preserves-definedness]
@@ -96,9 +100,11 @@ module LIDO-LEMMAS
     //  KEVM Improvements
     //
 
+    // Direct buffer resolution for auxiliary functions
     rule #addrBytes(ACCT) => #buf(20, ACCT) requires #rangeAddress(ACCT)   [priority(40), preserves-definedness]
     rule #wordBytes(WORD) => #buf(32, WORD) requires #rangeUInt(256, WORD) [priority(40), preserves-definedness]
 
+    // Direct buffer resolution for MSTORE
     rule <k> MSTORE INDEX VALUE => .K ... </k>
          <localMem> LM => LM [ INDEX := #buf(32, VALUE) ] </localMem>
          requires #rangeUInt(256, VALUE)
@@ -131,26 +137,6 @@ module LIDO-LEMMAS
     //   ensures notBool ( #newAddr(ACCT, NONCE) ==Int ACCT )
     //   andBool notBool ( <acctID> #newAddr(ACCT, NONCE) </acctID> in_keys ( ACCOUNTS_REST:AccountCellMap ) )
     // [priority(30), preserves-definedness]
-
-    //
-    //  Syntactics
-    //
-
-    // rule A <=Int B => true requires C <=Int B andBool A <=Int C [simplification, concrete(A, C), syntactic(1)]
-    // rule A <=Int B => true requires C  <Int B andBool A <=Int C [simplification, concrete(A, C), syntactic(1)]
-
-    // rule A <=Int B => true requires A <=Int C andBool C <=Int B [simplification, concrete(B, C), syntactic(1)]
-    // rule A <=Int B => true requires A  <Int C andBool C <=Int B [simplification, concrete(B, C), syntactic(1)]
-
-    // rule A <Int B => true requires A  <Int C andBool C <Int B [simplification, concrete(B, C), syntactic(1)]
-    // rule A <Int B => true requires A <=Int C andBool C <Int B [simplification, concrete(B, C), syntactic(1)]
-
-    // rule A <Int B => true requires C  <Int B andBool A <Int C [simplification, concrete(A, C), syntactic(1)]
-    // rule A <Int B => true requires C <=Int B andBool A <Int C [simplification, concrete(A, C), syntactic(1)]
-
-    // rule A <=Int B => A <Int B requires notBool (B ==Int A) [simplification, concrete(A), syntactic(1)]
-
-    // rule notBool (A ==Int B) => true requires B <Int A [simplification, concrete(B), syntactic(1)]
 
     // Removing function selector from #abiCallData
     rule #range ( #abiCallData ( FNAME , ARGS ) , 4 , LENGTH ) => #encodeArgs ( ARGS )

@@ -116,18 +116,24 @@ contract ProposalOperationsSetup is KontrolTest {
     // ?WORD24: emergencyModeEndsAfter
     function timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) external {
         kevm.symbolicStorage(address(_timelock));
-        //
+
+        // TODO: Storage clearance, requires maintenance
+        _clearSlot(address(_timelock), 0);
+        _clearSlot(address(_timelock), 2);
+        _clearSlot(address(_timelock), 4);
+        _clearSlot(address(_timelock), 5);
+
         uint256 governance = uint256(uint160(address(_dualGovernance)));
         _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
-        //
-        uint256 afterSubmitDelay = freshUInt256();
+
+        uint256 afterSubmitDelay = freshUInt256("ETL_ASBD");
         vm.assume(afterSubmitDelay < 2 ** 32);
         _storeData(
             address(_timelock), AFTERSUBMITDELAY_SLOT, AFTERSUBMITDELAY_OFFSET, AFTERSUBMITDELAY_SIZE, afterSubmitDelay
         );
-        //
-        uint256 afterScheduleDelay = freshUInt256();
-        vm.assume(afterSubmitDelay < 2 ** 32);
+
+        uint256 afterScheduleDelay = freshUInt256("ETL_ASCD");
+        vm.assume(afterScheduleDelay < 2 ** 32);
         _storeData(
             address(_timelock),
             AFTERSCHEDULEDELAY_SLOT,
@@ -135,12 +141,12 @@ contract ProposalOperationsSetup is KontrolTest {
             AFTERSCHEDULEDELAY_SIZE,
             afterScheduleDelay
         );
-        //
-        uint256 proposalsCount = freshUInt256();
+
+        uint256 proposalsCount = freshUInt256("ETL_PCNT");
         vm.assume(proposalsCount < type(uint64).max);
         _storeData(address(_timelock), PROPOSALSCOUNT_SLOT, PROPOSALSCOUNT_OFFSET, PROPOSALSCOUNT_SIZE, proposalsCount);
-        //
-        uint256 lastCancelledProposalId = freshUInt256();
+
+        uint256 lastCancelledProposalId = freshUInt256("ETL_LCPID");
         vm.assume(lastCancelledProposalId <= proposalsCount);
         _storeData(
             address(_timelock),
@@ -149,10 +155,10 @@ contract ProposalOperationsSetup is KontrolTest {
             LASTCANCELLEDPROPOSALID_SIZE,
             lastCancelledProposalId
         );
-        //
+
         {
             uint160 activationCommittee = uint160(uint256(keccak256("activationCommittee")));
-            uint256 protectionEndsAfter = freshUInt256();
+            uint256 protectionEndsAfter = freshUInt256("ETL_EPEA");
             vm.assume(protectionEndsAfter < timeUpperBound);
             vm.assume(protectionEndsAfter <= block.timestamp);
             _storeData(
@@ -170,9 +176,9 @@ contract ProposalOperationsSetup is KontrolTest {
                 protectionEndsAfter
             );
         }
-        //
+
         {
-            uint256 executionCommittee = uint160(kevm.freshUInt(20));
+            uint256 executionCommittee = uint256(uint160(freshAddress("ETL_EMEA")));
             _storeData(
                 address(_timelock),
                 EXECUTIONCOMMITTEE_SLOT,
@@ -181,8 +187,8 @@ contract ProposalOperationsSetup is KontrolTest {
                 uint256(executionCommittee)
             );
         }
-        //
-        uint256 emergencyModeEndsAfter = freshUInt256();
+
+        uint256 emergencyModeEndsAfter = freshUInt256("ETL_EMEA");
         vm.assume(emergencyModeEndsAfter < timeUpperBound);
         vm.assume(emergencyModeEndsAfter <= block.timestamp);
         _storeData(
@@ -206,7 +212,7 @@ contract ProposalOperationsSetup is KontrolTest {
     ) internal {
         // slot 1
         {
-            uint256 status = freshUInt256();
+            uint256 status = freshUInt256("ETL_STATUS");
             vm.assume(status != 0);
             vm.assume(status <= 4);
             _storeMappingData(
@@ -216,7 +222,7 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeMappingData(
                 address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, executor
             );
-            uint256 submittedAt = freshUInt256();
+            uint256 submittedAt = freshUInt256("ETL_SBMAT");
             vm.assume(submittedAt < timeUpperBound);
             vm.assume(submittedAt <= block.timestamp);
             _storeMappingData(
@@ -228,7 +234,7 @@ contract ProposalOperationsSetup is KontrolTest {
                 SUBMITTEDAT_SIZE,
                 submittedAt
             );
-            uint256 scheduledAt = freshUInt256();
+            uint256 scheduledAt = freshUInt256("ETH_SCHAT");
             vm.assume(scheduledAt < timeUpperBound);
             vm.assume(scheduledAt <= block.timestamp);
             _storeMappingData(
@@ -252,7 +258,7 @@ contract ProposalOperationsSetup is KontrolTest {
         }
         // slot 3
         {
-            uint256 numCalls = freshUInt256();
+            uint256 numCalls = freshUInt256("ETL_NC");
             vm.assume(numCalls < type(uint256).max);
             vm.assume(numCalls > 0);
             _storeUInt256(address(_timelock), baseSlot + 2, numCalls);

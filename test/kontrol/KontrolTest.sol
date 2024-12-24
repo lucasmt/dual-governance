@@ -154,4 +154,13 @@ contract KontrolTest is Test, KontrolCheats {
             vm.assume(augend < augend + addend);
         }
     }
+
+    function _clearSlot(address contractAddress, uint256 slot) internal {
+        _storeUInt256(contractAddress, slot, 0);
+    }
+
+    function _clearMappingSlot(address contractAddress, uint256 mappingSlot, uint256 key, uint256 subSlot) internal {
+        bytes32 hashedSlot = keccak256(abi.encodePacked(key, mappingSlot));
+        _storeData(contractAddress, uint256(hashedSlot) + subSlot, 0, 32, 0);
+    }
 }
