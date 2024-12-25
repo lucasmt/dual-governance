@@ -136,30 +136,27 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
         this.withdrawalQueueStorageSetup(withdrawalQueue, stEth);
     }
 
-    function _calculateDynamicTimelock(PercentD16 rageQuitSupport) public view returns (Duration) {
-        if (rageQuitSupport < config.FIRST_SEAL_RAGE_QUIT_SUPPORT()) {
-            return Durations.ZERO;
-        } else if (rageQuitSupport < config.SECOND_SEAL_RAGE_QUIT_SUPPORT()) {
-            return _linearInterpolation(rageQuitSupport);
-        } else {
-            return config.VETO_SIGNALLING_MAX_DURATION();
-        }
-    }
+    function _calcVetoSignallingDuration(PercentD16 rageQuitSupport) public view returns (Duration) {
+        PercentD16 firstSealRageQuitSupport = config.FIRST_SEAL_RAGE_QUIT_SUPPORT();
+        PercentD16 secondSealRageQuitSupport = config.SECOND_SEAL_RAGE_QUIT_SUPPORT();
 
-    function _linearInterpolation(PercentD16 rageQuitSupport) private view returns (Duration) {
-        uint32 L_min = Duration.unwrap(config.VETO_SIGNALLING_MIN_DURATION());
-        uint32 L_max = Duration.unwrap(config.VETO_SIGNALLING_MAX_DURATION());
-        uint256 interpolation = L_min
-            + (
-                (PercentD16.unwrap(rageQuitSupport) - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT()))
-                    * (L_max - L_min)
-            )
-                / (
-                    PercentD16.unwrap(config.SECOND_SEAL_RAGE_QUIT_SUPPORT())
-                        - PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
-                );
-        assert(interpolation <= type(uint32).max);
-        return Duration.wrap(uint32(interpolation));
+        Duration vetoSignallingMinDuration = config.VETO_SIGNALLING_MIN_DURATION();
+        Duration vetoSignallingMaxDuration = config.VETO_SIGNALLING_MAX_DURATION();
+
+        if (rageQuitSupport < firstSealRageQuitSupport) {
+            return Durations.ZERO;
+        }
+
+        if (rageQuitSupport >= secondSealRageQuitSupport) {
+            return vetoSignallingMaxDuration;
+        }
+
+        return vetoSignallingMinDuration
+            + Durations.from(
+                (rageQuitSupport - firstSealRageQuitSupport).toUint256()
+                    * (vetoSignallingMaxDuration - vetoSignallingMinDuration).toSeconds()
+                    / (secondSealRageQuitSupport - firstSealRageQuitSupport).toUint256()
+            );
     }
 
     function forgetStateTransition(
@@ -183,7 +180,7 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
             kevm.forgetBranch(
                 Timestamp.unwrap(Timestamps.now()),
                 KontrolCheatsBase.ComparisonOperator.GreaterThan,
-                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+                Timestamp.unwrap(_calcVetoSignallingDuration(rageQuitSupport).addTo(vetoSignallingActivatedAt))
             );
 
             kevm.forgetBranch(
@@ -206,7 +203,7 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
             kevm.forgetBranch(
                 Timestamp.unwrap(Timestamps.now()),
                 KontrolCheatsBase.ComparisonOperator.GreaterThan,
-                Timestamp.unwrap(_calculateDynamicTimelock(rageQuitSupport).addTo(vetoSignallingActivatedAt))
+                Timestamp.unwrap(_calcVetoSignallingDuration(rageQuitSupport).addTo(vetoSignallingActivatedAt))
             );
 
             kevm.forgetBranch(
