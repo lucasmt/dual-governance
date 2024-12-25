@@ -168,14 +168,13 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
         Timestamp rageQuitExtensionPeriodStartedAt,
         Duration rageQuitExtensionPeriodDuration
     ) public {
-        if (state == State.Normal) {
-            // Transitions from Normal
-            kevm.forgetBranch(
-                PercentD16.unwrap(rageQuitSupport),
-                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
-                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
-            );
-        } else if (state == State.VetoSignalling) {
+        kevm.forgetBranch(
+            PercentD16.unwrap(rageQuitSupport),
+            KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
+            PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
+        );
+
+        if (state == State.VetoSignalling) {
             // Transitions from VetoSignalling
             kevm.forgetBranch(
                 Timestamp.unwrap(Timestamps.now()),
@@ -224,24 +223,12 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
                 KontrolCheatsBase.ComparisonOperator.GreaterThan,
                 Timestamp.unwrap(config.VETO_COOLDOWN_DURATION().addTo(enteredAt))
             );
-
-            kevm.forgetBranch(
-                PercentD16.unwrap(rageQuitSupport),
-                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
-                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
-            );
         } else if (state == State.RageQuit) {
             // Transitions from RageQuit
             kevm.forgetBranch(
                 Timestamp.unwrap(Timestamps.now()),
                 KontrolCheatsBase.ComparisonOperator.GreaterThan,
                 Timestamp.unwrap(rageQuitExtensionPeriodDuration.addTo(rageQuitExtensionPeriodStartedAt))
-            );
-
-            kevm.forgetBranch(
-                PercentD16.unwrap(rageQuitSupport),
-                KontrolCheatsBase.ComparisonOperator.GreaterThanOrEqual,
-                PercentD16.unwrap(config.FIRST_SEAL_RAGE_QUIT_SUPPORT())
             );
         }
     }

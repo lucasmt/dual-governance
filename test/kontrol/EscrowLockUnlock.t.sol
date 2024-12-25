@@ -74,15 +74,6 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         {
             State initialState = dualGovernance.getPersistedState();
 
-            vm.assume(initialState == State.VetoSignalling);
-            vm.assume(9 <= _getRageQuitRound(dualGovernance));
-            vm.assume(_getRageQuitRound(dualGovernance) < 254);
-            vm.assume(
-                _getVetoSignallingActivationTime(dualGovernance) < _getVetoSignallingReactivationTime(dualGovernance)
-            );
-            vm.assume(block.timestamp <= _getVetoSignallingReactivationTime(dualGovernance) + 18000);
-            vm.assume(_getVetoSignallingReactivationTime(dualGovernance) + 2592000 < block.timestamp);
-
             // Information to help forget first state transition
             PercentD16 init_rageQuitSupport = signallingEscrow.getRageQuitSupport();
             Timestamp init_vetoSignallingActivatedAt = Timestamp.wrap(_getVetoSignallingActivationTime(dualGovernance));
