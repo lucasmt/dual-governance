@@ -26,8 +26,8 @@ import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
 import {UnstETHRecordStatus} from "contracts/libraries/AssetsAccounting.sol";
 
 contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
-    function testRageQuitSupport(bool isRageQuitEscrow) public {
-        Escrow escrow = isRageQuitEscrow ? rageQuitEscrow : signallingEscrow;
+    function testRageQuitSupport() public {
+        Escrow escrow = signallingEscrow;
 
         ISignallingEscrow.SignallingEscrowDetails memory details = escrow.getSignallingEscrowDetails();
         uint256 totalSharesLocked = SharesValue.unwrap(details.totalStETHLockedShares);
