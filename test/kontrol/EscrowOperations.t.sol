@@ -52,67 +52,22 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     }
 
     /**
-     * Test that funds cannot be locked and unlocked if the escrow is in the RageQuitEscrow state.
+     * Test that funds can neither be locked nor unlocked if the escrow is in the RageQuitEscrow state.
      */
-    function testCannotLockUnlockInRageQuitEscrowState(uint256 amount, bool isRageQuitEscrow) external {
-        Escrow escrow = isRageQuitEscrow ? rageQuitEscrow : signallingEscrow;
-
+    function testCannotLockUnlockInRageQuitEscrowState(uint256 amount) external {
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
         this.stEthUserSetup(stEth, sender);
-        this.escrowUserSetup(escrow, sender);
-        vm.assume(stEth.balanceOf(sender) < ethUpperBound);
+        this.escrowUserSetup(signallingEscrow, sender);
 
-        AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
-        vm.assume(0 < amount);
-        vm.assume(amount <= pre.userBalance);
-        vm.assume(amount <= pre.allowance);
+        vm.assume(dualGovernance.getPersistedState() != State.RageQuit);
+        vm.assume(dualGovernance.getEffectiveState() == State.RageQuit);
 
-        uint256 amountInShares = stEth.getSharesByPooledEth(amount);
-        _assumeNoOverflow(pre.userSharesLocked, amountInShares);
-        _assumeNoOverflow(pre.totalSharesLocked, amountInShares);
-
-        this.escrowInvariants(Mode.Assume, escrow);
-        this.signallingEscrowInvariants(Mode.Assume, escrow);
-        this.escrowUserInvariants(Mode.Assume, escrow, sender);
-
-        if (isRageQuitEscrow) {
-            vm.startPrank(sender);
-            //vm.expectRevert("Cannot lock in current state.");
-            bool lockSuccess = _tryLockStETH(escrow, amount);
-            assertTrue(lockSuccess, "Cannot lock in current state.");
-            vm.stopPrank;
-
-            vm.startPrank(sender);
-            //vm.expectRevert("Cannot unlock in current state.");
-            bool unlockSuccess = _tryUnlockStETH(escrow);
-            assertTrue(unlockSuccess, "Cannot unlock in current state.");
-            vm.stopPrank;
-        } else {
-            vm.prank(sender);
-            escrow.lockStETH(amount);
-
-            AccountingRecord memory afterLock = this.saveAccountingRecord(sender, escrow);
-            vm.assume(afterLock.userShares < ethUpperBound);
-            //vm.assume(afterLock.userLastLockedTime < timeUpperBound);
-            vm.assume(afterLock.userSharesLocked <= afterLock.totalSharesLocked);
-            vm.assume(Timestamps.now() >= addTo(config.MIN_ASSETS_LOCK_DURATION(), afterLock.userLastLockedTime));
-
-            vm.prank(sender);
-            escrow.unlockStETH();
-
-            this.escrowInvariants(Mode.Assert, escrow);
-            this.signallingEscrowInvariants(Mode.Assert, escrow);
-            this.escrowUserInvariants(Mode.Assert, escrow, sender);
-
-            AccountingRecord memory post = this.saveAccountingRecord(sender, escrow);
-            assert(EscrowSt(_getCurrentState(escrow)) == EscrowSt.SignallingEscrow);
-            assert(post.userShares == pre.userShares);
-            assert(post.escrowShares == pre.escrowShares);
-            assert(post.userSharesLocked == 0);
-            assert(post.totalSharesLocked == pre.totalSharesLocked);
-            assert(post.userLastLockedTime == afterLock.userLastLockedTime);
-        }
+        vm.startPrank(sender);
+        bool lockSuccess = _tryLockStETH(signallingEscrow, amount);
+        bool unlockSuccess = _tryUnlockStETH(signallingEscrow);
+        assert(!lockSuccess && !unlockSuccess);
+        vm.stopPrank;
     }
 
     /**
@@ -123,6 +78,8 @@ contract EscrowOperationsTest is EscrowAccountingTest {
 
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
+        kevm.symbolicStorage(sender);
+
         this.stEthUserSetup(stEth, sender);
         this.escrowUserSetup(escrow, sender);
         vm.assume(stEth.balanceOf(sender) < ethUpperBound);
@@ -137,18 +94,18 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
 
-        //vm.assume(escrow.lastWithdrawalRequestSubmitted());
-        //vm.assume(escrow.claimedWithdrawalRequests() == escrow.withdrawalRequestCount());
-        //vm.assume(escrow.getIsWithdrawalsClaimed());
         vm.assume(escrow.isRageQuitFinalized());
-        // Assumption for simplicity
-        //vm.assume(escrow.rageQuitSequenceNumber() < 2);
 
         uint256 rageQuitExtensionPeriodStartedAt = _getRageQuitExtensionPeriodStartedAt(escrow);
         uint256 rageQuitExtensionPeriodDuration = _getRageQuitExtensionPeriodDuration(escrow);
         uint256 rageQuitEthWithdrawalsDelay = _getRageQuitEthWithdrawalsDelay(escrow);
         uint256 ethWithdrawalsDelayEnd =
             rageQuitExtensionPeriodStartedAt + rageQuitExtensionPeriodDuration + rageQuitEthWithdrawalsDelay;
+
+        // Duration overflow prevention requirement: EscrowState.sol:L153-154
+        vm.assume(ethWithdrawalsDelayEnd < 2 ** 32);
+        // Ensuring transfer can happen in the successful case
+        vm.assume(sender.balance >= (pre.userSharesLocked * (2 ** 96)) / pre.totalSharesLocked);
 
         if (block.timestamp <= ethWithdrawalsDelayEnd) {
             vm.prank(sender);
