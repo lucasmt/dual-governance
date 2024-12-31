@@ -228,7 +228,7 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validScheduledProposal(Mode.Assume, pre);
         vm.assume(_getEmergencyModeEndsAfter(timelock) == 0);
-        //vm.assume(Timestamps.now() < addTo(config.AFTER_SCHEDULE_DELAY(), pre.scheduledAt));
+        vm.assume(Timestamps.now() < addTo(_getAfterScheduleDelay(address(timelock)), pre.scheduledAt));
 
         vm.expectRevert(abi.encodeWithSelector(Proposals.AfterScheduleDelayNotPassed.selector, proposalId));
         timelock.execute(proposalId);
