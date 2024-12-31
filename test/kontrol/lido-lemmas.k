@@ -133,7 +133,7 @@ module LIDO-LEMMAS
     rule #getValue(#uint256(X)) => X requires #rangeUInt(256, X) [priority(45), preserves-definedness]
 
     rule #encodeOutput(BA) => #abiCallData("expectRevert", #bytes(BA)) requires notBool #range(BA, 0, 4) ==K Int2Bytes(4, selector("Error(string)"), BE) [preserves-definedness]
-    rule #encodeOutput(BA) => BA                                       requires #range(BA, 0, 4) ==K Int2Bytes(4, selector("Error(string)"), BE)         [preserves-definedness]
+    rule #encodeOutput(BA) => BA                                       requires         #range(BA, 0, 4) ==K Int2Bytes(4, selector("Error(string)"), BE) [preserves-definedness]
 
     //
     // Rules
