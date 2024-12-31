@@ -158,21 +158,21 @@ library ExecutableProposals {
     /// @param proposalId The id of the proposal to execute.
     /// @param afterScheduleDelay The minimum delay required after scheduling before execution is allowed.
     function execute(Context storage self, uint256 proposalId, Duration afterScheduleDelay) internal {
-        Proposal memory proposal = self.proposals[proposalId];
+        ProposalData memory proposalData = self.proposals[proposalId].data;
 
-        _checkProposalNotCancelled(self, proposalId, proposal.data);
+        _checkProposalNotCancelled(self, proposalId, proposalData);
 
-        if (proposal.data.status != Status.Scheduled) {
-            revert UnexpectedProposalStatus(proposalId, proposal.data.status);
+        if (proposalData.status != Status.Scheduled) {
+            revert UnexpectedProposalStatus(proposalId, proposalData.status);
         }
 
-        if (afterScheduleDelay.addTo(proposal.data.scheduledAt) > Timestamps.now()) {
+        if (afterScheduleDelay.addTo(proposalData.scheduledAt) > Timestamps.now()) {
             revert AfterScheduleDelayNotPassed(proposalId);
         }
 
         self.proposals[proposalId].data.status = Status.Executed;
 
-        ExternalCalls.execute(IExternalExecutor(proposal.data.executor), proposal.calls);
+        ExternalCalls.execute(IExternalExecutor(proposalData.executor), self.proposals[proposalId].calls);
         emit ProposalExecuted(proposalId);
     }
 

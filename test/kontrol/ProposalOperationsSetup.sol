@@ -217,6 +217,9 @@ contract ProposalOperationsSetup is KontrolTest {
     ) internal {
         // slot 1
         {
+            // TODO: Storage clearance, requires maintenance
+            _clearMappingSlot(address(_timelock), PROPOSALS_SLOT, _proposalId, 0);
+
             uint256 status = uint256(_proposalStatus);
             if (status == 0) {
                 status = freshUInt256("ETL_STATUS");
