@@ -111,6 +111,23 @@ module LIDO-LEMMAS
          [priority(40), preserves-definedness]
 
     //
+    // keccak
+    //
+    rule [keccak-slots-disjoint]: keccak ( A ) ==Int keccak ( B ) +Int C => false requires notBool C ==Int 0 [simplification, concrete(C), comm]
+
+    rule [keccak-slots-disjoint-ml-l]: { keccak ( A ) #Equals keccak ( B ) +Int C } => #Bottom requires notBool C ==Int 0 [simplification, concrete(C)]
+    rule [keccak-slots-disjoint-ml-r]: { keccak ( B ) +Int C #Equals keccak ( A ) } => #Bottom requires notBool C ==Int 0 [simplification, concrete(C)]
+
+    //
+    // Argument encoding for booster
+    //
+    rule #encodeArgs(ARGS) => #encodeArgsAux(ARGS, #lenOfHeads(ARGS), .Bytes, .Bytes) [priority(45), preserves-definedness]
+
+    rule #encodeArgsAux( .TypedArgs,  _:Int, HEADS, TAILS) => HEADS +Bytes TAILS [priority(45), preserves-definedness]
+    rule #encodeArgsAux((ARG, ARGS), OFFSET, HEADS, TAILS) => #encodeArgsAux(ARGS, OFFSET, HEADS +Bytes #enc(ARG), TAILS) requires #isStaticType(ARG) [priority(45), preserves-definedness]
+    rule #encodeArgsAux((ARG, ARGS), OFFSET, HEADS, TAILS) => #encodeArgsAux(ARGS, OFFSET +Int #sizeOfDynamicType(ARG), HEADS +Bytes #enc(#uint256(OFFSET)), TAILS +Bytes #enc(ARG)) requires notBool(#isStaticType(ARG)) [priority(45), preserves-definedness]
+
+    //
     // Rules
     //
 
