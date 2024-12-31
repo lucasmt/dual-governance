@@ -129,7 +129,7 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validPendingProposal(Mode.Assume, pre);
         vm.assume(timelock.canSchedule(proposalId));
-        //vm.assume(!dualGovernance.isSchedulingEnabled());
+
         State state = dualGovernance.getEffectiveState();
         vm.assume(state != State.Normal);
         vm.assume(state != State.VetoCooldown);
@@ -200,18 +200,17 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
      * Test that a proposal cannot be scheduled for execution before ProposalExecutionMinTimelock has passed since its submission.
      */
     function testCannotScheduleBeforeMinTimelock(uint256 proposalId) external {
-        _proposalOperationsInitializeStorage(dualGovernance, timelock, proposalId);
+        _proposalIdAssumeBound(timelock, proposalId);
+        _proposalStorageSetup(timelock, proposalId);
 
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validPendingProposal(Mode.Assume, pre);
 
-        //vm.assume(dualGovernance.isSchedulingEnabled());
-        if (pre.state == State.VetoCooldown) {
+        if (dualGovernance.getEffectiveState() == State.VetoCooldown) {
             vm.assume(pre.submittedAt <= pre.vetoSignallingActivationTime);
         }
-        //vm.assume(Timestamps.now() < addTo(config.AFTER_SUBMIT_DELAY(), pre.submittedAt));
 
-        vm.expectRevert(abi.encodeWithSelector(Proposals.AfterSubmitDelayNotPassed.selector, proposalId));
+        vm.expectRevert(abi.encodeWithSelector(DualGovernance.ProposalSchedulingBlocked.selector, proposalId));
         dualGovernance.scheduleProposal(proposalId);
 
         ProposalRecord memory post = _recordProposal(proposalId);
@@ -222,7 +221,8 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
      * Test that a proposal cannot be executed until the emergency protection timelock has passed since it was scheduled.
      */
     function testCannotExecuteBeforeEmergencyProtectionTimelock(uint256 proposalId) external {
-        _proposalOperationsInitializeStorage(dualGovernance, timelock, proposalId);
+        _proposalIdAssumeBound(timelock, proposalId);
+        _proposalStorageSetup(timelock, proposalId);
 
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validScheduledProposal(Mode.Assume, pre);
