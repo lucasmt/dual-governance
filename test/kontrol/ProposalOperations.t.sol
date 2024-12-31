@@ -201,16 +201,17 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
      */
     function testCannotScheduleBeforeMinTimelock(uint256 proposalId) external {
         _proposalIdAssumeBound(timelock, proposalId);
-        _proposalStorageSetup(timelock, proposalId);
+        _proposalStorageSetup(timelock, proposalId, Status.Submitted);
 
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validPendingProposal(Mode.Assume, pre);
 
-        if (dualGovernance.getEffectiveState() == State.VetoCooldown) {
-            vm.assume(pre.submittedAt <= pre.vetoSignallingActivationTime);
-        }
+        State state = dualGovernance.getEffectiveState();
+        vm.assume(state == State.VetoCooldown);
+        vm.assume(pre.submittedAt <= pre.vetoSignallingActivationTime);
+        vm.assume(Timestamps.now() < addTo(_getAfterSubmitDelay(address(timelock)), pre.submittedAt));
 
-        vm.expectRevert(abi.encodeWithSelector(DualGovernance.ProposalSchedulingBlocked.selector, proposalId));
+        vm.expectRevert(abi.encodeWithSelector(Proposals.AfterSubmitDelayNotPassed.selector, proposalId));
         dualGovernance.scheduleProposal(proposalId);
 
         ProposalRecord memory post = _recordProposal(proposalId);
@@ -222,7 +223,7 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
      */
     function testCannotExecuteBeforeEmergencyProtectionTimelock(uint256 proposalId) external {
         _proposalIdAssumeBound(timelock, proposalId);
-        _proposalStorageSetup(timelock, proposalId);
+        _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
 
         ProposalRecord memory pre = _recordProposal(proposalId);
         _validScheduledProposal(Mode.Assume, pre);

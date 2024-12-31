@@ -110,10 +110,6 @@ contract ProposalOperationsSetup is KontrolTest {
         EmergencyProtectedTimelockStorageConstants.STRUCT_EXECUTABLEPROPOSALS_PROPOSAL_CALLS_SIZE;
 
     // ?STORAGE3
-    // ?WORD21: lastCancelledProposalId
-    // ?WORD22: proposalsLength
-    // ?WORD23: protectedTill
-    // ?WORD24: emergencyModeEndsAfter
     function timelockStorageSetup(DualGovernance _dualGovernance, EmergencyProtectedTimelock _timelock) external {
         kevm.symbolicStorage(address(_timelock));
 
@@ -200,21 +196,33 @@ contract ProposalOperationsSetup is KontrolTest {
         );
     }
 
+    function _getAfterSubmitDelay(address _timelock) internal returns (Duration) {
+        return Duration.wrap(
+            uint32(_loadData(_timelock, AFTERSUBMITDELAY_SLOT, AFTERSUBMITDELAY_OFFSET, AFTERSUBMITDELAY_SIZE))
+        );
+    }
+
+    function _getAfterScheduleDelay(address _timelock) internal returns (Duration) {
+        return Duration.wrap(
+            uint32(_loadData(_timelock, AFTERSCHEDULEDELAY_SLOT, AFTERSCHEDULEDELAY_OFFSET, AFTERSCHEDULEDELAY_SIZE))
+        );
+    }
+
     // Set up the storage for a proposal.
-    // ?WORD25: submittedAt
-    // ?WORD26: scheduledAt
-    // ?WORD27: executedAt
-    // ?WORD28: numCalls
     function _proposalStorageSetup(
         EmergencyProtectedTimelock _timelock,
         uint256 _proposalId,
-        address executor
+        address executor,
+        Status _proposalStatus
     ) internal {
         // slot 1
         {
-            uint256 status = freshUInt256("ETL_STATUS");
-            vm.assume(status != 0);
-            vm.assume(status <= 4);
+            uint256 status = uint256(_proposalStatus);
+            if (status == 0) {
+                status = freshUInt256("ETL_STATUS");
+                vm.assume(status != 0);
+                vm.assume(status <= 4);
+            }
             _storeMappingData(
                 address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE, status
             );
@@ -264,6 +272,23 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeUInt256(address(_timelock), baseSlot + 2, numCalls);
         }
         */
+    }
+
+    function _proposalStorageSetup(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId,
+        address executor
+    ) internal {
+        _proposalStorageSetup(_timelock, _proposalId, executor, Status.NotExist);
+    }
+
+    function _proposalStorageSetup(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId,
+        Status _proposalStatus
+    ) internal {
+        address executor = address(uint160(uint256(keccak256("executor"))));
+        _proposalStorageSetup(_timelock, _proposalId, executor, _proposalStatus);
     }
 
     function _proposalStorageSetup(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal {

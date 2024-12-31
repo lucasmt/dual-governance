@@ -127,6 +127,11 @@ module LIDO-LEMMAS
     rule #encodeArgsAux((ARG, ARGS), OFFSET, HEADS, TAILS) => #encodeArgsAux(ARGS, OFFSET, HEADS +Bytes #enc(ARG), TAILS) requires #isStaticType(ARG) [priority(45), preserves-definedness]
     rule #encodeArgsAux((ARG, ARGS), OFFSET, HEADS, TAILS) => #encodeArgsAux(ARGS, OFFSET +Int #sizeOfDynamicType(ARG), HEADS +Bytes #enc(#uint256(OFFSET)), TAILS +Bytes #enc(ARG)) requires notBool(#isStaticType(ARG)) [priority(45), preserves-definedness]
 
+    rule #enc(#bytes(BS)) => #encBytes(lengthBytes(BS), BS) ensures lengthBytes(BS) <=Int 1073741824 [priority(45), preserves-definedness]
+    rule #encBytes(N, BS) => #enc(#uint256(N)) +Bytes BS +Bytes #bufStrict(#ceil32(N) -Int N, 0) [priority(45), preserves-definedness]
+    rule #enc(#uint256(DATA)) => #bufStrict(32, #getValue(#uint256(DATA))) [priority(45), preserves-definedness]
+    rule #getValue(#uint256(X)) => X requires #rangeUInt(256, X) [priority(45), preserves-definedness]
+
     //
     // Rules
     //
