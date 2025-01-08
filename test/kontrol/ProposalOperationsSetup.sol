@@ -174,7 +174,7 @@ contract ProposalOperationsSetup is KontrolTest {
         }
 
         {
-            uint256 executionCommittee = uint256(uint160(freshAddress("ETL_EMEA")));
+            uint160 executionCommittee = uint160(uint256(keccak256("executionCommittee")));
             _storeData(
                 address(_timelock),
                 EXECUTIONCOMMITTEE_SLOT,
