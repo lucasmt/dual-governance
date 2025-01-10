@@ -162,11 +162,11 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.schedule.selector)
     {
-        vm.assume(proposalId < timelock.getProposalsCount());
-        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
-        vm.assume(details.status == Status.Submitted);
+        vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
+        _proposalStorageSetup(timelock, proposalId, Status.Submitted);
+        
         uint256 afterSubmitDelay = Duration.unwrap(timelock.getAfterSubmitDelay());
-        uint256 submittedAt = Timestamp.unwrap(details.submittedAt);
+        uint256 submittedAt = uint256(_getSubmittedAt(timelock, _getProposalsSlot(proposalId)));
         vm.assume(afterSubmitDelay + submittedAt <= block.timestamp);
 
         vm.prank(timelock.getGovernance());
@@ -190,13 +190,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(target.flag() == false);
         _createDummyProposal(timelock, proposalId, executor, target);
 
-        vm.assume(proposalId < timelock.getProposalsCount());
+        //vm.assume(proposalId < timelock.getProposalsCount());
+        vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
+        _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
 
-        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
         Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
-        Timestamp scheduledAt = details.scheduledAt;
+        Timestamp scheduledAt = Timestamp.wrap(_getScheduledAt(timelock, _getProposalsSlot(proposalId)));
 
-        vm.assume(details.status == Status.Scheduled);
         vm.assume(afterScheduleDelay.addTo(scheduledAt) <= Timestamps.now());
         vm.assume(!timelock.isEmergencyModeActive());
 
