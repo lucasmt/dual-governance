@@ -139,7 +139,8 @@ contract ProposalOperationsSetup is KontrolTest {
         );
 
         uint256 proposalsCount = freshUInt256("ETL_PCNT");
-        vm.assume(proposalsCount < type(uint64).max);
+        // To allow submit another proposal without reverting due to overflow
+        vm.assume(proposalsCount < type(uint64).max - 1);
         _storeData(address(_timelock), PROPOSALSCOUNT_SLOT, PROPOSALSCOUNT_OFFSET, PROPOSALSCOUNT_SIZE, proposalsCount);
 
         uint256 lastCancelledProposalId = freshUInt256("ETL_LCPID");
@@ -312,7 +313,7 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeData(address(_timelock), callSlot + VALUE_SLOT, VALUE_OFFSET, VALUE_SIZE, value);
             // TODO: Fix this if it becomes necessary (careful about how bytes need to be encoded)
             //bytes memory payload = abi.encodePacked(j, "payload");
-            //_storeBytes32(address(_timelock), callSlot + 2, keccak256(payload));
+            //_storeBytes32(address(_timelock), callSlot + 1, keccak256(payload));
         }
     }
 
@@ -375,5 +376,13 @@ contract ProposalOperationsSetup is KontrolTest {
         uint256 _proposalId
     ) internal view returns (uint256) {
         return _loadMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, CALLS_SLOT, CALLS_OFFSET, CALLS_SIZE);
+    }
+
+    function _setCallsCount(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId,
+        uint256 value
+    ) internal {
+        _storeMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, CALLS_SLOT, CALLS_OFFSET, CALLS_SIZE, value);
     }
 }

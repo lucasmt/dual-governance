@@ -136,10 +136,21 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         bytes4 selector,
         bytes32 argument
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.submit.selector) {
+        bytes memory payload = abi.encodeWithSelector(selector, argument);
+
         ExternalCall[] memory calls = new ExternalCall[](1);
         calls[0].target = target;
         calls[0].value = value;
-        calls[0].payload = abi.encodeWithSelector(selector, argument);
+        calls[0].payload = payload;
+
+        // Since the storage is fully symbolic we need to reset some storage slots of the new proposal that
+        // will be created:
+        // - The lenght of `calls` needs to be 0 otherwise the function might revert when pushing another call
+        // - The payload slot needs to be set to 0, otherwise the function reverts if the previous (symbolic)
+        //   payload is less than 32 bytes and the new one is greater or equal than 32 bytes
+        uint256 newProposalId = timelock.getProposalsCount() + 1;
+        _setCallsCount(timelock, newProposalId, 0);
+        vm.store(address(timelock), bytes32(_getCallsSlot(newProposalId) + 1), bytes32(0));
 
         vm.prank(timelock.getGovernance());
         uint256 proposalId = timelock.submit(executor, calls);
