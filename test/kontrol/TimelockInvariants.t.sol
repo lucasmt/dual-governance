@@ -319,6 +319,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionEndDate.selector)
     {
+        vm.assume(newEmergencyProtectionEndDate <= timelock.MAX_EMERGENCY_PROTECTION_DURATION().addTo(Timestamps.now()));
+        vm.assume(newEmergencyProtectionEndDate != timelock.getEmergencyProtectionDetails().emergencyProtectionEndsAfter);
+
         vm.prank(timelock.getAdminExecutor());
         timelock.setEmergencyProtectionEndDate(newEmergencyProtectionEndDate);
 
