@@ -1,6 +1,7 @@
 pragma solidity 0.8.26;
 
 import {EmergencyProtectedTimelock} from "contracts/EmergencyProtectedTimelock.sol";
+import {Executor} from "contracts/Executor.sol";
 import {IEmergencyProtectedTimelock} from "contracts/interfaces/IEmergencyProtectedTimelock.sol";
 import {ITimelock} from "contracts/interfaces/ITimelock.sol";
 import {EmergencyProtection} from "contracts/libraries/EmergencyProtection.sol";
@@ -236,6 +237,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setGovernance.selector)
     {
+        vm.assume(newGovernance != address(0));
+        vm.assume(newGovernance != timelock.getGovernance());
+    
         vm.prank(timelock.getAdminExecutor());
         timelock.setGovernance(newGovernance);
 
@@ -346,7 +350,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyExecute.selector) {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
-        _createDummyProposal(timelock, proposalId, executor, target);
+        _createDummyProposal(timelock, proposalId, target);
 
         vm.assume(proposalId < timelock.getProposalsCount());
 

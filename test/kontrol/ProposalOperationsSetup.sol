@@ -20,6 +20,10 @@ contract ProposalOperationsSetup is KontrolTest {
     uint256 constant GOVERNANCE_OFFSET =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_OFFSET;
     uint256 constant GOVERNANCE_SIZE = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_SIZE;
+    uint256 constant ADMINEXECUTOR_SLOT = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SLOT;
+    uint256 constant ADMINEXECUTOR_OFFSET =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_OFFSET;
+    uint256 constant ADMINEXECUTOR_SIZE = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SIZE;
     uint256 constant AFTERSUBMITDELAY_SLOT =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSUBMITDELAY_SLOT;
     uint256 constant AFTERSUBMITDELAY_OFFSET =
@@ -118,6 +122,9 @@ contract ProposalOperationsSetup is KontrolTest {
         _clearSlot(address(_timelock), 2);
         _clearSlot(address(_timelock), 4);
         _clearSlot(address(_timelock), 5);
+
+        uint160 adminExecutor = uint160(uint256(keccak256("adminExecutor")));
+        _storeData(address(_timelock), ADMINEXECUTOR_SLOT, ADMINEXECUTOR_OFFSET, ADMINEXECUTOR_SIZE, uint256(adminExecutor));
 
         uint256 governance = uint256(uint160(address(_dualGovernance)));
         _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
