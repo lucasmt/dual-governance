@@ -138,12 +138,51 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
 
-        // Only claim one unstETH for simplicity
-        uint256 maxUnstETHIdsCount = 1;
+        {
+            uint64 unstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
+            uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
+            // Assume not all batches have been claimed yet
+            vm.assume(unstEthIdsCount != unstEthIdsClaimed);
+            uint256 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
+            uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
+            uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
+            uint64 lastClaimedUnstEthIdIndex = _getLastClaimedUnstEthIdIndex(escrow);
+            uint256 batchesQueueLength = _getBatchesLength(escrow);
+            // Prevent overflows
+            vm.assume(lastClaimedBatchIndex < type(uint56).max);
+            vm.assume(lastUnstEthId - firstUnstEthId < type(uint256).max);
+            vm.assume(lastClaimedUnstEthIdIndex < type(uint64).max);
+            vm.assume(lastClaimedUnstEthIdIndex + 1 <= type(uint256).max - firstUnstEthId);
 
-        vm.startPrank(sender);
-        escrow.claimNextWithdrawalsBatch(maxUnstETHIdsCount);
-        vm.stopPrank();
+            uint256 lastFinalizedRequestId = _getLastFinalizedRequestId(withdrawalQueue);
+            uint256 nextRequestId;
+
+            if (lastUnstEthId - firstUnstEthId == lastClaimedUnstEthIdIndex) {
+                vm.assume(lastClaimedBatchIndex + 1 < batchesQueueLength);
+                uint256 nextBatchIndex = lastClaimedBatchIndex + 1;
+                uint256 nextBatchFirstUnstEthId = _getFirstUnstEthId(escrow, nextBatchIndex);
+                uint256 nextBatchLastUnstEthId = _getLastUnstEthId(escrow, nextBatchIndex);
+                vm.assume(nextBatchFirstUnstEthId <= nextBatchLastUnstEthId);
+                vm.assume(nextBatchLastUnstEthId - nextBatchFirstUnstEthId < type(uint256).max);
+
+                nextRequestId = nextBatchFirstUnstEthId;
+            } else {
+                nextRequestId = firstUnstEthId + lastClaimedUnstEthIdIndex + 1;
+            }
+
+            bool nextRequestIsClaimed = _getRequestIsClaimed(withdrawalQueue, nextRequestId);
+            address nextRequestOwner = _getRequestOwner(withdrawalQueue, nextRequestId);
+            vm.assume(nextRequestId <= lastFinalizedRequestId);
+            vm.assume(!nextRequestIsClaimed);
+            vm.assume(nextRequestOwner == address(escrow));
+
+            // Only claim one unstETH for simplicity
+            uint256 maxUnstETHIdsCount = 1;
+
+            vm.startPrank(sender);
+            escrow.claimNextWithdrawalsBatch(maxUnstETHIdsCount);
+            vm.stopPrank();
+        }
 
         this.escrowInvariants(Mode.Assert, escrow);
         this.escrowUserInvariants(Mode.Assert, escrow, sender);

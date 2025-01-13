@@ -30,6 +30,16 @@ contract EscrowInvariants is StorageSetup {
         //_establish(mode, totals.amountFinalized == stEth.getPooledEthByShares(totals.sharesFinalized));
         //_establish(mode, totals.amountFinalized <= totalPooledEther);
         //_establish(mode, totals.amountClaimed <= totals.amountFinalized);
+        uint64 unstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
+        uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
+        _establish(mode, unstEthIdsClaimed <= unstEthIdsCount);
+        uint56 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
+        uint256 batchesLength = _getBatchesLength(escrow);
+        _establish(mode, lastClaimedBatchIndex < batchesLength);
+        uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
+        uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
+        _establish(mode, firstUnstEthId <= lastUnstEthId);
+
         EscrowSt currentState = EscrowSt(_getCurrentState(escrow));
         _establish(mode, 0 <= uint8(currentState));
         _establish(mode, uint8(currentState) <= 2);
