@@ -184,16 +184,15 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
      * target contract.
      */
     function testExecute(
-        uint256 proposalId,
-        address executor
+        uint256 proposalId
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.execute.selector) {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
         
         // The executor owner must be the timelock contract
-        Executor executorContract = new Executor(address(timelock));
+        Executor executor = new Executor(address(timelock));
 
-        _proposalStorageSetup(timelock, proposalId, address(executorContract), Status.Scheduled);
+        _proposalStorageSetup(timelock, proposalId, address(executor), Status.Scheduled);
         _createDummyProposal(timelock, proposalId, target);
 
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
@@ -279,13 +278,17 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     }
 
     function testTransferExecutorOwnership(
-        address executor,
         address owner
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.transferExecutorOwnership.selector) {
-        vm.prank(timelock.getAdminExecutor());
-        timelock.transferExecutorOwnership(executor, owner);
+        // The executor owner must be the timelock contract
+        Executor executor = new Executor(address(timelock));
+        
+        vm.assume(owner != address(0));
 
-        // TODO: check executor owner has been changed
+        vm.prank(timelock.getAdminExecutor());
+        timelock.transferExecutorOwnership(address(executor), owner);
+
+        assert(executor.owner() == owner);
     }
 
     function testSetEmergencyProtectionActivationCommittee(address newEmergencyActivationCommittee)
