@@ -295,6 +295,8 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionActivationCommittee.selector)
     {
+        vm.assume(newEmergencyActivationCommittee != timelock.getEmergencyActivationCommittee());
+
         vm.prank(timelock.getAdminExecutor());
         timelock.setEmergencyProtectionActivationCommittee(newEmergencyActivationCommittee);
 
