@@ -188,11 +188,14 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.execute.selector) {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
-        _createDummyProposal(timelock, proposalId, executor, target);
+        
+        // The executor owner must be the timelock contract
+        Executor executorContract = new Executor(address(timelock));
 
-        //vm.assume(proposalId < timelock.getProposalsCount());
+        _proposalStorageSetup(timelock, proposalId, address(executorContract), Status.Scheduled);
+        _createDummyProposal(timelock, proposalId, target);
+
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
-        _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
 
         Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
         Timestamp scheduledAt = Timestamp.wrap(_getScheduledAt(timelock, _getProposalsSlot(proposalId)));
@@ -434,7 +437,6 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     function _createDummyProposal(
         EmergencyProtectedTimelock _timelock,
         uint256 _proposalId,
-        address _executor,
         FlagSetter _target
     ) internal {
         // Calculate storage location of ExecutableCalls array

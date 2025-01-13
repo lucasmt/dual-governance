@@ -230,9 +230,8 @@ contract ProposalOperationsSetup is KontrolTest {
             _storeMappingData(
                 address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE, status
             );
-            uint256 executor = uint256(uint160(uint256(keccak256("executor"))));
             _storeMappingData(
-                address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, executor
+                address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, uint256(uint160(executor))
             );
             uint256 submittedAt = freshUInt256("ETL_SBMAT");
             vm.assume(submittedAt < timeUpperBound);
