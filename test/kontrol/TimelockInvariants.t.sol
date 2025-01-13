@@ -437,15 +437,19 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     {
         vm.assume(proposalId < timelock.getProposalsCount());
         vm.assume(timelock.isEmergencyModeActive());
+        address emergencyGovernance = timelock.getEmergencyGovernance();
+        vm.assume(emergencyGovernance != address(0));
+        vm.assume(emergencyGovernance != timelock.getGovernance());
 
         _proposalStorageSetup(timelock, proposalId);
 
-        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+        Status statusBefore = _getProposalStatus(timelock, proposalId);
 
-        vm.prank(timelock.getEmergencyActivationCommittee());
+        vm.prank(timelock.getEmergencyExecutionCommittee());
         timelock.emergencyReset();
 
         assert(!timelock.isEmergencyModeActive());
+        assert(timelock.getGovernance() == emergencyGovernance);
 
         if (statusBefore != Status.Executed) {
             Status statusAfter = timelock.getProposalDetails(proposalId).status;
