@@ -1,7 +1,7 @@
 {
   "storage": [
     {
-      "astId": 13815,
+      "astId": 13814,
       "contract": "contracts/model/StETHModel.sol:StETHModel",
       "label": "totalPooledEther",
       "offset": 0,
@@ -9,7 +9,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 13817,
+      "astId": 13816,
       "contract": "contracts/model/StETHModel.sol:StETHModel",
       "label": "totalShares",
       "offset": 0,
@@ -17,7 +17,7 @@
       "type": "t_uint256"
     },
     {
-      "astId": 13821,
+      "astId": 13820,
       "contract": "contracts/model/StETHModel.sol:StETHModel",
       "label": "shares",
       "offset": 0,
@@ -25,7 +25,7 @@
       "type": "t_mapping(t_address,t_uint256)"
     },
     {
-      "astId": 13827,
+      "astId": 13826,
       "contract": "contracts/model/StETHModel.sol:StETHModel",
       "label": "allowances",
       "offset": 0,

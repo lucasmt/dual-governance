@@ -1,7 +1,7 @@
 {
   "storage": [
     {
-      "astId": 59072,
+      "astId": 60529,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_name",
       "offset": 0,
@@ -9,7 +9,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59074,
+      "astId": 60531,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_symbol",
       "offset": 0,
@@ -17,7 +17,7 @@
       "type": "t_string_storage"
     },
     {
-      "astId": 59078,
+      "astId": 60535,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_owners",
       "offset": 0,
@@ -25,7 +25,7 @@
       "type": "t_mapping(t_uint256,t_address)"
     },
     {
-      "astId": 59082,
+      "astId": 60539,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_balances",
       "offset": 0,
@@ -33,7 +33,7 @@
       "type": "t_mapping(t_address,t_uint256)"
     },
     {
-      "astId": 59086,
+      "astId": 60543,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_tokenApprovals",
       "offset": 0,
@@ -41,7 +41,7 @@
       "type": "t_mapping(t_uint256,t_address)"
     },
     {
-      "astId": 59092,
+      "astId": 60549,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_operatorApprovals",
       "offset": 0,
@@ -49,36 +49,52 @@
       "type": "t_mapping(t_address,t_mapping(t_address,t_bool))"
     },
     {
-      "astId": 14426,
+      "astId": 14429,
+      "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
+      "label": "vm",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_contract(Vm)34007"
+    },
+    {
+      "astId": 14432,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "stETH",
       "offset": 0,
-      "slot": "6",
+      "slot": "7",
       "type": "t_contract(IStETH)6353"
     },
     {
-      "astId": 14436,
+      "astId": 14442,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_lastRequestId",
-      "offset": 0,
-      "slot": "7",
-      "type": "t_uint256"
-    },
-    {
-      "astId": 14438,
-      "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
-      "label": "_lastFinalizedRequestId",
       "offset": 0,
       "slot": "8",
       "type": "t_uint256"
     },
     {
-      "astId": 14456,
+      "astId": 14444,
+      "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
+      "label": "_lastFinalizedRequestId",
+      "offset": 0,
+      "slot": "9",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 14446,
+      "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
+      "label": "_lockedEtherAmount",
+      "offset": 0,
+      "slot": "10",
+      "type": "t_uint256"
+    },
+    {
+      "astId": 14464,
       "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
       "label": "_requests",
       "offset": 0,
-      "slot": "9",
-      "type": "t_mapping(t_uint256,t_struct(WithdrawalRequest)14451_storage)"
+      "slot": "11",
+      "type": "t_mapping(t_uint256,t_struct(WithdrawalRequest)14459_storage)"
     }
   ],
   "types": {
@@ -95,6 +111,11 @@
     "t_contract(IStETH)6353": {
       "encoding": "inplace",
       "label": "contract IStETH",
+      "numberOfBytes": "20"
+    },
+    "t_contract(Vm)34007": {
+      "encoding": "inplace",
+      "label": "contract Vm",
       "numberOfBytes": "20"
     },
     "t_mapping(t_address,t_bool)": {
@@ -125,25 +146,25 @@
       "numberOfBytes": "32",
       "value": "t_address"
     },
-    "t_mapping(t_uint256,t_struct(WithdrawalRequest)14451_storage)": {
+    "t_mapping(t_uint256,t_struct(WithdrawalRequest)14459_storage)": {
       "encoding": "mapping",
       "key": "t_uint256",
       "label": "mapping(uint256 => struct WithdrawalQueueModel.WithdrawalRequest)",
       "numberOfBytes": "32",
-      "value": "t_struct(WithdrawalRequest)14451_storage"
+      "value": "t_struct(WithdrawalRequest)14459_storage"
     },
     "t_string_storage": {
       "encoding": "bytes",
       "label": "string",
       "numberOfBytes": "32"
     },
-    "t_struct(WithdrawalRequest)14451_storage": {
+    "t_struct(WithdrawalRequest)14459_storage": {
       "encoding": "inplace",
       "label": "struct WithdrawalQueueModel.WithdrawalRequest",
       "numberOfBytes": "160",
       "members": [
         {
-          "astId": 14440,
+          "astId": 14448,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "amountOfStETH",
           "offset": 0,
@@ -151,7 +172,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 14442,
+          "astId": 14450,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "amountOfShares",
           "offset": 0,
@@ -159,7 +180,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 14444,
+          "astId": 14452,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "owner",
           "offset": 0,
@@ -167,7 +188,7 @@
           "type": "t_address"
         },
         {
-          "astId": 14446,
+          "astId": 14454,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "timestamp",
           "offset": 0,
@@ -175,7 +196,7 @@
           "type": "t_uint256"
         },
         {
-          "astId": 14448,
+          "astId": 14456,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "isFinalized",
           "offset": 0,
@@ -183,7 +204,7 @@
           "type": "t_bool"
         },
         {
-          "astId": 14450,
+          "astId": 14458,
           "contract": "contracts/model/WithdrawalQueueModel.sol:WithdrawalQueueModel",
           "label": "isClaimed",
           "offset": 1,
