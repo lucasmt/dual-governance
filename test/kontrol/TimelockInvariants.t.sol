@@ -310,7 +310,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(newEmergencyExecutionCommittee != timelock.getEmergencyExecutionCommittee());
 
         vm.prank(timelock.getAdminExecutor());
-        timelock.setEmergencyProtectionActivationCommittee(newEmergencyExecutionCommittee);
+        timelock.setEmergencyProtectionExecutionCommittee(newEmergencyExecutionCommittee);
 
         assert(timelock.getEmergencyExecutionCommittee() == newEmergencyExecutionCommittee);
     }
