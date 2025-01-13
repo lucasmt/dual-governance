@@ -374,22 +374,22 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
      * target contract.
      */
     function testEmergencyExecute(
-        uint256 proposalId,
-        address executor
+        uint256 proposalId
     ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyExecute.selector) {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
+        
+        // The executor owner must be the timelock contract
+        Executor executor = new Executor(address(timelock));
+
+        _proposalStorageSetup(timelock, proposalId, address(executor), Status.Scheduled);
         _createDummyProposal(timelock, proposalId, target);
 
-        vm.assume(proposalId < timelock.getProposalsCount());
-
-        ITimelock.ProposalDetails memory details = timelock.getProposalDetails(proposalId);
-
-        vm.assume(details.status == Status.Scheduled);
+        vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
         vm.assume(timelock.isEmergencyModeActive());
         // Unlike in testExecute, we don't need to assume the delay has passed
 
-        vm.prank(timelock.getEmergencyActivationCommittee());
+        vm.prank(timelock.getEmergencyExecutionCommittee());
         timelock.emergencyExecute(proposalId);
 
         assert(timelock.getProposalDetails(proposalId).status == Status.Executed);
