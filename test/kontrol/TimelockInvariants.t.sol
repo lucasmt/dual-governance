@@ -250,6 +250,12 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setAfterSubmitDelay.selector)
     {
+        vm.assume(newAfterSubmitDelay != timelock.getAfterSubmitDelay());
+        vm.assume(newAfterSubmitDelay <= timelock.MAX_AFTER_SUBMIT_DELAY());
+        // Overflow assumption
+        vm.assume(Duration.unwrap(newAfterSubmitDelay) < type(uint32).max - Duration.unwrap(timelock.getAfterScheduleDelay()));
+        vm.assume(timelock.MIN_EXECUTION_DELAY() <= newAfterSubmitDelay + timelock.getAfterScheduleDelay());
+
         vm.prank(timelock.getAdminExecutor());
         timelock.setAfterSubmitDelay(newAfterSubmitDelay);
 
