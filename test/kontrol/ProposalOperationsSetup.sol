@@ -376,6 +376,11 @@ contract ProposalOperationsSetup is KontrolTest {
         return uint40(_loadUInt256(address(_timelock), baseSlot + 1));
     }
     */
+    function _getProposalStatus(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal view returns (Status) {
+        return Status(_loadMappingData(
+                address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE
+            ));
+    }
 
     function _getCallsCount(
         EmergencyProtectedTimelock _timelock,

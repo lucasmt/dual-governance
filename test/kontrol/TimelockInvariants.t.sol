@@ -409,7 +409,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         _proposalStorageSetup(timelock, proposalId);
 
-        Status statusBefore = timelock.getProposalDetails(proposalId).status;
+        Status statusBefore = _getProposalStatus(timelock, proposalId);
 
         Timestamp emergencyModeEndsAfter = timelock.getEmergencyProtectionDetails().emergencyModeEndsAfter;
 
