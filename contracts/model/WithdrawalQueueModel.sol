@@ -2,15 +2,19 @@ pragma solidity 0.8.26;
 
 import "contracts/interfaces/IWithdrawalQueue.sol";
 import "contracts/interfaces/IStETH.sol";
+import "forge-std/Vm.sol";
+import "kontrol-cheatcodes/KontrolCheats.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
+contract WithdrawalQueueModel is KontrolCheats, IWithdrawalQueue, ERC721 {
+    Vm vm;
     IStETH public stETH;
     uint256 public constant MIN_STETH_WITHDRAWAL_AMOUNT = 100;
     uint256 public constant MAX_STETH_WITHDRAWAL_AMOUNT = 1000 * 1e18;
 
     uint256 _lastRequestId;
     uint256 _lastFinalizedRequestId;
+    uint256 _lockedEtherAmount;
 
     struct WithdrawalRequest {
         uint256 amountOfStETH;
@@ -23,7 +27,8 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
 
     mapping(uint256 => WithdrawalRequest) private _requests;
 
-    constructor(IStETH _stETH) ERC721("WithdrawalQueue", "WQ") {
+    constructor(Vm _vm, IStETH _stETH) ERC721("WithdrawalQueue", "WQ") {
+        vm = _vm;
         stETH = _stETH;
     }
 
@@ -67,17 +72,38 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
         stETH.transfer(_to, request.amountOfStETH);
     }
 
-    function claimWithdrawals(uint256[] calldata requestIds, uint256[] calldata) external override {
-        for (uint256 i = 0; i < requestIds.length; i++) {
-            uint256 requestId = requestIds[i];
-            require(ownerOf(requestId) == msg.sender, "Not the owner");
-            require(_requests[requestId].isFinalized, "Not finalized");
+    function claimWithdrawals(uint256[] calldata _requestIds, uint256[] calldata _hints) external override {
+        require(_requestIds.length == _hints.length, "Arrays length mismatch");
 
-            // Mark the request as claimed
-            _requests[requestId].isClaimed = true;
+        for (uint256 i = 0; i < _requestIds.length; ++i) {
+            require(_requestIds[i] != 0, "Invalid request");
+            require(_requestIds[i] <= _lastFinalizedRequestId, "Request not found or not finalized");
 
-            _burn(requestId);
+            WithdrawalRequest storage request = _requests[_requestIds[i]];
+
+            require(!request.isClaimed, "Request already claimed");
+            require(request.owner == msg.sender, "Not owner");
+
+            request.isClaimed = true;
+            // Not tracking requests by owner in this model
+            //assert(_getRequestsByOwner()[request.owner].remove(_requestId));
+
+            uint256 ethWithDiscount = freshUInt256("ethWithDiscount");
+            vm.assume(ethWithDiscount <= _lockedEtherAmount);
+            // because of the stETH rounding issue
+            // (issue: https://github.com/lidofinance/lido-dao/issues/442 )
+            // some dust (1-2 wei per request) will be accumulated upon claiming
+            _lockedEtherAmount -= ethWithDiscount;
+            _sendValue(msg.sender, ethWithDiscount);
         }
+    }
+
+    function _sendValue(address _recipient, uint256 _amount) internal {
+        require(address(this).balance >= _amount, "Not enough ether");
+
+        // solhint-disable-next-line
+        (bool success,) = _recipient.call{value: _amount}("");
+        require(success, "Can't send value; recipient may have reverted");
     }
 
     function getWithdrawalStatus(uint256[] calldata _requestIds)
@@ -102,20 +128,25 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
     }
 
     function getClaimableEther(
-        uint256[] calldata,
+        uint256[] calldata _requestIds,
         uint256[] calldata
     ) external view override(IWithdrawalQueue) returns (uint256[] memory claimableEthValues) {
-        uint256[] memory emptyArray;
-        return emptyArray;
+        claimableEthValues = new uint256[](_requestIds.length);
+        for (uint256 i = 0; i < _requestIds.length; ++i) {
+            claimableEthValues[i] = freshUInt256("claimableEther");
+        }
     }
 
     function findCheckpointHints(
-        uint256[] calldata,
+        uint256[] calldata _requestIds,
         uint256,
         uint256
     ) external view override(IWithdrawalQueue) returns (uint256[] memory hintIds) {
-        uint256[] memory emptyArray;
-        return emptyArray;
+        hintIds = new uint256[](_requestIds.length);
+
+        for (uint256 i = 0; i < _requestIds.length; ++i) {
+            hintIds[i] = freshUInt256("hintId");
+        }
     }
 
     function getLastRequestId() external view override(IWithdrawalQueue) returns (uint256) {
@@ -127,7 +158,7 @@ contract WithdrawalQueueModel is IWithdrawalQueue, ERC721 {
     }
 
     function getLastCheckpointIndex() external view override(IWithdrawalQueue) returns (uint256) {
-        return 0;
+        return freshUInt256("lastCheckpointIndex");
     }
 
     function _exists(uint256 tokenId) internal view returns (bool) {

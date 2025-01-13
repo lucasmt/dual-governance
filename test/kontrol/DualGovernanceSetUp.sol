@@ -42,7 +42,7 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
 
         stEth = new StETHModel();
         wstEth = new WstETHAdapted(IStETH(stEth));
-        withdrawalQueue = new WithdrawalQueueModel(IStETH(stEth));
+        withdrawalQueue = new WithdrawalQueueModel(vm, IStETH(stEth));
 
         // Placeholder addresses
         address adminExecutor = address(uint160(uint256(keccak256("adminExecutor"))));
@@ -133,7 +133,7 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
         this.timelockStorageSetup(dualGovernance, timelock);
 
         // ?STORAGE4
-        this.withdrawalQueueStorageSetup(withdrawalQueue, stEth);
+        this.withdrawalQueueStorageSetup(withdrawalQueue, stEth, rageQuitEscrow);
     }
 
     function _calcVetoSignallingDuration(PercentD16 rageQuitSupport) public view returns (Duration) {
