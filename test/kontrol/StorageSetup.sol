@@ -106,25 +106,80 @@ contract StorageSetup is KontrolTest {
     uint256 constant LASTREQUESTID_SLOT = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_SLOT;
     uint256 constant LASTREQUESTID_OFFSET = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_OFFSET;
     uint256 constant LASTREQUESTID_SIZE = WithdrawalQueueStorageConstants.STORAGE_LASTREQUESTID_SIZE;
+    uint256 constant LASTFINALIZEDREQUESTID_SLOT = WithdrawalQueueStorageConstants.STORAGE_LASTFINALIZEDREQUESTID_SLOT;
+    uint256 constant LASTFINALIZEDREQUESTID_OFFSET =
+        WithdrawalQueueStorageConstants.STORAGE_LASTFINALIZEDREQUESTID_OFFSET;
+    uint256 constant LASTFINALIZEDREQUESTID_SIZE = WithdrawalQueueStorageConstants.STORAGE_LASTFINALIZEDREQUESTID_SIZE;
+    uint256 constant LOCKEDETHERAMOUNT_SLOT = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_SLOT;
+    uint256 constant LOCKEDETHERAMOUNT_OFFSET = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_OFFSET;
+    uint256 constant LOCKEDETHERAMOUNT_SIZE = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_SIZE;
     uint256 constant STETH_SLOT = WithdrawalQueueStorageConstants.STORAGE_STETH_SLOT;
     uint256 constant STETH_OFFSET = WithdrawalQueueStorageConstants.STORAGE_STETH_OFFSET;
     uint256 constant STETH_SIZE = WithdrawalQueueStorageConstants.STORAGE_STETH_SIZE;
     uint256 constant OWNERS_SLOT = WithdrawalQueueStorageConstants.STORAGE_OWNERS_SLOT;
+    uint256 constant REQUESTS_SLOT = WithdrawalQueueStorageConstants.STORAGE_REQUESTS_SLOT;
+    uint256 constant ISCLAIMED_SLOT =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_ISCLAIMED_SLOT;
+    uint256 constant ISCLAIMED_OFFSET =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_ISCLAIMED_OFFSET;
+    uint256 constant ISCLAIMED_SIZE =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_ISCLAIMED_SIZE;
+    uint256 constant OWNER_SLOT =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_OWNER_SLOT;
+    uint256 constant OWNER_OFFSET =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_OWNER_OFFSET;
+    uint256 constant OWNER_SIZE =
+        WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_OWNER_SIZE;
 
     function _getLastRequestId(WithdrawalQueueModel _withdrawalQueue) internal view returns (uint256) {
         return _loadData(address(_withdrawalQueue), LASTREQUESTID_SLOT, LASTREQUESTID_OFFSET, LASTREQUESTID_SIZE);
     }
 
-    function withdrawalQueueStorageSetup(WithdrawalQueueModel _withdrawalQueue, IStETH _stEth) external {
+    function _getLastFinalizedRequestId(WithdrawalQueueModel _withdrawalQueue) internal view returns (uint256) {
+        return _loadData(
+            address(_withdrawalQueue),
+            LASTFINALIZEDREQUESTID_SLOT,
+            LASTFINALIZEDREQUESTID_OFFSET,
+            LASTFINALIZEDREQUESTID_SIZE
+        );
+    }
+
+    function _getRequestIsClaimed(WithdrawalQueueModel _withdrawalQueue, uint256 _requestId) internal returns (bool) {
+        return 0
+            != _loadMappingData(
+                address(_withdrawalQueue), REQUESTS_SLOT, _requestId, ISCLAIMED_SLOT, ISCLAIMED_OFFSET, ISCLAIMED_SIZE
+            );
+    }
+
+    function _getRequestOwner(WithdrawalQueueModel _withdrawalQueue, uint256 _requestId) internal returns (address) {
+        return address(
+            uint160(
+                _loadMappingData(
+                    address(_withdrawalQueue),
+                    REQUESTS_SLOT,
+                    _requestId,
+                    ISCLAIMED_SLOT,
+                    ISCLAIMED_OFFSET,
+                    ISCLAIMED_SIZE
+                )
+            )
+        );
+    }
+
+    function withdrawalQueueStorageSetup(
+        WithdrawalQueueModel _withdrawalQueue,
+        IStETH _stEth,
+        IEscrowBase _escrow
+    ) external {
         kevm.symbolicStorage(address(_withdrawalQueue));
 
-        // Assuming 0 for simplicity
-        uint256 lastRequestId = 0;
-        uint256 owner = 0;
+        uint256 lastRequestId = freshUInt256("lastRequestId");
+        vm.assume(lastRequestId < type(uint256).max);
+        uint256 owner = freshUInt160("owner");
 
         // TODO: Storage clearance, requires maintenance
-        _clearSlot(address(_withdrawalQueue), 6);
-        _clearMappingSlot(address(_withdrawalQueue), 2, lastRequestId + 1, 0);
+        _clearSlot(address(_withdrawalQueue), STETH_SLOT);
+        _clearMappingSlot(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0);
 
         _storeData(address(_withdrawalQueue), STETH_SLOT, STETH_OFFSET, STETH_SIZE, uint256(uint160(address(_stEth))));
 
@@ -133,6 +188,43 @@ contract StorageSetup is KontrolTest {
         );
 
         _storeMappingData(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0, 0, 20, owner);
+
+        uint256 lastFinalizedRequestId = freshUInt256("lastFinalizedRequestId");
+        _storeData(
+            address(_withdrawalQueue),
+            LASTFINALIZEDREQUESTID_SLOT,
+            LASTFINALIZEDREQUESTID_OFFSET,
+            LASTFINALIZEDREQUESTID_SIZE,
+            lastFinalizedRequestId
+        );
+
+        uint256 lockedEtherAmount = freshUInt256("lockedEtherAmount");
+        _storeData(
+            address(_withdrawalQueue),
+            LOCKEDETHERAMOUNT_SLOT,
+            LOCKEDETHERAMOUNT_OFFSET,
+            LOCKEDETHERAMOUNT_SIZE,
+            lockedEtherAmount
+        );
+        vm.deal(address(_withdrawalQueue), lockedEtherAmount);
+    }
+
+    function withdrawalQueueRequestSetup(WithdrawalQueueModel _withdrawalQueue, uint256 _requestId) external {
+        uint256 isClaimed = freshUInt8("isClaimed");
+        _storeMappingData(
+            address(_withdrawalQueue),
+            REQUESTS_SLOT,
+            _requestId,
+            ISCLAIMED_SLOT,
+            ISCLAIMED_OFFSET,
+            ISCLAIMED_SIZE,
+            isClaimed
+        );
+
+        uint256 owner = freshUInt160("owner");
+        _storeMappingData(
+            address(_withdrawalQueue), REQUESTS_SLOT, _requestId, OWNER_SLOT, OWNER_OFFSET, OWNER_SIZE, owner
+        );
     }
 
     //
@@ -383,6 +475,42 @@ contract StorageSetup is KontrolTest {
     uint256 constant BATCHESQUEUESTATE_SLOT = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_SLOT;
     uint256 constant BATCHESQUEUESTATE_OFFSET = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_OFFSET;
     uint256 constant BATCHESQUEUESTATE_SIZE = EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_STATE_SIZE;
+    uint256 constant TOTALUNSTETHIDSCOUNT_SLOT =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCOUNT_SLOT;
+    uint256 constant TOTALUNSTETHIDSCOUNT_OFFSET =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCOUNT_OFFSET;
+    uint256 constant TOTALUNSTETHIDSCOUNT_SIZE =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCOUNT_SIZE;
+    uint256 constant TOTALUNSTETHIDSCLAIMED_SLOT =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCLAIMED_SLOT;
+    uint256 constant TOTALUNSTETHIDSCLAIMED_OFFSET =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCLAIMED_OFFSET;
+    uint256 constant TOTALUNSTETHIDSCLAIMED_SIZE =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_TOTALUNSTETHIDSCLAIMED_SIZE;
+    uint256 constant LASTCLAIMEDBATCHINDEX_SLOT =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDBATCHINDEX_SLOT;
+    uint256 constant LASTCLAIMEDBATCHINDEX_OFFSET =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDBATCHINDEX_OFFSET;
+    uint256 constant LASTCLAIMEDBATCHINDEX_SIZE =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDBATCHINDEX_SIZE;
+    uint256 constant LASTCLAIMEDUNSTETHIDINDEX_SLOT =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDUNSTETHIDINDEX_SLOT;
+    uint256 constant LASTCLAIMEDUNSTETHIDINDEX_OFFSET =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDUNSTETHIDINDEX_OFFSET;
+    uint256 constant LASTCLAIMEDUNSTETHIDINDEX_SIZE =
+        EscrowStorageConstants.STORAGE_BATCHESQUEUE_INFO_LASTCLAIMEDUNSTETHIDINDEX_SIZE;
+    uint256 constant FIRSTUNSTETHID_SLOT =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_FIRSTUNSTETHID_SLOT;
+    uint256 constant FIRSTUNSTETHID_OFFSET =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_FIRSTUNSTETHID_OFFSET;
+    uint256 constant FIRSTUNSTETHID_SIZE =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_FIRSTUNSTETHID_SIZE;
+    uint256 constant LASTUNSTETHID_SLOT =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_LASTUNSTETHID_SLOT;
+    uint256 constant LASTUNSTETHID_OFFSET =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_LASTUNSTETHID_OFFSET;
+    uint256 constant LASTUNSTETHID_SIZE =
+        EscrowStorageConstants.STRUCT_WITHDRAWALSBATCHESQUEUE_SEQUENTIALBATCH_LASTUNSTETHID_SIZE;
     uint256 constant UNSTETHRECORDS_SLOT = EscrowStorageConstants.STORAGE_ACCOUNTING_UNSTETHRECORDS_SLOT;
     uint256 constant UNSTETHRECORDSTATUS_SLOT = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_SLOT;
     uint256 constant UNSTETHRECORDSTATUS_OFFSET = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_OFFSET;
@@ -443,6 +571,70 @@ contract StorageSetup is KontrolTest {
     function _getBatchesQueueStatus(IEscrowBase _escrow) internal view returns (uint8) {
         return
             uint8(_loadData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE));
+    }
+
+    function _getBatchesLength(IEscrowBase _escrow) internal view returns (uint256) {
+        return _loadData(address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE);
+    }
+
+    function _getLastClaimedBatchSlot(IEscrowBase _escrow) internal view returns (uint256) {
+        return _getBatchSlot(_escrow, _getLastClaimedBatchIndex(_escrow));
+    }
+
+    function _getBatchSlot(IEscrowBase _escrow, uint256 _batchIndex) internal view returns (uint256) {
+        uint256 batchesDataSlot = uint256(keccak256(abi.encode(BATCHESLENGTH_SLOT)));
+        // SequentialBatch struct occupies 2 slots
+        // TODO: replace with constant
+        uint256 batchStructSize = 2;
+        return batchesDataSlot + batchStructSize * _batchIndex;
+    }
+
+    function _getFirstUnstEthId(IEscrowBase _escrow, uint256 _batchIndex) internal view returns (uint256) {
+        uint256 batchSlot = _getBatchSlot(_escrow, _batchIndex);
+        return _loadData(address(_escrow), batchSlot + FIRSTUNSTETHID_SLOT, FIRSTUNSTETHID_OFFSET, FIRSTUNSTETHID_SIZE);
+    }
+
+    function _getLastUnstEthId(IEscrowBase _escrow, uint256 _batchIndex) internal view returns (uint256) {
+        uint256 batchSlot = _getBatchSlot(_escrow, _batchIndex);
+        return _loadData(address(_escrow), batchSlot + LASTUNSTETHID_SLOT, LASTUNSTETHID_OFFSET, LASTUNSTETHID_SIZE);
+    }
+
+    function _getLastClaimedBatchIndex(IEscrowBase _escrow) internal view returns (uint56) {
+        return uint56(
+            _loadData(
+                address(_escrow), LASTCLAIMEDBATCHINDEX_SLOT, LASTCLAIMEDBATCHINDEX_OFFSET, LASTCLAIMEDBATCHINDEX_SIZE
+            )
+        );
+    }
+
+    function _getLastClaimedUnstEthIdIndex(IEscrowBase _escrow) internal view returns (uint64) {
+        return uint64(
+            _loadData(
+                address(_escrow),
+                LASTCLAIMEDUNSTETHIDINDEX_SLOT,
+                LASTCLAIMEDUNSTETHIDINDEX_OFFSET,
+                LASTCLAIMEDUNSTETHIDINDEX_SIZE
+            )
+        );
+    }
+
+    function _getTotalUnstEthIdsCount(IEscrowBase _escrow) internal view returns (uint64) {
+        return uint64(
+            _loadData(
+                address(_escrow), TOTALUNSTETHIDSCOUNT_SLOT, TOTALUNSTETHIDSCOUNT_OFFSET, TOTALUNSTETHIDSCOUNT_SIZE
+            )
+        );
+    }
+
+    function _getTotalUnstEthIdsClaimed(IEscrowBase _escrow) internal view returns (uint64) {
+        return uint64(
+            _loadData(
+                address(_escrow),
+                TOTALUNSTETHIDSCLAIMED_SLOT,
+                TOTALUNSTETHIDSCLAIMED_OFFSET,
+                TOTALUNSTETHIDSCLAIMED_SIZE
+            )
+        );
     }
 
     function _getUnstEthRecordStatus(IEscrowBase _escrow, uint256 _requestId) internal view returns (uint8) {
@@ -625,15 +817,80 @@ contract StorageSetup is KontrolTest {
             _storeData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE, 0);
         }
 
-        // TODO: Storage clearance, requires maintenance
-        uint256 batchesQueueStatusRest = freshUInt256("ES_BQS_REST");
-        vm.assume(batchesQueueStatusRest < 2 ** (8 * (32 - BATCHESQUEUESTATE_SIZE)));
+        uint256 lastClaimedBatchIndex = freshUInt56("lastClaimedBatchIndex");
         _storeData(
             address(_escrow),
-            BATCHESQUEUESTATE_SLOT,
-            BATCHESQUEUESTATE_SIZE,
-            32 - BATCHESQUEUESTATE_SIZE,
-            batchesQueueStatusRest
+            LASTCLAIMEDBATCHINDEX_SLOT,
+            LASTCLAIMEDBATCHINDEX_OFFSET,
+            LASTCLAIMEDBATCHINDEX_SIZE,
+            lastClaimedBatchIndex
+        );
+
+        // TODO: Refactor this into its own function
+        {
+            uint256 lastClaimedBatchSlot = _getBatchSlot(_escrow, lastClaimedBatchIndex);
+            uint256 firstUnstEthId = freshUInt256("firstUnstEthId");
+            _storeData(
+                address(_escrow),
+                lastClaimedBatchSlot + FIRSTUNSTETHID_SLOT,
+                FIRSTUNSTETHID_OFFSET,
+                FIRSTUNSTETHID_SIZE,
+                firstUnstEthId
+            );
+            uint256 lastUnstEthId = freshUInt256("lastUnstEthId");
+            _storeData(
+                address(_escrow),
+                lastClaimedBatchSlot + LASTUNSTETHID_SLOT,
+                LASTUNSTETHID_OFFSET,
+                LASTUNSTETHID_SIZE,
+                lastUnstEthId
+            );
+        }
+        {
+            uint256 nextBatchSlot = _getBatchSlot(_escrow, lastClaimedBatchIndex + 1);
+            uint256 firstUnstEthId = freshUInt256("firstUnstEthId");
+            _storeData(
+                address(_escrow),
+                nextBatchSlot + FIRSTUNSTETHID_SLOT,
+                FIRSTUNSTETHID_OFFSET,
+                FIRSTUNSTETHID_SIZE,
+                firstUnstEthId
+            );
+            uint256 lastUnstEthId = freshUInt256("lastUnstEthId");
+            _storeData(
+                address(_escrow),
+                nextBatchSlot + LASTUNSTETHID_SLOT,
+                LASTUNSTETHID_OFFSET,
+                LASTUNSTETHID_SIZE,
+                lastUnstEthId
+            );
+        }
+
+        uint256 lastClaimedUnstEthIdIndex = freshUInt64("lastClaimedUnstEthIdIndex");
+        _storeData(
+            address(_escrow),
+            LASTCLAIMEDUNSTETHIDINDEX_SLOT,
+            LASTCLAIMEDUNSTETHIDINDEX_OFFSET,
+            LASTCLAIMEDUNSTETHIDINDEX_SIZE,
+            lastClaimedUnstEthIdIndex
+        );
+
+        uint256 totalUnstEthIdsCount = freshUInt64("totalUnstEthIdsCount");
+        _storeData(
+            address(_escrow),
+            TOTALUNSTETHIDSCOUNT_SLOT,
+            TOTALUNSTETHIDSCOUNT_OFFSET,
+            TOTALUNSTETHIDSCOUNT_SIZE,
+            totalUnstEthIdsCount
+        );
+
+        uint256 totalUnstEthIdsClaimed = freshUInt64("totalUnstEthIdsClaimed");
+        _storeData(
+            address(_escrow),
+            TOTALUNSTETHIDSCLAIMED_SLOT,
+            TOTALUNSTETHIDSCLAIMED_OFFSET,
+            TOTALUNSTETHIDSCLAIMED_SIZE,
+            totalUnstEthIdsClaimed
         );
 
         // Slot 6
