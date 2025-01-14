@@ -245,6 +245,15 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(target.flag() == true);
     }
 
+    function testExecuteExecutedRevert(uint256 proposalId) external {
+        _proposalStorageSetup(timelock, proposalId, Status.Executed);
+        
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed));
+        timelock.execute(proposalId);
+    }
+
     /**
      * After cancelAllNonExecutedProposals is called, any previously-submitted
      * proposal will be marked as cancelled.
