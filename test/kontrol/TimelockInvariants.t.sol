@@ -543,4 +543,15 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.setGovernance(newGovernance);
         vm.stopPrank();
     }
+
+    function testSetAfterSubmitDelayRevert(address caller, Duration newAfterSubmitDelay)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setAfterSubmitDelay(newAfterSubmitDelay);
+        vm.stopPrank();
+    }
 }
