@@ -159,6 +159,29 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(timelock.getProposalDetails(proposalId).status == Status.Submitted);
     }
 
+    function testSubmitRevert(
+        address caller,
+        address executor,
+        address target,
+        uint96 value,
+        bytes4 selector,
+        bytes32 argument
+    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.submit.selector) {
+        bytes memory payload = abi.encodeWithSelector(selector, argument);
+
+        ExternalCall[] memory calls = new ExternalCall[](1);
+        calls[0].target = target;
+        calls[0].value = value;
+        calls[0].payload = payload;
+
+        vm.assume(caller != timelock.getGovernance());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotGovernance.selector, caller));
+        uint256 proposalId = timelock.submit(executor, calls);
+        vm.stopPrank();
+    }
+
     function testSchedule(uint256 proposalId)
         external
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.schedule.selector)
