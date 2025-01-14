@@ -35,7 +35,8 @@ contract EscrowInvariants is StorageSetup {
         _establish(mode, unstEthIdsClaimed <= unstEthIdsCount);
         uint56 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
         uint256 batchesLength = _getBatchesLength(escrow);
-        _establish(mode, lastClaimedBatchIndex < batchesLength);
+        // <= because they can both be 0 at first
+        _establish(mode, lastClaimedBatchIndex <= batchesLength);
         uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
         uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
         _establish(mode, firstUnstEthId <= lastUnstEthId);
