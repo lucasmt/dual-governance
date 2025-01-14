@@ -259,6 +259,18 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(target.flag() == true);
     }
 
+    function testExecuteNonScheduledRevert(uint256 proposalId) external {
+        _proposalStorageSetup(timelock, proposalId);
+        Status status = _getProposalStatus(timelock, proposalId);
+        
+        vm.assume(status != Status.Scheduled);
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        //vm.expectPartialRevert(ExecutableProposals.UnexpectedProposalStatus.selector);
+        vm.expectRevert();
+        timelock.execute(proposalId);
+    }
+
     function testExecuteExecutedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Executed);
         
