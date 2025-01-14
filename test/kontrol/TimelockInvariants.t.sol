@@ -212,6 +212,20 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
+    function testScheduleDelayHasNotPassedRevert(uint256 proposalId) external {
+        vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
+        _proposalStorageSetup(timelock, proposalId, Status.Submitted);
+        
+        uint256 afterSubmitDelay = Duration.unwrap(timelock.getAfterSubmitDelay());
+        uint256 submittedAt = uint256(_getSubmittedAt(timelock, _getProposalsSlot(proposalId)));
+        vm.assume(block.timestamp < afterSubmitDelay + submittedAt);
+
+        vm.startPrank(timelock.getGovernance());
+        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.AfterSubmitDelayNotPassed.selector, proposalId));
+        timelock.schedule(proposalId);
+        vm.stopPrank();
+    }
+
     /**
      * When execute is called for a proposalId,
      * 1) the proposal is marked as executed, and
@@ -439,6 +453,18 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         assert(timelock.getProposalDetails(proposalId).status == Status.Executed);
         assert(target.flag() == true);
+    }
+
+    function testEmergencyExecuteExecutedRevert(uint256 proposalId) external {
+        _proposalStorageSetup(timelock, proposalId, Status.Executed);
+        
+        vm.assume(timelock.isEmergencyModeActive());
+        // Unlike in testExecute, we don't need to assume the delay has passed
+
+        vm.startPrank(timelock.getEmergencyExecutionCommittee());
+        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed));
+        timelock.emergencyExecute(proposalId);
+        vm.stopPrank();
     }
 
     /**
