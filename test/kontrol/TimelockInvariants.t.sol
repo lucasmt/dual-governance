@@ -280,6 +280,21 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.execute(proposalId);
     }
 
+    function testExecuteDelayHasNotPassedRevert(uint256 proposalId) external {
+
+        _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
+        vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
+
+        Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
+        Timestamp scheduledAt = Timestamp.wrap(_getScheduledAt(timelock, _getProposalsSlot(proposalId)));
+
+        vm.assume(Timestamps.now() < afterScheduleDelay.addTo(scheduledAt));
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.AfterScheduleDelayNotPassed.selector, proposalId));
+        timelock.execute(proposalId);
+    }
+
     /**
      * After cancelAllNonExecutedProposals is called, any previously-submitted
      * proposal will be marked as cancelled.
