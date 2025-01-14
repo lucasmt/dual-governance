@@ -574,4 +574,15 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.transferExecutorOwnership(address(executor), owner);
         vm.stopPrank();
     }
+
+    function testSetAdminExecutorRevert(address caller, address newAdminExecutor)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setAdminExecutor(newAdminExecutor);
+        vm.stopPrank();
+    }
 }
