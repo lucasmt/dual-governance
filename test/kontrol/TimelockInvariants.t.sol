@@ -159,6 +159,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(timelock.getProposalDetails(proposalId).status == Status.Submitted);
     }
 
+    // Caller is not governance
     function testSubmitRevert(
         address caller,
         address executor,
@@ -197,6 +198,18 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.schedule(proposalId);
 
         assert(timelock.getProposalDetails(proposalId).status == Status.Scheduled);
+    }
+
+    // Caller is not Governance
+    function testScheduleRevert(address caller, uint256 proposalId)
+        external
+    {
+        vm.assume(caller != timelock.getGovernance());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotGovernance.selector, caller));
+        timelock.schedule(proposalId);
+        vm.stopPrank();
     }
 
     /**
