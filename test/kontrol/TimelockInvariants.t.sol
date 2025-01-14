@@ -585,4 +585,59 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.setAdminExecutor(newAdminExecutor);
         vm.stopPrank();
     }
+
+    function testSetEmergencyProtectionActivationCommitteeRevert(address caller, address newEmergencyActivationCommittee)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setEmergencyProtectionActivationCommittee(newEmergencyActivationCommittee);
+        vm.stopPrank();
+    }
+
+    function testSetEmergencyProtectionExecutionCommitteeRevert(address caller, address newEmergencyExecutionCommittee)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setEmergencyProtectionExecutionCommittee(newEmergencyExecutionCommittee);
+        vm.stopPrank();
+    }
+
+    function testSetEmergencyProtectionEndDateRevert(address caller, Timestamp newEmergencyProtectionEndDate)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setEmergencyProtectionEndDate(newEmergencyProtectionEndDate);
+        vm.stopPrank();
+    }
+
+    function testSetEmergencyModeDurationRevert(address caller, Duration newEmergencyModeDuration)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setEmergencyModeDuration(newEmergencyModeDuration);
+        vm.stopPrank();
+    }
+
+    function testSetEmergencyGovernanceRevert(address caller, address newEmergencyGovernance)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setEmergencyGovernance(newEmergencyGovernance);
+        vm.stopPrank();
+    }
 }
