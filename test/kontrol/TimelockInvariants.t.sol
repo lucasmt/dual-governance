@@ -532,4 +532,15 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         // Store second half of payload
         _storeData(address(_timelock), payloadContentSlot + 1, 0, 32, uint256(payloadLowerHalf));
     }
+
+    function testSetGovernanceRevert(address caller, address newGovernance)
+        external
+    {
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.setGovernance(newGovernance);
+        vm.stopPrank();
+    }
 }
