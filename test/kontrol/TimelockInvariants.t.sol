@@ -452,6 +452,36 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(timelock.isEmergencyModeActive());
     }
 
+    // Caller is not EmergencyActiavtionComittee
+    function testActivateEmergencyModeRevert(address caller) external {
+        vm.assume(caller != timelock.getEmergencyActivationCommittee());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyActivationCommittee.selector, caller));
+        timelock.activateEmergencyMode();
+        vm.stopPrank();
+    }
+
+    function testActivateEmergencyModeInEmergencyRevert() external {
+        vm.assume(timelock.isEmergencyModeActive());
+
+        vm.startPrank(timelock.getEmergencyActivationCommittee());
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.UnexpectedEmergencyModeState.selector, true));
+        timelock.activateEmergencyMode();
+        vm.stopPrank();
+    }
+
+    function testActivateEmergencyAfterEndDateRevert() external {
+        Timestamp protectionEndDate = timelock.getEmergencyProtectionDetails().emergencyProtectionEndsAfter;
+        vm.assume(Timestamps.now() > protectionEndDate);
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.startPrank(timelock.getEmergencyActivationCommittee());
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.EmergencyProtectionExpired.selector, protectionEndDate));
+        timelock.activateEmergencyMode();
+        vm.stopPrank();
+    }
+
     /**
      * When emergencyExecute is called for a proposalId,
      * 1) the proposal is marked as executed, and
@@ -505,6 +535,24 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         vm.startPrank(timelock.getEmergencyExecutionCommittee());
         vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed));
+        timelock.emergencyExecute(proposalId);
+        vm.stopPrank();
+    }
+
+    function testEmergencyExecuteNormalModeRevert(uint256 proposalId) external {        
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.UnexpectedEmergencyModeState.selector, false));
+        timelock.emergencyExecute(proposalId);
+    }
+
+    // Caller is not Emergency execution comittee
+    function testEmergencyExecuteRevert(address caller, uint256 proposalId) external {
+        vm.assume(timelock.isEmergencyModeActive());
+        vm.assume(caller != timelock.getEmergencyExecutionCommittee());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller));
         timelock.emergencyExecute(proposalId);
         vm.stopPrank();
     }
