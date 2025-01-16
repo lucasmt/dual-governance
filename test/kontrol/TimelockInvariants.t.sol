@@ -8,7 +8,7 @@ import {EmergencyProtection} from "contracts/libraries/EmergencyProtection.sol";
 import {ExecutableProposals, Status} from "contracts/libraries/ExecutableProposals.sol";
 import {ExternalCall} from "contracts/libraries/ExternalCalls.sol";
 import {TimelockState} from "contracts/libraries/TimelockState.sol";
-import {Duration} from "contracts/types/Duration.sol";
+import {Duration, Durations} from "contracts/types/Duration.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
 import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
@@ -580,12 +580,40 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         timelock.deactivateEmergencyMode();
 
+        EmergencyProtection.Context memory postState = _saveEmergencyProtection(timelock);
+
         assert(!timelock.isEmergencyModeActive());
+        assert(postState.emergencyActivationCommittee == address(0));
+        assert(postState.emergencyExecutionCommittee == address(0));
+        assert(postState.emergencyModeDuration == Durations.ZERO);
+        assert(postState.emergencyModeEndsAfter == Timestamps.ZERO);
+        assert(postState.emergencyProtectionEndsAfter == Timestamps.ZERO);
 
         if (statusBefore != Status.Executed) {
             Status statusAfter = timelock.getProposalDetails(proposalId).status;
             assert(statusAfter == Status.Cancelled);
         }
+    }
+
+    function testDeactivateEmergencyModeNormalModeRevert(uint256 proposalId) external {
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.UnexpectedEmergencyModeState.selector, false));
+        timelock.deactivateEmergencyMode();
+    }
+
+    function testDeactivateEmergencyModeRevert(address caller, uint256 proposalId) external {
+        vm.assume(timelock.isEmergencyModeActive());
+
+        Timestamp emergencyModeEndsAfter = timelock.getEmergencyProtectionDetails().emergencyModeEndsAfter;
+        vm.assume(Timestamps.now() <= emergencyModeEndsAfter);
+            
+        vm.assume(caller != timelock.getAdminExecutor());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(TimelockState.CallerIsNotAdminExecutor.selector, caller));
+        timelock.deactivateEmergencyMode();
+        vm.stopPrank();
     }
 
     /**
@@ -610,12 +638,40 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         timelock.emergencyReset();
 
         assert(!timelock.isEmergencyModeActive());
-        assert(timelock.getGovernance() == emergencyGovernance);
+
+        EmergencyProtection.Context memory postState = _saveEmergencyProtection(timelock);
+
+        assert(!timelock.isEmergencyModeActive());
+        assert(postState.emergencyActivationCommittee == address(0));
+        assert(postState.emergencyExecutionCommittee == address(0));
+        assert(postState.emergencyGovernance == emergencyGovernance);
+        assert(postState.emergencyModeDuration == Durations.ZERO);
+        assert(postState.emergencyModeEndsAfter == Timestamps.ZERO);
+        assert(postState.emergencyProtectionEndsAfter == Timestamps.ZERO);
 
         if (statusBefore != Status.Executed) {
             Status statusAfter = timelock.getProposalDetails(proposalId).status;
             assert(statusAfter == Status.Cancelled);
         }
+    }
+
+    function testEmergencyResetNormalModeRevert(uint256 proposalId) external {
+        vm.assume(!timelock.isEmergencyModeActive());
+
+        vm.startPrank(timelock.getEmergencyExecutionCommittee());
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.UnexpectedEmergencyModeState.selector, false));
+        timelock.emergencyReset();
+        vm.stopPrank();
+    }
+
+    // Caller is not Emergency Execution Comittee
+    function testEmergencyResetRevert(address caller, uint256 proposalId) external {
+        vm.assume(caller != timelock.getEmergencyExecutionCommittee());
+
+        vm.startPrank(caller);
+        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller));
+        timelock.emergencyReset();
+        vm.stopPrank();
     }
 
     function testSetAdminExecutor(address newAdminExecutor)
