@@ -2,7 +2,7 @@
 foundry-project-root       = '.'
 regen                      = true
 rekompile                  = true
-verbose                    = true
+verbose                    = false
 debug                      = false
 require                    = 'test/kontrol/lido-lemmas.k'
 module-import              = 'VetoSignallingTest:LIDO-LEMMAS'
@@ -23,7 +23,7 @@ maintenance-rate           = 128
 assume-defined             = false
 no-log-succ-rewrites       = true
 no-stack-checks            = true
-optimize-kcfg              = true
+optimize-kcfg              = false
 kore-rpc-command           = 'kore-rpc-booster --no-post-exec-simplify --equation-max-recursion 20 --equation-max-iterations 1000 --fallback-on Aborted'
 failure-information        = true
 counterexample-information = true
@@ -81,7 +81,7 @@ maintenance-rate           = 128
 assume-defined             = false
 no-log-succ-rewrites       = true
 no-stack-checks            = true
-optimize-kcfg              = false
+optimize-kcfg              = true
 kore-rpc-command           = 'kore-rpc-booster --no-post-exec-simplify --equation-max-recursion 20 --equation-max-iterations 1000 --fallback-on Aborted'
 failure-information        = true
 counterexample-information = true
@@ -131,7 +131,11 @@ match-test                 = [
         "TimelockInvariantsTest.testEmergencyExecuteNormalModeRevert",
         "TimelockInvariantsTest.testEmergencyExecuteRevert",
         "TimelockInvariantsTest.testDeactivateEmergencyMode",
+        "TimelockInvariantsTest.testDeactivateEmergencyModeNormalModeRevert",
+        "TimelockInvariantsTest.testDeactivateEmergencyModeRevert",
         "TimelockInvariantsTest.testEmergencyReset",
+        "TimelockInvariantsTest.testEmergencyResetNormalModeRevert",
+        "TimelockInvariantsTest.testEmergencyResetRevert",
         "TimelockInvariantsTest.testSetAdminExecutor",
         "TimelockInvariantsTest.testSetGovernanceRevert",
         "TimelockInvariantsTest.testSetAfterSubmitDelayRevert",
