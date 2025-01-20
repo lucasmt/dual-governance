@@ -36,7 +36,7 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
     DualGovernance.DualGovernanceComponents components;
     DualGovernance.SanityCheckParams dgSanityCheckParams;
 
-    function setUp() public {
+    function setUp() public virtual {
         vm.chainId(1); // Set block.chainid so it's not symbolic
         vm.assume(block.timestamp < timeUpperBound);
 
