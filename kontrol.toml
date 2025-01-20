@@ -147,6 +147,8 @@ match-test                 = [
         "TimelockInvariantsTest.testSetEmergencyProtectionEndDateRevert",
         "TimelockInvariantsTest.testSetEmergencyModeDurationRevert",
         "TimelockInvariantsTest.testSetEmergencyGovernanceRevert",
+        "TimelockedGovernanceTest.testSubmitProposalRevert",
+        "TimelockedGovernanceTest.testCancellAllPendingProposalsRevert",
     ]
 
 [show.default]
