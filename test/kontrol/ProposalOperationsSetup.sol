@@ -20,10 +20,12 @@ contract ProposalOperationsSetup is KontrolTest {
     uint256 constant GOVERNANCE_OFFSET =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_OFFSET;
     uint256 constant GOVERNANCE_SIZE = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_GOVERNANCE_SIZE;
-    uint256 constant ADMINEXECUTOR_SLOT = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SLOT;
+    uint256 constant ADMINEXECUTOR_SLOT =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SLOT;
     uint256 constant ADMINEXECUTOR_OFFSET =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_OFFSET;
-    uint256 constant ADMINEXECUTOR_SIZE = EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SIZE;
+    uint256 constant ADMINEXECUTOR_SIZE =
+        EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_ADMINEXECUTOR_SIZE;
     uint256 constant AFTERSUBMITDELAY_SLOT =
         EmergencyProtectedTimelockStorageConstants.STORAGE_TIMELOCKSTATE_AFTERSUBMITDELAY_SLOT;
     uint256 constant AFTERSUBMITDELAY_OFFSET =
@@ -124,7 +126,9 @@ contract ProposalOperationsSetup is KontrolTest {
         _clearSlot(address(_timelock), 5);
 
         uint160 adminExecutor = uint160(uint256(keccak256("adminExecutor")));
-        _storeData(address(_timelock), ADMINEXECUTOR_SLOT, ADMINEXECUTOR_OFFSET, ADMINEXECUTOR_SIZE, uint256(adminExecutor));
+        _storeData(
+            address(_timelock), ADMINEXECUTOR_SLOT, ADMINEXECUTOR_OFFSET, ADMINEXECUTOR_SIZE, uint256(adminExecutor)
+        );
 
         uint256 governance = uint256(uint160(address(_dualGovernance)));
         _storeData(address(_timelock), GOVERNANCE_SLOT, GOVERNANCE_OFFSET, GOVERNANCE_SIZE, governance);
@@ -238,7 +242,13 @@ contract ProposalOperationsSetup is KontrolTest {
                 address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE, status
             );
             _storeMappingData(
-                address(_timelock), PROPOSALS_SLOT, _proposalId, EXECUTOR_SLOT, EXECUTOR_OFFSET, EXECUTOR_SIZE, uint256(uint160(executor))
+                address(_timelock),
+                PROPOSALS_SLOT,
+                _proposalId,
+                EXECUTOR_SLOT,
+                EXECUTOR_OFFSET,
+                EXECUTOR_SIZE,
+                uint256(uint160(executor))
             );
             uint256 submittedAt = freshUInt256("ETL_SBMAT");
             vm.assume(submittedAt < timeUpperBound);
@@ -336,7 +346,7 @@ contract ProposalOperationsSetup is KontrolTest {
 
     function _getCallsSlot(uint256 _proposalId) internal returns (uint256) {
         uint256 proposalsSlot = _getProposalsSlot(_proposalId);
-        return uint256(keccak256(abi.encodePacked(proposalsSlot + 1)));
+        return uint256(keccak256(abi.encodePacked(proposalsSlot + CALLS_SLOT)));
     }
 
     function _getLastCancelledProposalId(EmergencyProtectedTimelock _timelock) internal view returns (uint256) {
@@ -376,10 +386,13 @@ contract ProposalOperationsSetup is KontrolTest {
         return uint40(_loadUInt256(address(_timelock), baseSlot + 1));
     }
     */
-    function _getProposalStatus(EmergencyProtectedTimelock _timelock, uint256 _proposalId) internal view returns (Status) {
-        return Status(_loadMappingData(
-                address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE
-            ));
+    function _getProposalStatus(
+        EmergencyProtectedTimelock _timelock,
+        uint256 _proposalId
+    ) internal view returns (Status) {
+        return Status(
+            _loadMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, STATUS_SLOT, STATUS_OFFSET, STATUS_SIZE)
+        );
     }
 
     function _getCallsCount(
@@ -389,11 +402,7 @@ contract ProposalOperationsSetup is KontrolTest {
         return _loadMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, CALLS_SLOT, CALLS_OFFSET, CALLS_SIZE);
     }
 
-    function _setCallsCount(
-        EmergencyProtectedTimelock _timelock,
-        uint256 _proposalId,
-        uint256 value
-    ) internal {
+    function _setCallsCount(EmergencyProtectedTimelock _timelock, uint256 _proposalId, uint256 value) internal {
         _storeMappingData(address(_timelock), PROPOSALS_SLOT, _proposalId, CALLS_SLOT, CALLS_OFFSET, CALLS_SIZE, value);
     }
 }

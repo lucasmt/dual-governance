@@ -151,7 +151,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         //   payload is less than 32 bytes and the new one is greater or equal than 32 bytes
         uint256 newProposalId = timelock.getProposalsCount() + 1;
         _setCallsCount(timelock, newProposalId, 0);
-        vm.store(address(timelock), bytes32(_getCallsSlot(newProposalId) + 1), bytes32(0));
+        _storeData(address(timelock), _getCallsSlot(newProposalId) + PAYLOAD_SLOT, PAYLOAD_OFFSET, PAYLOAD_SIZE, 0);
 
         vm.prank(timelock.getGovernance());
         uint256 proposalId = timelock.submit(executor, calls);
@@ -189,7 +189,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     {
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
         _proposalStorageSetup(timelock, proposalId, Status.Submitted);
-        
+
         uint256 afterSubmitDelay = Duration.unwrap(timelock.getAfterSubmitDelay());
         uint256 submittedAt = uint256(_getSubmittedAt(timelock, _getProposalsSlot(proposalId)));
         vm.assume(afterSubmitDelay + submittedAt <= block.timestamp);
@@ -201,9 +201,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     }
 
     // Caller is not Governance
-    function testScheduleRevert(address caller, uint256 proposalId)
-        external
-    {
+    function testScheduleRevert(address caller, uint256 proposalId) external {
         vm.assume(caller != timelock.getGovernance());
 
         vm.startPrank(caller);
@@ -215,7 +213,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     function testScheduleDelayHasNotPassedRevert(uint256 proposalId) external {
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
         _proposalStorageSetup(timelock, proposalId, Status.Submitted);
-        
+
         uint256 afterSubmitDelay = Duration.unwrap(timelock.getAfterSubmitDelay());
         uint256 submittedAt = uint256(_getSubmittedAt(timelock, _getProposalsSlot(proposalId)));
         vm.assume(block.timestamp < afterSubmitDelay + submittedAt);
@@ -233,12 +231,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
      * The test uses a simplified example proposal that sets a flag in the
      * target contract.
      */
-    function testExecute(
-        uint256 proposalId
-    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.execute.selector) {
+    function testExecute(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.execute.selector)
+    {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
-        
+
         // The executor owner must be the timelock contract
         Executor executor = new Executor(address(timelock));
 
@@ -253,16 +252,43 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(afterScheduleDelay.addTo(scheduledAt) <= Timestamps.now());
         vm.assume(!timelock.isEmergencyModeActive());
 
+        // Ensure that no external calls are performed besides
+        // - timelock.execute(proposalId)
+        // - executor.execute(target, value, payload)
+        // - target.call(payload)
+        // where (target, value, payload) is the call submitted for proposalId
+        _whitelistOnlyProposalCalls(address(executor), proposalId);
+
         timelock.execute(proposalId);
 
         assert(timelock.getProposalDetails(proposalId).status == Status.Executed);
         assert(target.flag() == true);
     }
 
+    function _whitelistOnlyProposalCalls(address executor, uint256 proposalId) internal {
+        bytes memory timelockCallData = abi.encodeWithSelector(EmergencyProtectedTimelock.execute.selector, proposalId);
+
+        // Whitelist timelock.execute(proposalId)
+        kevm.allowCalls(address(timelock), timelockCallData);
+
+        ExternalCall[] memory calls = timelock.getProposalCalls(proposalId);
+
+        for (uint256 i = 0; i < calls.length; ++i) {
+            bytes memory executorCalldata =
+                abi.encodeWithSelector(Executor.execute.selector, calls[i].target, calls[i].value, calls[i].payload);
+
+            // Whitelist executor.execute(target, value, payload)
+            kevm.allowCalls(address(executor), executorCalldata);
+
+            // Whitelist target.call(payload)
+            kevm.allowCalls(calls[i].target, calls[i].payload);
+        }
+    }
+
     function testExecuteNonScheduledRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId);
         Status status = _getProposalStatus(timelock, proposalId);
-        
+
         vm.assume(status != Status.Scheduled);
         vm.assume(!timelock.isEmergencyModeActive());
 
@@ -273,15 +299,16 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testExecuteExecutedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Executed);
-        
+
         vm.assume(!timelock.isEmergencyModeActive());
 
-        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed));
+        vm.expectRevert(
+            abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed)
+        );
         timelock.execute(proposalId);
     }
 
     function testExecuteDelayHasNotPassedRevert(uint256 proposalId) external {
-
         _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
 
@@ -324,7 +351,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     {
         vm.assume(newGovernance != address(0));
         vm.assume(newGovernance != timelock.getGovernance());
-    
+
         vm.prank(timelock.getAdminExecutor());
         timelock.setGovernance(newGovernance);
 
@@ -338,7 +365,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(newAfterSubmitDelay != timelock.getAfterSubmitDelay());
         vm.assume(newAfterSubmitDelay <= timelock.MAX_AFTER_SUBMIT_DELAY());
         // Overflow assumption
-        vm.assume(Duration.unwrap(newAfterSubmitDelay) < type(uint32).max - Duration.unwrap(timelock.getAfterScheduleDelay()));
+        vm.assume(
+            Duration.unwrap(newAfterSubmitDelay) < type(uint32).max - Duration.unwrap(timelock.getAfterScheduleDelay())
+        );
         vm.assume(timelock.MIN_EXECUTION_DELAY() <= newAfterSubmitDelay + timelock.getAfterScheduleDelay());
 
         vm.prank(timelock.getAdminExecutor());
@@ -354,21 +383,24 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(newAfterScheduleDelay != timelock.getAfterScheduleDelay());
         vm.assume(newAfterScheduleDelay <= timelock.MAX_AFTER_SCHEDULE_DELAY());
         // Overflow assumption
-        vm.assume(Duration.unwrap(newAfterScheduleDelay) < type(uint32).max - Duration.unwrap(timelock.getAfterSubmitDelay()));
+        vm.assume(
+            Duration.unwrap(newAfterScheduleDelay) < type(uint32).max - Duration.unwrap(timelock.getAfterSubmitDelay())
+        );
         vm.assume(timelock.MIN_EXECUTION_DELAY() <= newAfterScheduleDelay + timelock.getAfterSubmitDelay());
-        
+
         vm.prank(timelock.getAdminExecutor());
         timelock.setAfterScheduleDelay(newAfterScheduleDelay);
 
         assert(timelock.getAfterScheduleDelay() == newAfterScheduleDelay);
     }
 
-    function testTransferExecutorOwnership(
-        address owner
-    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.transferExecutorOwnership.selector) {
+    function testTransferExecutorOwnership(address owner)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.transferExecutorOwnership.selector)
+    {
         // The executor owner must be the timelock contract
         Executor executor = new Executor(address(timelock));
-        
+
         vm.assume(owner != address(0));
 
         vm.prank(timelock.getAdminExecutor());
@@ -406,7 +438,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         _checkStateRemainsUnchanged(EmergencyProtectedTimelock.setEmergencyProtectionEndDate.selector)
     {
         vm.assume(newEmergencyProtectionEndDate <= timelock.MAX_EMERGENCY_PROTECTION_DURATION().addTo(Timestamps.now()));
-        vm.assume(newEmergencyProtectionEndDate != timelock.getEmergencyProtectionDetails().emergencyProtectionEndsAfter);
+        vm.assume(
+            newEmergencyProtectionEndDate != timelock.getEmergencyProtectionDetails().emergencyProtectionEndsAfter
+        );
 
         vm.prank(timelock.getAdminExecutor());
         timelock.setEmergencyProtectionEndDate(newEmergencyProtectionEndDate);
@@ -457,7 +491,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(caller != timelock.getEmergencyActivationCommittee());
 
         vm.startPrank(caller);
-        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyActivationCommittee.selector, caller));
+        vm.expectRevert(
+            abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyActivationCommittee.selector, caller)
+        );
         timelock.activateEmergencyMode();
         vm.stopPrank();
     }
@@ -477,7 +513,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(!timelock.isEmergencyModeActive());
 
         vm.startPrank(timelock.getEmergencyActivationCommittee());
-        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.EmergencyProtectionExpired.selector, protectionEndDate));
+        vm.expectRevert(
+            abi.encodeWithSelector(EmergencyProtection.EmergencyProtectionExpired.selector, protectionEndDate)
+        );
         timelock.activateEmergencyMode();
         vm.stopPrank();
     }
@@ -489,12 +527,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
      * The test uses a simplified example proposal that sets a flag in the
      * target contract.
      */
-    function testEmergencyExecute(
-        uint256 proposalId
-    ) external _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyExecute.selector) {
+    function testEmergencyExecute(uint256 proposalId)
+        external
+        _checkStateRemainsUnchanged(EmergencyProtectedTimelock.emergencyExecute.selector)
+    {
         FlagSetter target = new FlagSetter();
         assert(target.flag() == false);
-        
+
         // The executor owner must be the timelock contract
         Executor executor = new Executor(address(timelock));
 
@@ -515,7 +554,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     function testEmergencyExecuteNonScheduledRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId);
         Status status = _getProposalStatus(timelock, proposalId);
-        
+
         vm.assume(status != Status.Scheduled);
         vm.assume(timelock.isEmergencyModeActive());
         // Unlike in testExecute, we don't need to assume the delay has passed
@@ -529,17 +568,19 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testEmergencyExecuteExecutedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Executed);
-        
+
         vm.assume(timelock.isEmergencyModeActive());
         // Unlike in testExecute, we don't need to assume the delay has passed
 
         vm.startPrank(timelock.getEmergencyExecutionCommittee());
-        vm.expectRevert(abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed));
+        vm.expectRevert(
+            abi.encodeWithSelector(ExecutableProposals.UnexpectedProposalStatus.selector, proposalId, Status.Executed)
+        );
         timelock.emergencyExecute(proposalId);
         vm.stopPrank();
     }
 
-    function testEmergencyExecuteNormalModeRevert(uint256 proposalId) external {        
+    function testEmergencyExecuteNormalModeRevert(uint256 proposalId) external {
         vm.assume(!timelock.isEmergencyModeActive());
 
         vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.UnexpectedEmergencyModeState.selector, false));
@@ -552,7 +593,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(caller != timelock.getEmergencyExecutionCommittee());
 
         vm.startPrank(caller);
-        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller));
+        vm.expectRevert(
+            abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller)
+        );
         timelock.emergencyExecute(proposalId);
         vm.stopPrank();
     }
@@ -607,7 +650,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         Timestamp emergencyModeEndsAfter = timelock.getEmergencyProtectionDetails().emergencyModeEndsAfter;
         vm.assume(Timestamps.now() <= emergencyModeEndsAfter);
-            
+
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -669,7 +712,9 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(caller != timelock.getEmergencyExecutionCommittee());
 
         vm.startPrank(caller);
-        vm.expectRevert(abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller));
+        vm.expectRevert(
+            abi.encodeWithSelector(EmergencyProtection.CallerIsNotEmergencyExecutionCommittee.selector, caller)
+        );
         timelock.emergencyReset();
         vm.stopPrank();
     }
@@ -750,9 +795,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         _storeData(address(_timelock), payloadContentSlot + 1, 0, 32, uint256(payloadLowerHalf));
     }
 
-    function testSetGovernanceRevert(address caller, address newGovernance)
-        external
-    {
+    function testSetGovernanceRevert(address caller, address newGovernance) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -761,9 +804,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetAfterSubmitDelayRevert(address caller, Duration newAfterSubmitDelay)
-        external
-    {
+    function testSetAfterSubmitDelayRevert(address caller, Duration newAfterSubmitDelay) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -772,9 +813,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetAfterScheduleDelayRevert(address caller, Duration newAfterScheduleDelay)
-        external
-    {
+    function testSetAfterScheduleDelayRevert(address caller, Duration newAfterScheduleDelay) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -792,9 +831,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetAdminExecutorRevert(address caller, address newAdminExecutor)
-        external
-    {
+    function testSetAdminExecutorRevert(address caller, address newAdminExecutor) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -803,9 +840,10 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetEmergencyProtectionActivationCommitteeRevert(address caller, address newEmergencyActivationCommittee)
-        external
-    {
+    function testSetEmergencyProtectionActivationCommitteeRevert(
+        address caller,
+        address newEmergencyActivationCommittee
+    ) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -814,9 +852,10 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetEmergencyProtectionExecutionCommitteeRevert(address caller, address newEmergencyExecutionCommittee)
-        external
-    {
+    function testSetEmergencyProtectionExecutionCommitteeRevert(
+        address caller,
+        address newEmergencyExecutionCommittee
+    ) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -825,9 +864,10 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetEmergencyProtectionEndDateRevert(address caller, Timestamp newEmergencyProtectionEndDate)
-        external
-    {
+    function testSetEmergencyProtectionEndDateRevert(
+        address caller,
+        Timestamp newEmergencyProtectionEndDate
+    ) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -836,9 +876,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetEmergencyModeDurationRevert(address caller, Duration newEmergencyModeDuration)
-        external
-    {
+    function testSetEmergencyModeDurationRevert(address caller, Duration newEmergencyModeDuration) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
@@ -847,9 +885,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.stopPrank();
     }
 
-    function testSetEmergencyGovernanceRevert(address caller, address newEmergencyGovernance)
-        external
-    {
+    function testSetEmergencyGovernanceRevert(address caller, address newEmergencyGovernance) external {
         vm.assume(caller != timelock.getAdminExecutor());
 
         vm.startPrank(caller);
