@@ -240,26 +240,12 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
     /**
      * Test that only admin proposers can cancel proposals.
      */
-    /*
-    function testOnlyAdminProposersCanCancelProposals() external {
-        _timelockStorageSetup(dualGovernance, timelock);
+    function testOnlyAdminProposersCanCancelProposals(address sender) external {
+        vm.assume(sender != dualGovernance.getProposalsCanceller());
 
-        // Cancel as a non-admin proposer
-        address proposer = address(uint160(uint256(keccak256("proposer"))));
-        vm.assume(dualGovernance.isProposer(proposer));
-        vm.assume(dualGovernance.getProposer(proposer).executor != config.ADMIN_EXECUTOR());
-
-        vm.prank(proposer);
-        vm.expectRevert(abi.encodeWithSelector(Proposers.NotAdminProposer.selector, proposer));
+        vm.startPrank(sender);
+        vm.expectRevert(abi.encodeWithSelector(DualGovernance.InvalidProposalsCanceller.selector, sender));
         dualGovernance.cancelAllPendingProposals();
-
-        // Cancel as an admin proposer
-        address adminProposer = address(uint160(uint256(keccak256("adminProposer"))));
-        vm.assume(dualGovernance.isProposer(adminProposer));
-        vm.assume(dualGovernance.getProposer(adminProposer).executor == config.ADMIN_EXECUTOR());
-
-        vm.prank(adminProposer);
-        dualGovernance.cancelAllPendingProposals();
+        vm.stopPrank();
     }
-    */
 }
