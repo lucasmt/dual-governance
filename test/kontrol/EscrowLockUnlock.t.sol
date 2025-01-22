@@ -37,7 +37,37 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         );
     }
 
-    function testLockStEth(uint256 amount) public {
+    function testLockStEthNormal(uint256 amount) public {
+        vm.assume(dualGovernance.getPersistedState() == State.Normal);
+
+        testLockStEthBase(amount);
+    }
+
+    function testLockStEthVetoSignalling(uint256 amount) public {
+        vm.assume(dualGovernance.getPersistedState() == State.VetoSignalling);
+
+        testLockStEthBase(amount);
+    }
+
+    function testLockStEthVetoSignallingDeactivation(uint256 amount) public {
+        vm.assume(dualGovernance.getPersistedState() == State.VetoSignallingDeactivation);
+
+        testLockStEthBase(amount);
+    }
+
+    function testLockStEthVetoCooldown(uint256 amount) public {
+        vm.assume(dualGovernance.getPersistedState() == State.VetoCooldown);
+
+        testLockStEthBase(amount);
+    }
+
+    function testLockStEthRageQuit(uint256 amount) public {
+        vm.assume(dualGovernance.getPersistedState() == State.RageQuit);
+
+        testLockStEthBase(amount);
+    }
+
+    function testLockStEthBase(uint256 amount) public {
         // Placeholder address to avoid complications with keccak of symbolic addresses
         address sender = address(uint160(uint256(keccak256("sender"))));
 
