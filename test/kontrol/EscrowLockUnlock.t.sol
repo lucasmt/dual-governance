@@ -43,7 +43,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
         testLockStEthBase(amount);
     }
 
-    function testLockStEthVetoSignalling(uint256 amount) public {
+    function testLockStEthVetoSignalling_(uint256 amount) public {
         vm.assume(dualGovernance.getPersistedState() == State.VetoSignalling);
 
         testLockStEthBase(amount);
