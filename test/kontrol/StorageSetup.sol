@@ -174,7 +174,8 @@ contract StorageSetup is KontrolTest {
         kevm.symbolicStorage(address(_withdrawalQueue));
 
         uint256 lastRequestId = freshUInt256("lastRequestId");
-        vm.assume(lastRequestId < type(uint256).max);
+        // If we assume that request IDs increase sequentially, it's unlikely tha they will reach this high
+        vm.assume(lastRequestId < 2 ** 64);
         uint256 owner = freshUInt160("owner");
 
         // TODO: Storage clearance, requires maintenance
@@ -541,7 +542,7 @@ contract StorageSetup is KontrolTest {
             uint32(_loadData(address(_escrow), WITHDRAWALSDELAY_SLOT, WITHDRAWALSDELAY_OFFSET, WITHDRAWALSDELAY_SIZE));
     }
 
-    function _getStEthLockedShares(IEscrowBase _escrow) internal view returns (uint128) {
+    function _getTotalStEthLockedShares(IEscrowBase _escrow) internal view returns (uint128) {
         return uint128(_loadData(address(_escrow), LOCKEDSHARES_SLOT, LOCKEDSHARES_OFFSET, LOCKEDSHARES_SIZE));
     }
 
@@ -568,6 +569,13 @@ contract StorageSetup is KontrolTest {
         );
     }
 
+    function _getStEthLockedShares(IEscrowBase _escrow, address _vetoer) internal view returns (uint128) {
+        uint256 key = uint256(uint160(_vetoer));
+        return uint128(
+            _loadMappingData(address(_escrow), ASSETS_SLOT, key, STETHSHARES_SLOT, STETHSHARES_OFFSET, STETHSHARES_SIZE)
+        );
+    }
+
     function _getBatchesQueueStatus(IEscrowBase _escrow) internal view returns (uint8) {
         return
             uint8(_loadData(address(_escrow), BATCHESQUEUESTATE_SLOT, BATCHESQUEUESTATE_OFFSET, BATCHESQUEUESTATE_SIZE));
@@ -579,6 +587,10 @@ contract StorageSetup is KontrolTest {
 
     function _getLastClaimedBatchSlot(IEscrowBase _escrow) internal view returns (uint256) {
         return _getBatchSlot(_escrow, _getLastClaimedBatchIndex(_escrow));
+    }
+
+    function _getLastWithdrawalsBatchSlot(IEscrowBase _escrow) internal view returns (uint256) {
+        return _getBatchSlot(_escrow, _getBatchesLength(_escrow) - 1);
     }
 
     function _getBatchSlot(IEscrowBase _escrow, uint256 _batchIndex) internal view returns (uint256) {
@@ -896,9 +908,28 @@ contract StorageSetup is KontrolTest {
         // Slot 6
         if (_currentState == EscrowSt.RageQuitEscrow) {
             uint256 batchesQueueLength = freshUInt256("ES_BQL");
+            vm.assume(0 < batchesQueueLength);
             vm.assume(batchesQueueLength < 2 ** 64);
             _storeData(
                 address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, batchesQueueLength
+            );
+
+            uint256 lastWithdrawalsBatchSlot = _getBatchSlot(_escrow, batchesQueueLength - 1);
+            uint256 firstUnstEthId = freshUInt256("firstUnstEthId");
+            _storeData(
+                address(_escrow),
+                lastWithdrawalsBatchSlot + FIRSTUNSTETHID_SLOT,
+                FIRSTUNSTETHID_OFFSET,
+                FIRSTUNSTETHID_SIZE,
+                firstUnstEthId
+            );
+            uint256 lastUnstEthId = freshUInt256("lastUnstEthId");
+            _storeData(
+                address(_escrow),
+                lastWithdrawalsBatchSlot + LASTUNSTETHID_SLOT,
+                LASTUNSTETHID_OFFSET,
+                LASTUNSTETHID_SIZE,
+                lastUnstEthId
             );
         } else {
             _storeData(address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, 0);
@@ -907,7 +938,7 @@ contract StorageSetup is KontrolTest {
 
     function escrowUserSetup(IEscrowBase _escrow, address _user) external {
         uint256 key = uint256(uint160(_user));
-        uint256 lastAssetsLockTimestamp = freshUInt256("ES_LALT");
+        uint256 lastAssetsLockTimestamp = freshUInt40("ES_LALT");
         vm.assume(lastAssetsLockTimestamp <= block.timestamp);
         vm.assume(lastAssetsLockTimestamp < timeUpperBound);
         _storeMappingData(
@@ -919,7 +950,7 @@ contract StorageSetup is KontrolTest {
             LASTASSETSLOCK_SIZE,
             lastAssetsLockTimestamp
         );
-        uint256 stETHLockedShares = freshUInt256("ES_ST_LSH");
+        uint256 stETHLockedShares = freshUInt128("ES_ST_LSH");
         vm.assume(stETHLockedShares < ethUpperBound);
         _storeMappingData(
             address(_escrow),
@@ -930,7 +961,7 @@ contract StorageSetup is KontrolTest {
             STETHSHARES_SIZE,
             stETHLockedShares
         );
-        uint256 unstEthLockedShares = freshUInt256("ES_UNST_LSH");
+        uint256 unstEthLockedShares = freshUInt128("ES_UNST_LSH");
         vm.assume(unstEthLockedShares < ethUpperBound);
         _storeMappingData(
             address(_escrow),
@@ -985,7 +1016,7 @@ contract StorageSetup is KontrolTest {
         if (_currentState == EscrowSt.SignallingEscrow) {
             // Assume getRageQuitSupport() doesn´t overflow
             uint256 finalizedEth = _getFinalizedEth(_escrow);
-            uint256 unfinalizedShares = _getUnfinalizedShares(_escrow) + _getStEthLockedShares(_escrow);
+            uint256 unfinalizedShares = _getUnfinalizedShares(_escrow) + _getTotalStEthLockedShares(_escrow);
             IStETH stEth = Escrow(payable(address(_escrow))).ST_ETH();
             uint256 numerator = stEth.getPooledEthByShares(unfinalizedShares) + finalizedEth;
             uint256 denominator = stEth.totalSupply() + finalizedEth;

@@ -20,7 +20,7 @@ import {StorageSetup} from "test/kontrol/StorageSetup.sol";
 contract EscrowInvariants is StorageSetup {
     function escrowInvariants(Mode mode, Escrow escrow) external view {
         StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
-        uint128 totalLockedShares = _getStEthLockedShares(escrow);
+        uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
         _establish(mode, totalLockedShares + _getUnfinalizedShares(escrow) <= stEth.sharesOf(address(escrow)));
         // TODO: Adapt to updated code
         //_establish(mode, totals.sharesFinalized <= totals.stETHLockedShares);
@@ -64,7 +64,7 @@ contract EscrowInvariants is StorageSetup {
 
     function escrowUserInvariants(Mode mode, Escrow escrow, address user) external view {
         SharesValue userLockedShares = escrow.getVetoerDetails(user).stETHLockedShares;
-        uint128 totalLockedShares = _getStEthLockedShares(escrow);
+        uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
 
         _establish(
             mode,
