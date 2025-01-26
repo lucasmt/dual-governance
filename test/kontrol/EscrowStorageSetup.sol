@@ -439,45 +439,8 @@ contract EscrowStorageSetup is KontrolTest {
             lastClaimedBatchIndex
         );
 
-        // TODO: Refactor this into its own function
-        {
-            uint256 lastClaimedBatchSlot = _getBatchSlot(_escrow, lastClaimedBatchIndex);
-            uint256 firstUnstEthId = freshUInt256("Escrow_firstUnstEthId");
-            _storeData(
-                address(_escrow),
-                lastClaimedBatchSlot + FIRSTUNSTETHID_SLOT,
-                FIRSTUNSTETHID_OFFSET,
-                FIRSTUNSTETHID_SIZE,
-                firstUnstEthId
-            );
-            uint256 lastUnstEthId = freshUInt256("Escrow_lastUnstEthId");
-            _storeData(
-                address(_escrow),
-                lastClaimedBatchSlot + LASTUNSTETHID_SLOT,
-                LASTUNSTETHID_OFFSET,
-                LASTUNSTETHID_SIZE,
-                lastUnstEthId
-            );
-        }
-        {
-            uint256 nextBatchSlot = _getBatchSlot(_escrow, lastClaimedBatchIndex + 1);
-            uint256 firstUnstEthId = freshUInt256("Escrow_firstUnstEthId");
-            _storeData(
-                address(_escrow),
-                nextBatchSlot + FIRSTUNSTETHID_SLOT,
-                FIRSTUNSTETHID_OFFSET,
-                FIRSTUNSTETHID_SIZE,
-                firstUnstEthId
-            );
-            uint256 lastUnstEthId = freshUInt256("Escrow_lastUnstEthId");
-            _storeData(
-                address(_escrow),
-                nextBatchSlot + LASTUNSTETHID_SLOT,
-                LASTUNSTETHID_OFFSET,
-                LASTUNSTETHID_SIZE,
-                lastUnstEthId
-            );
-        }
+        _withdrawalsBatchSetup(_escrow, lastClaimedBatchIndex);
+        _withdrawalsBatchSetup(_escrow, lastClaimedBatchIndex + 1);
 
         uint256 lastClaimedUnstEthIdIndex = freshUInt64("Escrow_lastClaimedUnstEthIdIndex");
         _storeData(
@@ -514,26 +477,30 @@ contract EscrowStorageSetup is KontrolTest {
                 address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, batchesQueueLength
             );
 
-            uint256 lastWithdrawalsBatchSlot = _getBatchSlot(_escrow, batchesQueueLength - 1);
-            uint256 firstUnstEthId = freshUInt256("Escrow_firstUnstEthId");
-            _storeData(
-                address(_escrow),
-                lastWithdrawalsBatchSlot + FIRSTUNSTETHID_SLOT,
-                FIRSTUNSTETHID_OFFSET,
-                FIRSTUNSTETHID_SIZE,
-                firstUnstEthId
-            );
-            uint256 lastUnstEthId = freshUInt256("Escrow_lastUnstEthId");
-            _storeData(
-                address(_escrow),
-                lastWithdrawalsBatchSlot + LASTUNSTETHID_SLOT,
-                LASTUNSTETHID_OFFSET,
-                LASTUNSTETHID_SIZE,
-                lastUnstEthId
-            );
+            _withdrawalsBatchSetup(_escrow, batchesQueueLength - 1);
         } else {
             _storeData(address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, 0);
         }
+    }
+
+    function _withdrawalsBatchSetup(IEscrowBase _escrow, uint256 _batchIndex) internal {
+        uint256 batchSlot = _getBatchSlot(_escrow, _batchIndex);
+        uint256 firstUnstEthId = freshUInt256("Escrow_firstUnstEthId");
+        _storeData(
+            address(_escrow),
+            batchSlot + FIRSTUNSTETHID_SLOT,
+            FIRSTUNSTETHID_OFFSET,
+            FIRSTUNSTETHID_SIZE,
+            firstUnstEthId
+        );
+        uint256 lastUnstEthId = freshUInt256("Escrow_lastUnstEthId");
+        _storeData(
+            address(_escrow),
+            batchSlot + LASTUNSTETHID_SLOT,
+            LASTUNSTETHID_OFFSET,
+            LASTUNSTETHID_SIZE,
+            lastUnstEthId
+        );
     }
 
     function escrowUserSetup(IEscrowBase _escrow, address _user) external {
