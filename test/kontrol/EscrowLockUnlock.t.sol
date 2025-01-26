@@ -305,7 +305,6 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
 
         {
             State initialState = dualGovernance.getPersistedState();
-            vm.assume(initialState == State.VetoCooldown);
 
             // Information to help forget first state transition
             PercentD16 init_rageQuitSupport = signallingEscrow.getRageQuitSupport();
