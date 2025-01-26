@@ -35,30 +35,27 @@ contract WithdrawalQueueModel is KontrolCheats, IWithdrawalQueue, ERC721 {
     function requestWithdrawals(
         uint256[] calldata _amounts,
         address _owner
-    ) external override returns (uint256[] memory requestIds) {
-        require(_amounts.length > 0, "No amounts provided");
+    ) public override returns (uint256[] memory requestIds) {
+        // Assume queue is not paused
+        //_checkResumed();
+        if (_owner == address(0)) _owner = msg.sender;
         requestIds = new uint256[](_amounts.length);
-
-        for (uint256 i = 0; i < _amounts.length; i++) {
+        for (uint256 i = 0; i < _amounts.length; ++i) {
             require(_amounts[i] >= MIN_STETH_WITHDRAWAL_AMOUNT, "Amount too small");
             require(_amounts[i] <= MAX_STETH_WITHDRAWAL_AMOUNT, "Amount too large");
 
             stETH.transferFrom(msg.sender, address(this), _amounts[i]);
 
-            // Create a new withdrawal request
-            _lastRequestId++;
-            _requests[_lastRequestId] = WithdrawalRequest({
-                amountOfStETH: _amounts[i],
-                amountOfShares: stETH.getSharesByPooledEth(_amounts[i]), // assumes this matches the calculation in real code
-                owner: _owner,
-                timestamp: block.timestamp,
-                isFinalized: false,
-                isClaimed: false
-            });
+            uint256 amountOfShares = stETH.getSharesByPooledEth(_amounts[i]);
 
-            _mint(_owner, _lastRequestId);
-            requestIds[i] = _lastRequestId;
+            if (i == 0) {
+                requestIds[i] = _lastRequestId + 1;
+            } else {
+                requestIds[i] = requestIds[i - 1] + 1;
+            }
         }
+
+        kevm.symbolicStorage(address(this));
     }
 
     function finalizeWithdrawal(address _to, uint256 _requestId) external {
