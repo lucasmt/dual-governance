@@ -22,24 +22,8 @@ import {EscrowInvariants} from "test/kontrol/EscrowInvariants.sol";
 import "kontrol-cheatcodes/KontrolCheats.sol";
 
 contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
-    function _assumeFreshAddress(address account) internal {
-        IEscrowBase escrow = signallingEscrow;
-        vm.assume(account != address(0));
-        vm.assume(account != address(this));
-        vm.assume(account != address(vm));
-        vm.assume(account != address(kevm));
-        vm.assume(account != address(stEth));
-        vm.assume(account != address(escrow)); // Important assumption: could potentially violate invariants if violated
-
-        // Keccak injectivity
-        vm.assume(
-            keccak256(abi.encodePacked(account, uint256(2))) != keccak256(abi.encodePacked(address(escrow), uint256(2)))
-        );
-    }
-
     function testLockStEth(uint256 amount) public {
-        // Placeholder address to avoid complications with keccak of symbolic addresses
-        address sender = address(uint160(uint256(keccak256("sender"))));
+        address sender = _getArbitraryUserAddress();
 
         {
             uint256 senderShares = freshUInt256("SNDR_SH");
@@ -160,8 +144,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
 
     //
     function testUnlockStEth() public {
-        // Placeholder address to avoid complications with keccak of symbolic addresses
-        address sender = address(uint160(uint256(keccak256("sender"))));
+        address sender = _getArbitraryUserAddress();
         uint256 senderShares = freshUInt256("SNDR_SH");
         vm.assume(senderShares < ethUpperBound);
         stEth.setShares(sender, senderShares);

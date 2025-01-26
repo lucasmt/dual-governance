@@ -136,7 +136,12 @@ contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
         this.withdrawalQueueStorageSetup(withdrawalQueue, stEth, rageQuitEscrow);
     }
 
-    function _calcVetoSignallingDuration(PercentD16 rageQuitSupport) public view returns (Duration) {
+    function _getArbitraryUserAddress() internal pure returns (address) {
+        // Placeholder address to avoid complications with keccak of symbolic addresses
+        return address(uint160(uint256(keccak256("sender"))));
+    }
+
+    function _calcVetoSignallingDuration(PercentD16 rageQuitSupport) internal view returns (Duration) {
         PercentD16 firstSealRageQuitSupport = config.FIRST_SEAL_RAGE_QUIT_SUPPORT();
         PercentD16 secondSealRageQuitSupport = config.SECOND_SEAL_RAGE_QUIT_SUPPORT();
 

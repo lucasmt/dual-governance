@@ -30,8 +30,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     function testCannotUnlockBeforeMinLockTime() external {
         Escrow escrow = signallingEscrow;
 
-        // Placeholder address to avoid complications with keccak of symbolic addresses
-        address sender = address(uint160(uint256(keccak256("sender"))));
+        address sender = _getArbitraryUserAddress();
         this.stEthUserSetup(stEth, sender);
         this.escrowUserSetup(escrow, sender);
 
@@ -55,8 +54,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
      * Test that funds can neither be locked nor unlocked if the escrow is in the RageQuitEscrow state.
      */
     function testCannotLockUnlockInRageQuitEscrowState(uint256 amount) external {
-        // Placeholder address to avoid complications with keccak of symbolic addresses
-        address sender = address(uint160(uint256(keccak256("sender"))));
+        address sender = _getArbitraryUserAddress();
         this.stEthUserSetup(stEth, sender);
         this.escrowUserSetup(signallingEscrow, sender);
 
@@ -76,8 +74,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     function testCannotWithdrawBeforeEthClaimTimelockElapsed() external {
         Escrow escrow = rageQuitEscrow;
 
-        // Placeholder address to avoid complications with keccak of symbolic addresses
-        address sender = address(uint160(uint256(keccak256("sender"))));
+        address sender = _getArbitraryUserAddress();
         kevm.symbolicStorage(sender);
 
         this.stEthUserSetup(stEth, sender);
