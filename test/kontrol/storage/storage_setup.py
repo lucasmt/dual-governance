@@ -43,6 +43,7 @@ def main():
         for var_type in types:
             if var_type.startswith('t_struct'):
                 prefix = types[var_type]['label'].replace(' ', '_').replace('.', '_').upper()
+                print_constant(prefix + '_SIZE', types[var_type]['numberOfBytes'])
 
                 for member in types[var_type]['members']:
                     print_constants_for_storage_variables_recursive(prefix, 0, member, types)

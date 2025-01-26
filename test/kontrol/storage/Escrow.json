@@ -91,7 +91,7 @@
           "label": "minAssetsLockDuration",
           "offset": 1,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15292"
+          "type": "t_userDefinedValueType(Duration)15244"
         },
         {
           "astId": 10521,
@@ -99,7 +99,7 @@
           "label": "rageQuitExtensionPeriodDuration",
           "offset": 5,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15292"
+          "type": "t_userDefinedValueType(Duration)15244"
         },
         {
           "astId": 10525,
@@ -107,7 +107,7 @@
           "label": "rageQuitExtensionPeriodStartedAt",
           "offset": 9,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16648"
+          "type": "t_userDefinedValueType(Timestamp)16600"
         },
         {
           "astId": 10529,
@@ -115,7 +115,7 @@
           "label": "rageQuitEthWithdrawalsDelay",
           "offset": 14,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15292"
+          "type": "t_userDefinedValueType(Duration)15244"
         }
       ]
     },
@@ -192,7 +192,7 @@
           "label": "lastAssetsLockTimestamp",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16648"
+          "type": "t_userDefinedValueType(Timestamp)16600"
         },
         {
           "astId": 6748,
@@ -200,7 +200,7 @@
           "label": "stETHLockedShares",
           "offset": 5,
           "slot": "0",
-          "type": "t_userDefinedValueType(SharesValue)16459"
+          "type": "t_userDefinedValueType(SharesValue)16411"
         },
         {
           "astId": 6752,
@@ -208,7 +208,7 @@
           "label": "unstETHLockedShares",
           "offset": 0,
           "slot": "1",
-          "type": "t_userDefinedValueType(SharesValue)16459"
+          "type": "t_userDefinedValueType(SharesValue)16411"
         },
         {
           "astId": 6756,
@@ -301,7 +301,7 @@
           "label": "lockedShares",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(SharesValue)16459"
+          "type": "t_userDefinedValueType(SharesValue)16411"
         },
         {
           "astId": 6776,
@@ -309,7 +309,7 @@
           "label": "claimedETH",
           "offset": 16,
           "slot": "0",
-          "type": "t_userDefinedValueType(ETHValue)15743"
+          "type": "t_userDefinedValueType(ETHValue)15695"
         }
       ]
     },
@@ -324,7 +324,7 @@
           "label": "unfinalizedShares",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(SharesValue)16459"
+          "type": "t_userDefinedValueType(SharesValue)16411"
         },
         {
           "astId": 6766,
@@ -332,7 +332,7 @@
           "label": "finalizedETH",
           "offset": 16,
           "slot": "0",
-          "type": "t_userDefinedValueType(ETHValue)15743"
+          "type": "t_userDefinedValueType(ETHValue)15695"
         }
       ]
     },
@@ -355,7 +355,7 @@
           "label": "index",
           "offset": 1,
           "slot": "0",
-          "type": "t_userDefinedValueType(IndexOneBased)16011"
+          "type": "t_userDefinedValueType(IndexOneBased)15963"
         },
         {
           "astId": 6796,
@@ -371,7 +371,7 @@
           "label": "shares",
           "offset": 0,
           "slot": "1",
-          "type": "t_userDefinedValueType(SharesValue)16459"
+          "type": "t_userDefinedValueType(SharesValue)16411"
         },
         {
           "astId": 6804,
@@ -379,7 +379,7 @@
           "label": "claimableAmount",
           "offset": 16,
           "slot": "1",
-          "type": "t_userDefinedValueType(ETHValue)15743"
+          "type": "t_userDefinedValueType(ETHValue)15695"
         }
       ]
     },
@@ -398,27 +398,27 @@
       "label": "uint64",
       "numberOfBytes": "8"
     },
-    "t_userDefinedValueType(Duration)15292": {
+    "t_userDefinedValueType(Duration)15244": {
       "encoding": "inplace",
       "label": "Duration",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(ETHValue)15743": {
+    "t_userDefinedValueType(ETHValue)15695": {
       "encoding": "inplace",
       "label": "ETHValue",
       "numberOfBytes": "16"
     },
-    "t_userDefinedValueType(IndexOneBased)16011": {
+    "t_userDefinedValueType(IndexOneBased)15963": {
       "encoding": "inplace",
       "label": "IndexOneBased",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(SharesValue)16459": {
+    "t_userDefinedValueType(SharesValue)16411": {
       "encoding": "inplace",
       "label": "SharesValue",
       "numberOfBytes": "16"
     },
-    "t_userDefinedValueType(Timestamp)16648": {
+    "t_userDefinedValueType(Timestamp)16600": {
       "encoding": "inplace",
       "label": "Timestamp",
       "numberOfBytes": "5"
