@@ -19,57 +19,55 @@ import {StorageSetup} from "test/kontrol/StorageSetup.sol";
 
 contract EscrowInvariants is StorageSetup {
     function escrowInvariants(Mode mode, Escrow escrow) external view {
-        StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
-        uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
-        _establish(mode, totalLockedShares + _getUnfinalizedShares(escrow) <= stEth.sharesOf(address(escrow)));
-        // TODO: Adapt to updated code
-        //_establish(mode, totals.sharesFinalized <= totals.stETHLockedShares);
-        uint256 totalLockedEther = stEth.getPooledEthByShares(totalLockedShares);
-        _establish(mode, totalLockedEther <= stEth.balanceOf(address(escrow)));
-        // TODO: Adapt to updated code
-        //_establish(mode, totals.amountFinalized == stEth.getPooledEthByShares(totals.sharesFinalized));
-        //_establish(mode, totals.amountFinalized <= totalPooledEther);
-        //_establish(mode, totals.amountClaimed <= totals.amountFinalized);
+        // Number of unstETHs claimed is <= the total number of unstETHs
         uint64 unstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
         uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
         _establish(mode, unstEthIdsClaimed <= unstEthIdsCount);
+
+        // Index of the last claimed batch is <= the total number of batches
+        // (<= because they can both be 0 at first)
         uint56 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
         uint256 batchesLength = _getBatchesLength(escrow);
-        // <= because they can both be 0 at first
         _establish(mode, lastClaimedBatchIndex <= batchesLength);
+
+        // UnstETH ids in the last claimed batch are in order
         uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
         uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
         _establish(mode, firstUnstEthId <= lastUnstEthId);
 
+        // Escrow state is either SignallingEscrow or RageQuitEscrow
         EscrowSt currentState = EscrowSt(_getCurrentState(escrow));
-        _establish(mode, 0 <= uint8(currentState));
+        _establish(mode, 1 <= uint8(currentState));
         _establish(mode, uint8(currentState) <= 2);
+
         // WithdrawalQueue has infinite allowance
+        StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
         address withdrawalQueue = address(escrow.WITHDRAWAL_QUEUE());
         uint256 allowance = stEth.allowance(address(escrow), withdrawalQueue);
         _establish(mode, allowance == type(uint256).max);
     }
 
     function signallingEscrowInvariants(Mode mode, Escrow escrow) external view {
-        // TODO: Adapt to updated code
-        /*
-        if (_getCurrentState(escrow) == EscrowState.SignallingEscrow) {
-            LockedAssetsTotals memory totals = escrow.getLockedAssetsTotals();
-            _establish(mode, totals.sharesFinalized == 0);
-            _establish(mode, totals.amountFinalized == 0);
-            _establish(mode, totals.amountClaimed == 0);
-        }
-        */
+        assert(_getCurrentState(escrow) == EscrowState.SignallingEscrow);
+
+        // Accounting for locked stETH is backed by the escrow's stETH balance
+        // (only applies to signalling escrow, since in the rage quit escrow
+        // requestNextWithdrawalsBatch reduces the balance without reducing
+        // the accounted shares)
+        StETHModel stEth = StETHModel(address(escrow.ST_ETH()));
+        uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
+        _establish(mode, totalLockedShares <= stEth.sharesOf(address(escrow)));
+        uint256 totalLockedEther = stEth.getPooledEthByShares(totalLockedShares);
+        _establish(mode, totalLockedEther <= stEth.balanceOf(address(escrow)));
     }
 
     function escrowUserInvariants(Mode mode, Escrow escrow, address user) external view {
-        SharesValue userLockedShares = escrow.getVetoerDetails(user).stETHLockedShares;
+        SharesValue userLockedSharesWrapped =
+            escrow.getVetoerDetails(user).stETHLockedShares;
+        // Unwrapping because <= is not implemented for SharesValue type
+        uint128 userLockedShares = SharesValue.unwrap(userLockedSharesWrapped);
         uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
 
-        _establish(
-            mode,
-            // Unwrapping because <= is not implemented for SharesValue type
-            SharesValue.unwrap(userLockedShares) <= totalLockedShares
-        );
+        _establish(mode, userLockedShares <= totalLockedShares);
     }
 }
