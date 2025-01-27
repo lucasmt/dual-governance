@@ -59,58 +59,74 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         Escrow escrow = rageQuitEscrow;
 
         address sender = _getArbitraryUserAddress();
-        vm.assume(stEth.sharesOf(sender) < ethUpperBound);
-
-        vm.assume(_getRageQuitExtensionPeriodStartedAt(escrow) == 0);
+        this.stEthUserSetup(stEth, sender);
 
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
 
+        // Only claim one unstETH for simplicity
+        uint256 maxUnstETHIdsCount = 1;
+
         {
+            // Assume the extension period hasn't started
+            vm.assume(_getRageQuitExtensionPeriodStartedAt(escrow) == 0);
+
+            // Assume not all batches have been claimed yet
             uint64 unstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
             uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
-            // Assume not all batches have been claimed yet
             vm.assume(unstEthIdsCount != unstEthIdsClaimed);
+
+            // Assume no overflows
             uint256 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
             uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
             uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
             uint64 lastClaimedUnstEthIdIndex = _getLastClaimedUnstEthIdIndex(escrow);
             uint256 batchesQueueLength = _getBatchesLength(escrow);
-            // Prevent overflows
             vm.assume(lastClaimedBatchIndex < type(uint56).max);
             vm.assume(lastUnstEthId - firstUnstEthId < type(uint256).max);
             vm.assume(lastClaimedUnstEthIdIndex < type(uint64).max);
             vm.assume(lastClaimedUnstEthIdIndex + 1 <= type(uint256).max - firstUnstEthId);
 
+            // Predict what the next request id will be, to make the proper assumption
             uint256 lastFinalizedRequestId = _getLastFinalizedRequestId(withdrawalQueue);
             uint256 nextRequestId;
 
             if (lastUnstEthId - firstUnstEthId == lastClaimedUnstEthIdIndex) {
+                // If all unstETH in the previous batch have been claimed,
+                // start a new batch
+
+                // Assume that there is a next batch
                 vm.assume(lastClaimedBatchIndex + 1 < batchesQueueLength);
+
                 uint256 nextBatchIndex = lastClaimedBatchIndex + 1;
                 uint256 nextBatchFirstUnstEthId = _getFirstUnstEthId(escrow, nextBatchIndex);
                 uint256 nextBatchLastUnstEthId = _getLastUnstEthId(escrow, nextBatchIndex);
+
+                // Assume that unstETH ids are sequential
                 vm.assume(nextBatchFirstUnstEthId <= nextBatchLastUnstEthId);
+                // Assume no overflows
                 vm.assume(nextBatchLastUnstEthId - nextBatchFirstUnstEthId < type(uint256).max);
 
                 nextRequestId = nextBatchFirstUnstEthId;
             } else {
+                // Otherwise, continue from the next index in the current batch
                 nextRequestId = firstUnstEthId + lastClaimedUnstEthIdIndex + 1;
             }
 
+            // Assume the request to be claimed
+            // a) is finalized,
+            // b) hasn't been claimed, and
+            // c) is owned by the rage quit escrow
             bool nextRequestIsClaimed = _getRequestIsClaimed(withdrawalQueue, nextRequestId);
             address nextRequestOwner = _getRequestOwner(withdrawalQueue, nextRequestId);
             vm.assume(nextRequestId <= lastFinalizedRequestId);
             vm.assume(!nextRequestIsClaimed);
             vm.assume(nextRequestOwner == address(escrow));
-
-            // Only claim one unstETH for simplicity
-            uint256 maxUnstETHIdsCount = 1;
-
-            vm.startPrank(sender);
-            escrow.claimNextWithdrawalsBatch(maxUnstETHIdsCount);
-            vm.stopPrank();
         }
+
+        vm.startPrank(sender);
+        escrow.claimNextWithdrawalsBatch(maxUnstETHIdsCount);
+        vm.stopPrank();
 
         this.escrowInvariants(Mode.Assert, escrow);
         this.escrowUserInvariants(Mode.Assert, escrow, sender);
