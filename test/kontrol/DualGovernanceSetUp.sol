@@ -15,10 +15,9 @@ import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol
 import {PercentD16, PercentsD16} from "contracts/types/PercentD16.sol";
 import {Duration, Durations} from "contracts/types/Duration.sol";
 
-import "test/kontrol/ProposalOperationsSetup.sol";
 import "test/kontrol/StorageSetup.sol";
 
-contract DualGovernanceSetUp is StorageSetup, ProposalOperationsSetup {
+contract DualGovernanceSetUp is StorageSetup {
     ImmutableDualGovernanceConfigProvider config;
     DualGovernance dualGovernance;
     EmergencyProtectedTimelock timelock;
