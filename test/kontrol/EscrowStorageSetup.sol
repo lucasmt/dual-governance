@@ -122,7 +122,7 @@ contract EscrowStorageSetup is KontrolTest {
     uint256 constant UNSTETHRECORDSTATUS_SIZE = EscrowStorageConstants.STRUCT_UNSTETHRECORD_STATUS_SIZE;
 
     //
-    //  STORAGE SETUP
+    //  GETTERS
     //
 
     function _getCurrentState(IEscrowBase _escrow) internal view returns (uint8) {
