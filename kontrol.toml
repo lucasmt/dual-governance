@@ -29,7 +29,7 @@ failure-information        = true
 counterexample-information = true
 minimize-proofs            = false
 fail-fast                  = true
-smt-timeout                = 60000
+smt-timeout                = 80000
 smt-retry-limit            = 0
 break-every-step           = false
 break-on-jumpi             = false
@@ -56,7 +56,7 @@ match-test                 = [
         #"EscrowLockUnlockTest.testUnlockStEthNormal",
         #"EscrowLockUnlockTest.testUnlockStEthVetoCooldown",
         #"EscrowLockUnlockTest.testUnlockStEthRageQuit",
-        "EscrowLockUnlockTest.testUnlockStEthVetoSignallingDeactivation",
+        "EscrowLockUnlockTest.testUnlockStEthVetoSignalling_",
         #"EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
         #"EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
         #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
