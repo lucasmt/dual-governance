@@ -9,9 +9,9 @@ import {Timestamp} from "contracts/types/Timestamp.sol";
 import {State as WithdrawalsBatchesQueueState} from "contracts/libraries/WithdrawalsBatchesQueue.sol";
 import {State as EscrowSt} from "contracts/libraries/EscrowState.sol";
 
-import "contracts/model/StETHModel.sol";
-import "contracts/model/WithdrawalQueueModel.sol";
-import "contracts/model/WstETHAdapted.sol";
+import "test/kontrol/model/StETHModel.sol";
+import "test/kontrol/model/WithdrawalQueueModel.sol";
+import "test/kontrol/model/WstETHAdapted.sol";
 
 import "test/kontrol/KontrolTest.sol";
 import "test/kontrol/storage/DualGovernanceStorageConstants.sol";

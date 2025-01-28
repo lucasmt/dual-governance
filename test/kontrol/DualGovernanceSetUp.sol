@@ -6,9 +6,9 @@ import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
 import "contracts/EmergencyProtectedTimelock.sol";
 import {Escrow} from "contracts/Escrow.sol";
-import "contracts/model/StETHModel.sol";
-import "contracts/model/WstETHAdapted.sol";
-import "contracts/model/WithdrawalQueueModel.sol";
+import "test/kontrol/model/StETHModel.sol";
+import "test/kontrol/model/WstETHAdapted.sol";
+import "test/kontrol/model/WithdrawalQueueModel.sol";
 import "contracts/ResealManager.sol";
 
 import {DualGovernanceConfig} from "contracts/libraries/DualGovernanceConfig.sol";

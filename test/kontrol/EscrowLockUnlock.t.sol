@@ -11,9 +11,9 @@ import {addTo, Duration, Durations} from "contracts/types/Duration.sol";
 import {PercentD16} from "contracts/types/PercentD16.sol";
 import {Timestamp, Timestamps} from "contracts/types/Timestamp.sol";
 
-import "contracts/model/StETHModel.sol";
-import "contracts/model/WithdrawalQueueModel.sol";
-import "contracts/model/WstETHAdapted.sol";
+import "test/kontrol/model/StETHModel.sol";
+import "test/kontrol/model/WithdrawalQueueModel.sol";
+import "test/kontrol/model/WstETHAdapted.sol";
 
 import {StorageSetup} from "test/kontrol/StorageSetup.sol";
 import {DualGovernanceSetUp} from "test/kontrol/DualGovernanceSetUp.sol";
