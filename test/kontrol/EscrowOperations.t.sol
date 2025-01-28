@@ -25,7 +25,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
     }
 
     /**
-     * Test that a staker cannot unlock funds from the escrow until SignallingEscrowMinLockTime has passed since the last time that user has locked tokens.
+     * Test that a staker cannot unlock funds from the escrow until minAssetsLockDuration has passed since the last time that user has locked tokens.
      */
     function testCannotUnlockBeforeMinLockTime() external {
         Escrow escrow = signallingEscrow;
@@ -36,17 +36,24 @@ contract EscrowOperationsTest is EscrowAccountingTest {
 
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
         vm.assume(pre.userSharesLocked <= pre.totalSharesLocked);
+
+        // Assume that the state doesn't transition to rage quit, which would
+        // turn this into the rage quit escrow
         vm.assume(
-            dualGovernance.getPersistedState() == State.RageQuit || dualGovernance.getEffectiveState() != State.RageQuit
+            dualGovernance.getPersistedState() == State.RageQuit ||
+            dualGovernance.getEffectiveState() != State.RageQuit
         );
 
+        // Assume that the minimal lock duration has not passed
         Duration lockDuration = Duration.wrap(_getMinAssetsLockDuration(escrow));
         Timestamp lockPeriod = addTo(lockDuration, pre.userLastLockedTime);
-
         vm.assume(Timestamps.now() < lockPeriod);
 
         vm.prank(sender);
+
+        // Check that unlockStETH reverts with the expected message
         vm.expectRevert(abi.encodeWithSelector(AssetsAccounting.MinAssetsLockDurationNotPassed.selector, lockPeriod));
+
         escrow.unlockStETH();
     }
 
@@ -58,13 +65,17 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         this.stEthUserSetup(stEth, sender);
         this.escrowUserSetup(signallingEscrow, sender);
 
+        // Assume that the DualGovernance is about to transition to the RageQuit state
         vm.assume(dualGovernance.getPersistedState() != State.RageQuit);
         vm.assume(dualGovernance.getEffectiveState() == State.RageQuit);
 
         vm.startPrank(sender);
+
+        // Check that both lockStETH and unlockStETH revert
         bool lockSuccess = _tryLockStETH(signallingEscrow, amount);
         bool unlockSuccess = _tryUnlockStETH(signallingEscrow);
         assert(!lockSuccess && !unlockSuccess);
+
         vm.stopPrank;
     }
 
@@ -76,7 +87,6 @@ contract EscrowOperationsTest is EscrowAccountingTest {
 
         address sender = _getArbitraryUserAddress();
         kevm.symbolicStorage(sender);
-
         this.stEthUserSetup(stEth, sender);
         this.escrowUserSetup(escrow, sender);
         vm.assume(stEth.balanceOf(sender) < ethUpperBound);
@@ -84,6 +94,7 @@ contract EscrowOperationsTest is EscrowAccountingTest {
         AccountingRecord memory pre = this.saveAccountingRecord(sender, escrow);
         vm.assume(pre.userSharesLocked > 0);
         vm.assume(pre.userSharesLocked <= pre.totalSharesLocked);
+
         uint256 userEth = stEth.getPooledEthByShares(pre.userSharesLocked);
         vm.assume(userEth <= pre.totalEth);
         vm.assume(userEth <= address(escrow).balance);
