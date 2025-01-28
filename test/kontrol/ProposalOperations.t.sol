@@ -240,11 +240,12 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
     /**
      * Test that only admin proposers can cancel proposals.
      */
-    function testOnlyAdminProposersCanCancelProposals(address sender) external {
+    function testOnlyAdminProposersCanCancelProposals() external {
+        address sender = address(uint160(uint256(keccak256("sender"))));
         vm.assume(sender != dualGovernance.getProposalsCanceller());
 
         vm.startPrank(sender);
-        vm.expectRevert(abi.encodeWithSelector(DualGovernance.InvalidProposalsCanceller.selector, sender));
+        vm.expectRevert(abi.encodeWithSelector(DualGovernance.CallerIsNotProposalsCanceller.selector, sender));
         dualGovernance.cancelAllPendingProposals();
         vm.stopPrank();
     }
