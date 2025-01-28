@@ -486,7 +486,7 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(timelock.isEmergencyModeActive());
     }
 
-    // Caller is not EmergencyActiavtionComittee
+    // Caller is not EmergencyActivationComittee
     function testActivateEmergencyModeRevert(address caller) external {
         vm.assume(caller != timelock.getEmergencyActivationCommittee());
 
