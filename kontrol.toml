@@ -56,7 +56,7 @@ match-test                 = [
         #"EscrowLockUnlockTest.testUnlockStEthNormal",
         #"EscrowLockUnlockTest.testUnlockStEthVetoCooldown",
         #"EscrowLockUnlockTest.testUnlockStEthRageQuit",
-        "EscrowLockUnlockTest.testUnlockStEthVetoSignalling_",
+        "EscrowLockUnlockTest.testUnlockStEthVetoSignallingDeactivation",
         #"EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
         #"EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
         #"EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
