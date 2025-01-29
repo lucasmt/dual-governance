@@ -133,6 +133,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             Duration next_rageQuitExtensionPeriodDuration =
                 Duration.wrap(_getRageQuitExtensionPeriodDuration(rageQuitEscrow));
 
+            /*
             // Forget rage quit support correctness constraints
             kevm.forgetBranch(
                 PercentD16.unwrap(init_rageQuitSupport), KontrolCheatsBase.ComparisonOperator.LessThan, 2 ** 128
@@ -140,6 +141,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             kevm.forgetBranch(
                 PercentD16.unwrap(next_rageQuitSupport), KontrolCheatsBase.ComparisonOperator.LessThan, 2 ** 128
             );
+            */
 
             // Forget second state transition
             this.forgetStateTransition(
@@ -335,6 +337,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             Duration next_rageQuitExtensionPeriodDuration =
                 Duration.wrap(_getRageQuitExtensionPeriodDuration(rageQuitEscrow));
 
+            /*
             // Forget rage quit support correctness constraints
             kevm.forgetBranch(
                 PercentD16.unwrap(init_rageQuitSupport), KontrolCheatsBase.ComparisonOperator.LessThan, 2 ** 128
@@ -342,6 +345,7 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
             kevm.forgetBranch(
                 PercentD16.unwrap(next_rageQuitSupport), KontrolCheatsBase.ComparisonOperator.LessThan, 2 ** 128
             );
+            */
 
             // Forget second state transition
             this.forgetStateTransition(
