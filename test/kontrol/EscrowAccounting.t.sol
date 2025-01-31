@@ -154,9 +154,21 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
             vm.assume(nextRequestOwner == address(escrow));
         }
 
+        uint256 balancePre = address(escrow).balance;
+        uint256 claimedPre =
+            ETHValue.unwrap(escrow.getSignallingEscrowDetails().totalStETHClaimedETH);
+
         vm.startPrank(sender);
         escrow.claimNextWithdrawalsBatch(maxUnstETHIdsCount);
         vm.stopPrank();
+
+        uint256 balancePost = address(escrow).balance;
+        uint256 claimedPost =
+            ETHValue.unwrap(escrow.getSignallingEscrowDetails().totalStETHClaimedETH);
+
+        uint256 amountClaimed = balancePost - balancePre;
+
+        assert(claimedPost == claimedPre + amountClaimed);
 
         this.escrowInvariants(Mode.Assert, escrow);
         this.escrowUserInvariants(Mode.Assert, escrow, sender);
