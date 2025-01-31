@@ -439,9 +439,6 @@ contract EscrowStorageSetup is KontrolTest {
             lastClaimedBatchIndex
         );
 
-        _withdrawalsBatchSetup(_escrow, lastClaimedBatchIndex);
-        _withdrawalsBatchSetup(_escrow, lastClaimedBatchIndex + 1);
-
         uint256 lastClaimedUnstEthIdIndex = freshUInt64("Escrow_lastClaimedUnstEthIdIndex");
         _storeData(
             address(_escrow),
@@ -476,8 +473,6 @@ contract EscrowStorageSetup is KontrolTest {
             _storeData(
                 address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, batchesQueueLength
             );
-
-            _withdrawalsBatchSetup(_escrow, batchesQueueLength - 1);
         } else {
             _storeData(address(_escrow), BATCHESLENGTH_SLOT, BATCHESLENGTH_OFFSET, BATCHESLENGTH_SIZE, 0);
         }

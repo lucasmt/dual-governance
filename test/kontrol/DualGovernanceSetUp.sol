@@ -92,7 +92,7 @@ contract DualGovernanceSetUp is StorageSetup {
         components.configProvider = config;
 
         dgSanityCheckParams = DualGovernance.SanityCheckParams({
-            minWithdrawalsBatchSize: 4,
+            minWithdrawalsBatchSize: 1,
             minTiebreakerActivationTimeout: Durations.from(30 days),
             maxTiebreakerActivationTimeout: Durations.from(180 days),
             maxSealableWithdrawalBlockersCount: 128,

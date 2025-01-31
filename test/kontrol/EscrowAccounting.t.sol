@@ -55,6 +55,31 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         this.escrowUserInvariants(Mode.Assert, initialEscrow, sender);
     }
 
+    function testRequestNextWithdrawalsBatch() public {
+        Escrow escrow = rageQuitEscrow;
+        // For simplicity
+        uint256 batchSize = 1;
+        assert(batchSize >= escrow.MIN_WITHDRAWALS_BATCH_SIZE());
+
+        vm.assume(!escrow.isWithdrawalsBatchesClosed());
+        uint256 batchesLength = _getBatchesLength(escrow);
+        _withdrawalsBatchSetup(escrow, batchesLength - 1);
+
+        uint256 lastBatchIndex = batchesLength - 1;
+        vm.assume(_getLastUnstEthId(escrow, lastBatchIndex) ==
+                  _getLastRequestId(withdrawalQueue));
+
+        // Avoid overflow
+        uint64 totalUnstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
+        vm.assume(totalUnstEthIdsCount < 2 ** 32);
+
+        this.escrowInvariants(Mode.Assume, escrow);
+
+        escrow.requestNextWithdrawalsBatch(batchSize);
+
+        this.escrowInvariants(Mode.Assert, escrow);
+    }
+
     function testClaimNextWithdrawalsBatch() public {
         Escrow escrow = rageQuitEscrow;
 
@@ -63,6 +88,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
 
         this.escrowInvariants(Mode.Assume, escrow);
         this.escrowUserInvariants(Mode.Assume, escrow, sender);
+        this.claimedBatchesInvariants(Mode.Assume, escrow);
 
         // Only claim one unstETH for simplicity
         uint256 maxUnstETHIdsCount = 1;
@@ -86,6 +112,10 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
             vm.assume(lastUnstEthId - firstUnstEthId < type(uint256).max);
             vm.assume(lastClaimedUnstEthIdIndex < type(uint64).max);
             vm.assume(lastClaimedUnstEthIdIndex + 1 <= type(uint256).max - firstUnstEthId);
+
+            // Set up storage for last and next claimed batch
+            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex);
+            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex + 1);
 
             // Predict what the next request id will be, to make the proper assumption
             uint256 lastFinalizedRequestId = _getLastFinalizedRequestId(withdrawalQueue);
@@ -130,5 +160,6 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
 
         this.escrowInvariants(Mode.Assert, escrow);
         this.escrowUserInvariants(Mode.Assert, escrow, sender);
+        this.claimedBatchesInvariants(Mode.Assert, escrow);
     }
 }

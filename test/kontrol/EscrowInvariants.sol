@@ -24,17 +24,6 @@ contract EscrowInvariants is StorageSetup {
         uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
         _establish(mode, unstEthIdsClaimed <= unstEthIdsCount);
 
-        // Index of the last claimed batch is <= the total number of batches
-        // (<= because they can both be 0 at first)
-        uint56 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
-        uint256 batchesLength = _getBatchesLength(escrow);
-        _establish(mode, lastClaimedBatchIndex <= batchesLength);
-
-        // UnstETH ids in the last claimed batch are in order
-        uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
-        uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
-        _establish(mode, firstUnstEthId <= lastUnstEthId);
-
         // Escrow state is either SignallingEscrow or RageQuitEscrow
         EscrowSt currentState = EscrowSt(_getCurrentState(escrow));
         _establish(mode, 1 <= uint8(currentState));
@@ -69,5 +58,18 @@ contract EscrowInvariants is StorageSetup {
         uint128 totalLockedShares = _getTotalStEthLockedShares(escrow);
 
         _establish(mode, userLockedShares <= totalLockedShares);
+    }
+
+    function claimedBatchesInvariants(Mode mode, Escrow escrow) external view {
+        // Index of the last claimed batch is <= the total number of batches
+        // (<= because they can both be 0 at first)
+        uint56 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
+        uint256 batchesLength = _getBatchesLength(escrow);
+        _establish(mode, lastClaimedBatchIndex <= batchesLength);
+
+        // UnstETH ids in the last claimed batch are in order
+        uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
+        uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
+        _establish(mode, firstUnstEthId <= lastUnstEthId);
     }
 }
