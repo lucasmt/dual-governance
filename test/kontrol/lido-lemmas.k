@@ -168,6 +168,13 @@ module LIDO-LEMMAS
         requires LENGTH ==Int lengthBytes ( #abiCallData ( FNAME , ARGS ) ) -Int 4
         [simplification, preserves-definedness]
 
+    rule ( A /Int B ) /Int C => 0
+        requires 0 <=Int A
+         andBool 0 <Int B
+         andBool 0 <Int C
+         andBool A <Int ( C *Int B )
+        [simplification, symbolic(A, B), concrete(C), preserves-definedness]
+
 endmodule
 
 module LIDO-LEMMAS-SPEC
