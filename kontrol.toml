@@ -48,56 +48,27 @@ match-test                 = [
         "VetoSignallingTest.testDeactivationNotCancelled",
         "EscrowAccountingTest.testRageQuitSupport",
         "EscrowAccountingTest.testEscrowInvariantsHoldInitially",
-        #"EscrowAccountingTest.testRequestWithdrawals",
+        "EscrowAccountingTest.testRequestNextWithdrawalsBatch",
         "EscrowAccountingTest.testClaimNextWithdrawalsBatch",
-        #"EscrowLockUnlockTest.testLockStEth",
-        #"EscrowLockUnlockTest.testUnlockStEth",
+        "EscrowLockUnlockTest.testLockStEthNormal",
+        "EscrowLockUnlockTest.testLockStEthVetoSignalling_",
+        "EscrowLockUnlockTest.testLockStEthVetoSignallingDeactivation",
+        "EscrowLockUnlockTest.testLockStEthVetoCooldown",
+        "EscrowLockUnlockTest.testLockStEthRageQuit",
+        "EscrowLockUnlockTest.testUnlockStEthNormal",
+        "EscrowLockUnlockTest.testUnlockStEthVetoSignalling_",
+        "EscrowLockUnlockTest.testUnlockStEthVetoSignallingDeactivation",
+        "EscrowLockUnlockTest.testUnlockStEthVetoCooldown",
+        "EscrowLockUnlockTest.testUnlockStEthRageQuit",
         "EscrowOperationsTest.testCannotUnlockBeforeMinLockTime",
         "EscrowOperationsTest.testCannotLockUnlockInRageQuitEscrowState",
         "EscrowOperationsTest.testCannotWithdrawBeforeEthClaimTimelockElapsed",
-        #"ProposalOperationsTest.testOnlyAdminProposersCanCancelProposals",
         "ProposalOperationsTest.testCannotProposeInInvalidState",
         "ProposalOperationsTest.testCannotScheduleInInvalidStates",
         "ProposalOperationsTest.testCannotScheduleSubmissionAfterLastVetoSignalling",
-        #"ProposalOperationsTest.testCanceledOrExecutedActionsCannotBeRescheduled",
         "ProposalOperationsTest.testCannotScheduleBeforeMinTimelock",
         "ProposalOperationsTest.testCannotExecuteBeforeEmergencyProtectionTimelock",
-        #"ActivateNextStateTest.testEscrowStateTransition",
-    ]
-# bug-report               = disabled by default
-
-[prove.extension]
-foundry-project-root       = '.'
-schedule                   = 'CANCUN'
-verbose                    = false
-debug                      = false
-max-depth                  = 100000
-max-iterations             = 10000
-reinit                     = false
-cse                        = false
-workers                    = 1
-max-frontier-parallel      = 6
-maintenance-rate           = 128
-assume-defined             = false
-no-log-succ-rewrites       = true
-no-stack-checks            = true
-optimize-kcfg              = true
-kore-rpc-command           = 'kore-rpc-booster --no-post-exec-simplify --equation-max-recursion 20 --equation-max-iterations 1000 --fallback-on Aborted'
-failure-information        = true
-counterexample-information = true
-minimize-proofs            = false
-fail-fast                  = true
-smt-timeout                = 60000
-smt-retry-limit            = 0
-break-every-step           = false
-break-on-jumpi             = false
-break-on-calls             = false
-break-on-storage           = false
-break-on-basic-blocks      = false
-break-on-cheatcodes        = false
-auto_abstract              = true
-run-constructor            = false
-match-test                 = [
+        "ProposalOperationsTest.testOnlyProposalsCancellerCanCancelProposals",
         "CancellingProposalsTest.testOnlyGovernanceCanCancelProposals",
         "CancellingProposalsTest.testCancelledProposalsCannotBeScheduled",
         "CancellingProposalsTest.testCancelledProposalsCannotBeExecuted",
