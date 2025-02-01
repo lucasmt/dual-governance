@@ -687,10 +687,11 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         assert(!timelock.isEmergencyModeActive());
         assert(postState.emergencyActivationCommittee == address(0));
         assert(postState.emergencyExecutionCommittee == address(0));
-        assert(postState.emergencyGovernance == emergencyGovernance);
         assert(postState.emergencyModeDuration == Durations.ZERO);
         assert(postState.emergencyModeEndsAfter == Timestamps.ZERO);
         assert(postState.emergencyProtectionEndsAfter == Timestamps.ZERO);
+        assert(postState.emergencyGovernance == emergencyGovernance);
+        assert(timelock.getGovernance() == emergencyGovernance);
 
         if (statusBefore != Status.Executed) {
             Status statusAfter = timelock.getProposalDetails(proposalId).status;
