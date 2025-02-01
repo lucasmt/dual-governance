@@ -32,10 +32,6 @@ contract WithdrawalQueueStorageSetup is KontrolTest {
     uint256 constant LOCKEDETHERAMOUNT_SLOT = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_SLOT;
     uint256 constant LOCKEDETHERAMOUNT_OFFSET = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_OFFSET;
     uint256 constant LOCKEDETHERAMOUNT_SIZE = WithdrawalQueueStorageConstants.STORAGE_LOCKEDETHERAMOUNT_SIZE;
-    uint256 constant STETH_SLOT = WithdrawalQueueStorageConstants.STORAGE_STETH_SLOT;
-    uint256 constant STETH_OFFSET = WithdrawalQueueStorageConstants.STORAGE_STETH_OFFSET;
-    uint256 constant STETH_SIZE = WithdrawalQueueStorageConstants.STORAGE_STETH_SIZE;
-    uint256 constant OWNERS_SLOT = WithdrawalQueueStorageConstants.STORAGE_OWNERS_SLOT;
     uint256 constant REQUESTS_SLOT = WithdrawalQueueStorageConstants.STORAGE_REQUESTS_SLOT;
     uint256 constant ISCLAIMED_SLOT =
         WithdrawalQueueStorageConstants.STRUCT_WITHDRAWALQUEUEMODEL_WITHDRAWALREQUEST_ISCLAIMED_SLOT;
@@ -81,9 +77,9 @@ contract WithdrawalQueueStorageSetup is KontrolTest {
                     address(_withdrawalQueue),
                     REQUESTS_SLOT,
                     _requestId,
-                    ISCLAIMED_SLOT,
-                    ISCLAIMED_OFFSET,
-                    ISCLAIMED_SIZE
+                    OWNER_SLOT,
+                    OWNER_OFFSET,
+                    OWNER_SIZE
                 )
             )
         );
@@ -103,19 +99,10 @@ contract WithdrawalQueueStorageSetup is KontrolTest {
         uint256 lastRequestId = freshUInt256("WQ_lastRequestId");
         // If we assume that request IDs increase sequentially, it's unlikely tha they will reach this high
         vm.assume(lastRequestId < 2 ** 64);
-        uint256 owner = freshUInt160("WQ_owner");
-
-        // TODO: Storage clearance, requires maintenance
-        _clearSlot(address(_withdrawalQueue), STETH_SLOT);
-        _clearMappingSlot(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0);
-
-        _storeData(address(_withdrawalQueue), STETH_SLOT, STETH_OFFSET, STETH_SIZE, uint256(uint160(address(_stEth))));
 
         _storeData(
             address(_withdrawalQueue), LASTREQUESTID_SLOT, LASTREQUESTID_OFFSET, LASTREQUESTID_SIZE, lastRequestId
         );
-
-        _storeMappingData(address(_withdrawalQueue), OWNERS_SLOT, lastRequestId + 1, 0, 0, 20, owner);
 
         uint256 lastFinalizedRequestId = freshUInt256("WQ_lastFinalizedRequestId");
         _storeData(

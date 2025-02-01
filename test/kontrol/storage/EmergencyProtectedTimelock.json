@@ -104,7 +104,7 @@
           "label": "afterSubmitDelay",
           "offset": 20,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15244"
+          "type": "t_userDefinedValueType(Duration)13814"
         },
         {
           "astId": 12902,
@@ -112,7 +112,7 @@
           "label": "afterScheduleDelay",
           "offset": 24,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15244"
+          "type": "t_userDefinedValueType(Duration)13814"
         },
         {
           "astId": 12905,
@@ -135,7 +135,7 @@
           "label": "emergencyModeEndsAfter",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 9746,
@@ -151,7 +151,7 @@
           "label": "emergencyProtectionEndsAfter",
           "offset": 25,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 9753,
@@ -167,7 +167,7 @@
           "label": "emergencyModeDuration",
           "offset": 20,
           "slot": "1",
-          "type": "t_userDefinedValueType(Duration)15244"
+          "type": "t_userDefinedValueType(Duration)13814"
         },
         {
           "astId": 9760,
@@ -260,7 +260,7 @@
           "label": "submittedAt",
           "offset": 21,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 10915,
@@ -268,7 +268,7 @@
           "label": "scheduledAt",
           "offset": 26,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         }
       ]
     },
@@ -287,12 +287,12 @@
       "label": "uint96",
       "numberOfBytes": "12"
     },
-    "t_userDefinedValueType(Duration)15244": {
+    "t_userDefinedValueType(Duration)13814": {
       "encoding": "inplace",
       "label": "Duration",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(Timestamp)16600": {
+    "t_userDefinedValueType(Timestamp)15170": {
       "encoding": "inplace",
       "label": "Timestamp",
       "numberOfBytes": "5"

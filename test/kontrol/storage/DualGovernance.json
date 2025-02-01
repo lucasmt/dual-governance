@@ -110,18 +110,18 @@
       "numberOfBytes": "32",
       "value": "t_uint256"
     },
-    "t_struct(AddressSet)66444_storage": {
+    "t_struct(AddressSet)65014_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.AddressSet",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 66443,
+          "astId": 65013,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_inner",
           "offset": 0,
           "slot": "0",
-          "type": "t_struct(Set)66129_storage"
+          "type": "t_struct(Set)64699_storage"
         }
       ]
     },
@@ -198,7 +198,7 @@
           "label": "tiebreakerActivationTimeout",
           "offset": 20,
           "slot": "0",
-          "type": "t_userDefinedValueType(Duration)15244"
+          "type": "t_userDefinedValueType(Duration)13814"
         },
         {
           "astId": 12381,
@@ -206,7 +206,7 @@
           "label": "sealableWithdrawalBlockers",
           "offset": 0,
           "slot": "1",
-          "type": "t_struct(AddressSet)66444_storage"
+          "type": "t_struct(AddressSet)65014_storage"
         }
       ]
     },
@@ -229,7 +229,7 @@
           "label": "enteredAt",
           "offset": 1,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 8646,
@@ -237,7 +237,7 @@
           "label": "vetoSignallingActivatedAt",
           "offset": 6,
           "slot": "0",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 8650,
@@ -261,7 +261,7 @@
           "label": "vetoSignallingReactivationTime",
           "offset": 0,
           "slot": "1",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 8661,
@@ -269,7 +269,7 @@
           "label": "normalOrVetoCooldownExitedAt",
           "offset": 5,
           "slot": "1",
-          "type": "t_userDefinedValueType(Timestamp)16600"
+          "type": "t_userDefinedValueType(Timestamp)15170"
         },
         {
           "astId": 8665,
@@ -300,7 +300,7 @@
           "label": "proposerIndex",
           "offset": 0,
           "slot": "0",
-          "type": "t_userDefinedValueType(IndexOneBased)15963"
+          "type": "t_userDefinedValueType(IndexOneBased)14533"
         },
         {
           "astId": 11665,
@@ -312,13 +312,13 @@
         }
       ]
     },
-    "t_struct(Set)66129_storage": {
+    "t_struct(Set)64699_storage": {
       "encoding": "inplace",
       "label": "struct EnumerableSet.Set",
       "numberOfBytes": "64",
       "members": [
         {
-          "astId": 66124,
+          "astId": 64694,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_values",
           "offset": 0,
@@ -326,7 +326,7 @@
           "type": "t_array(t_bytes32)dyn_storage"
         },
         {
-          "astId": 66128,
+          "astId": 64698,
           "contract": "contracts/DualGovernance.sol:DualGovernance",
           "label": "_positions",
           "offset": 0,
@@ -345,17 +345,17 @@
       "label": "uint8",
       "numberOfBytes": "1"
     },
-    "t_userDefinedValueType(Duration)15244": {
+    "t_userDefinedValueType(Duration)13814": {
       "encoding": "inplace",
       "label": "Duration",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(IndexOneBased)15963": {
+    "t_userDefinedValueType(IndexOneBased)14533": {
       "encoding": "inplace",
       "label": "IndexOneBased",
       "numberOfBytes": "4"
     },
-    "t_userDefinedValueType(Timestamp)16600": {
+    "t_userDefinedValueType(Timestamp)15170": {
       "encoding": "inplace",
       "label": "Timestamp",
       "numberOfBytes": "5"

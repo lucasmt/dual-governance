@@ -7,8 +7,8 @@ import "kontrol-cheatcodes/KontrolCheats.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract WithdrawalQueueModel is KontrolCheats, IWithdrawalQueue, ERC721 {
-    Vm vm;
-    IStETH public stETH;
+    Vm immutable vm;
+    IStETH public immutable stETH;
     uint256 public constant MIN_STETH_WITHDRAWAL_AMOUNT = 100;
     uint256 public constant MAX_STETH_WITHDRAWAL_AMOUNT = 1000 * 1e18;
 
@@ -85,7 +85,8 @@ contract WithdrawalQueueModel is KontrolCheats, IWithdrawalQueue, ERC721 {
             // Not tracking requests by owner in this model
             //assert(_getRequestsByOwner()[request.owner].remove(_requestId));
 
-            uint256 ethWithDiscount = freshUInt256("ethWithDiscount");
+            uint128 ethWithDiscount = freshUInt128("ethWithDiscount");
+            vm.assume(ethWithDiscount < 2 ** 96);
             vm.assume(ethWithDiscount <= _lockedEtherAmount);
             // because of the stETH rounding issue
             // (issue: https://github.com/lidofinance/lido-dao/issues/442 )
