@@ -102,20 +102,29 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
             uint64 unstEthIdsClaimed = _getTotalUnstEthIdsClaimed(escrow);
             vm.assume(unstEthIdsCount != unstEthIdsClaimed);
 
-            // Assume no overflows
+            // Set up storage for last and next claimed batch
             uint256 lastClaimedBatchIndex = _getLastClaimedBatchIndex(escrow);
+            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex);
+            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex + 1);
+
+            // Assume the batches queue is not empty
+            uint256 batchesQueueLength = _getBatchesLength(escrow);
+            vm.assume(0 < batchesQueueLength);
+            vm.assume(lastClaimedBatchIndex < batchesQueueLength);
+
+            // Assume unstETH ids are not 0
             uint256 firstUnstEthId = _getFirstUnstEthId(escrow, lastClaimedBatchIndex);
             uint256 lastUnstEthId = _getLastUnstEthId(escrow, lastClaimedBatchIndex);
+            vm.assume(firstUnstEthId != 0);
+            vm.assume(lastUnstEthId != 0);
+
+            // Assume no overflows
             uint64 lastClaimedUnstEthIdIndex = _getLastClaimedUnstEthIdIndex(escrow);
-            uint256 batchesQueueLength = _getBatchesLength(escrow);
             vm.assume(lastClaimedBatchIndex < type(uint56).max);
+            vm.assume(firstUnstEthId <= lastUnstEthId);
             vm.assume(lastUnstEthId - firstUnstEthId < type(uint256).max);
             vm.assume(lastClaimedUnstEthIdIndex < type(uint64).max);
             vm.assume(lastClaimedUnstEthIdIndex + 1 <= type(uint256).max - firstUnstEthId);
-
-            // Set up storage for last and next claimed batch
-            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex);
-            _withdrawalsBatchSetup(escrow, lastClaimedBatchIndex + 1);
 
             // Predict what the next request id will be, to make the proper assumption
             uint256 lastFinalizedRequestId = _getLastFinalizedRequestId(withdrawalQueue);
@@ -132,6 +141,9 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
                 uint256 nextBatchFirstUnstEthId = _getFirstUnstEthId(escrow, nextBatchIndex);
                 uint256 nextBatchLastUnstEthId = _getLastUnstEthId(escrow, nextBatchIndex);
 
+                // Assume that unstETH ids are not 0
+                vm.assume(nextBatchFirstUnstEthId != 0);
+                vm.assume(nextBatchLastUnstEthId != 0);
                 // Assume that unstETH ids are sequential
                 vm.assume(nextBatchFirstUnstEthId <= nextBatchLastUnstEthId);
                 // Assume no overflows
@@ -147,6 +159,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
             // a) is finalized,
             // b) hasn't been claimed, and
             // c) is owned by the rage quit escrow
+            this.withdrawalQueueRequestSetup(withdrawalQueue, nextRequestId);
             bool nextRequestIsClaimed = _getRequestIsClaimed(withdrawalQueue, nextRequestId);
             address nextRequestOwner = _getRequestOwner(withdrawalQueue, nextRequestId);
             vm.assume(nextRequestId <= lastFinalizedRequestId);
