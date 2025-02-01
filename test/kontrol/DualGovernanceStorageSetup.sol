@@ -59,6 +59,9 @@ contract DualGovernanceStorageSetup is KontrolTest {
     uint256 constant CONFIGPROVIDER_SLOT = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_SLOT;
     uint256 constant CONFIGPROVIDER_OFFSET = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_OFFSET;
     uint256 constant CONFIGPROVIDER_SIZE = DualGovernanceStorageConstants.STORAGE_STATEMACHINE_CONFIGPROVIDER_SIZE;
+    uint256 constant PROPOSALSCANCELLER_SLOT = DualGovernanceStorageConstants.STORAGE_PROPOSALSCANCELLER_SLOT;
+    uint256 constant PROPOSALSCANCELLER_OFFSET = DualGovernanceStorageConstants.STORAGE_PROPOSALSCANCELLER_OFFSET;
+    uint256 constant PROPOSALSCANCELLER_SIZE = DualGovernanceStorageConstants.STORAGE_PROPOSALSCANCELLER_SIZE;
 
     //
     //  GETTERS
@@ -170,6 +173,15 @@ contract DualGovernanceStorageSetup is KontrolTest {
             CONFIGPROVIDER_OFFSET,
             CONFIGPROVIDER_SIZE,
             uint256(uint160(address(_config)))
+        );
+
+        address proposalsCanceller = kevm.freshAddress("DG_PROPOSALSCANCELER");
+        _storeData(
+            address(_dualGovernance),
+            PROPOSALSCANCELLER_SLOT,
+            PROPOSALSCANCELLER_OFFSET,
+            PROPOSALSCANCELLER_SIZE,
+            uint256(uint160(proposalsCanceller))
         );
     }
 
