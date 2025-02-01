@@ -1,6 +1,7 @@
 pragma solidity 0.8.26;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import "contracts/ImmutableDualGovernanceConfigProvider.sol";
 import "contracts/DualGovernance.sol";
@@ -57,7 +58,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
 
     function testRequestNextWithdrawalsBatch() public {
         Escrow escrow = rageQuitEscrow;
-        // For simplicity
+        // Use a batch size of 1 for simplicity
         uint256 batchSize = 1;
         assert(batchSize >= escrow.MIN_WITHDRAWALS_BATCH_SIZE());
 
@@ -73,11 +74,33 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         uint64 totalUnstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
         vm.assume(totalUnstEthIdsCount < 2 ** 32);
 
+        uint256 stEthRemainingPre = stEth.balanceOf(address(escrow));
+
         this.escrowInvariants(Mode.Assume, escrow);
 
         escrow.requestNextWithdrawalsBatch(batchSize);
 
         this.escrowInvariants(Mode.Assert, escrow);
+
+        uint256 stEthRemainingPost = stEth.balanceOf(address(escrow));
+
+        // Since batchesSize = 1, there is only a single withdrawal request
+        uint256 requestAmount = Math.min(
+            stEthRemainingPre,
+            withdrawalQueue.MAX_STETH_WITHDRAWAL_AMOUNT()
+        );
+
+        assert(stEthRemainingPost == stEthRemainingPre - requestAmount);
+
+        uint256 minWithdrawableStEthAmount = Math.max(
+            escrow.MIN_TRANSFERRABLE_ST_ETH_AMOUNT(),
+            withdrawalQueue.MIN_STETH_WITHDRAWAL_AMOUNT()
+        );
+
+        if (stEthRemainingPost < minWithdrawableStEthAmount)
+            assert(escrow.isWithdrawalsBatchesClosed());
+        else
+            assert(!escrow.isWithdrawalsBatchesClosed());
     }
 
     function testClaimNextWithdrawalsBatch() public {
