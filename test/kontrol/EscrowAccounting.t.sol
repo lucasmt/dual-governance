@@ -74,6 +74,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
         uint64 totalUnstEthIdsCount = _getTotalUnstEthIdsCount(escrow);
         vm.assume(totalUnstEthIdsCount < 2 ** 32);
 
+        uint256 sharesRemainingPre = stEth.sharesOf(address(escrow));
         uint256 stEthRemainingPre = stEth.balanceOf(address(escrow));
 
         this.escrowInvariants(Mode.Assume, escrow);
@@ -82,20 +83,29 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
 
         this.escrowInvariants(Mode.Assert, escrow);
 
+        uint256 sharesRemainingPost = stEth.sharesOf(address(escrow));
         uint256 stEthRemainingPost = stEth.balanceOf(address(escrow));
-
-        // Since batchesSize = 1, there is only a single withdrawal request
-        uint256 requestAmount = Math.min(
-            stEthRemainingPre,
-            withdrawalQueue.MAX_STETH_WITHDRAWAL_AMOUNT()
-        );
-
-        assert(stEthRemainingPost == stEthRemainingPre - requestAmount);
 
         uint256 minWithdrawableStEthAmount = Math.max(
             escrow.MIN_TRANSFERRABLE_ST_ETH_AMOUNT(),
             withdrawalQueue.MIN_STETH_WITHDRAWAL_AMOUNT()
         );
+
+        if (stEthRemainingPre < minWithdrawableStEthAmount)
+            assert(sharesRemainingPost == sharesRemainingPre);
+        else {
+            // Since batchesSize = 1, there is only a single withdrawal request
+            uint256 requestAmount = Math.min(
+                stEthRemainingPre,
+                withdrawalQueue.MAX_STETH_WITHDRAWAL_AMOUNT()
+            );
+
+            uint256 requestAmountInShares =
+                stEth.getSharesByPooledEth(requestAmount);
+
+            assert(sharesRemainingPost ==
+                   sharesRemainingPre - requestAmountInShares);
+        }
 
         if (stEthRemainingPost < minWithdrawableStEthAmount)
             assert(escrow.isWithdrawalsBatchesClosed());
