@@ -21,6 +21,20 @@ import {EscrowInvariants} from "test/kontrol/EscrowInvariants.sol";
 import "kontrol-cheatcodes/KontrolCheats.sol";
 
 contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
+    function _calculateRageQuitSupportAfterLock(IEscrowBase escrow, uint256 amount) internal returns (uint256) {
+        uint256 finalizedEth = _getFinalizedEth(escrow);
+        uint256 lockedShares = _getTotalStEthLockedShares(escrow);
+        uint256 unfinalizedShares = _getUnfinalizedShares(escrow);
+        uint256 totalPooledEther = stEth.getTotalPooledEther();
+        uint256 amountInShares = stEth.getSharesByPooledEth(amount);
+        uint256 numerator =
+            stEth.getPooledEthByShares(lockedShares + amountInShares + unfinalizedShares) +
+            finalizedEth;
+        uint256 denominator = totalPooledEther + finalizedEth;
+
+        return 100 * 10 ** 16 * numerator / denominator;
+    }
+
     function testLockStEthNormal(uint256 amount) public {
         vm.assume(dualGovernance.getPersistedState() == State.Normal);
 
@@ -79,12 +93,18 @@ contract EscrowLockUnlockTest is EscrowInvariants, DualGovernanceSetUp {
 
         uint256 amountInShares = stEth.getSharesByPooledEth(amount);
         vm.assume(0 < amountInShares);
+        vm.assume(amountInShares < ethUpperBound);
 
         this.escrowInvariants(Mode.Assume, signallingEscrow);
         this.signallingEscrowInvariants(Mode.Assume, signallingEscrow);
         this.escrowUserInvariants(Mode.Assume, signallingEscrow, sender);
 
         {
+            // Assume rage quit support won't overflow after amount is locked
+            uint256 rageQuitSupportAfterLock =
+                _calculateRageQuitSupportAfterLock(signallingEscrow, amount);
+            vm.assume(rageQuitSupportAfterLock <= type(uint128).max);
+
             State initialState = dualGovernance.getPersistedState();
 
             // Information to help forget first state transition
