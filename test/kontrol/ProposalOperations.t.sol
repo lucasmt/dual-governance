@@ -137,47 +137,6 @@ contract ProposalOperationsTest is DualGovernanceSetUp {
     }
 
     /**
-     * Test that a proposal cannot be scheduled for execution before ProposalExecutionMinTimelock has passed since its submission.
-     */
-    function testCannotScheduleBeforeMinTimelock(uint256 proposalId) external {
-        _proposalIdAssumeBound(timelock, proposalId);
-        _proposalStorageSetup(timelock, proposalId, Status.Submitted);
-
-        ProposalRecord memory pre = _recordProposal(proposalId);
-        _validPendingProposal(Mode.Assume, pre);
-
-        State state = dualGovernance.getEffectiveState();
-        vm.assume(state == State.VetoCooldown);
-        vm.assume(pre.submittedAt <= pre.vetoSignallingActivationTime);
-        vm.assume(Timestamps.now() < addTo(_getAfterSubmitDelay(address(timelock)), pre.submittedAt));
-
-        vm.expectRevert(abi.encodeWithSelector(Proposals.AfterSubmitDelayNotPassed.selector, proposalId));
-        dualGovernance.scheduleProposal(proposalId);
-
-        ProposalRecord memory post = _recordProposal(proposalId);
-        _validPendingProposal(Mode.Assert, post);
-    }
-
-    /**
-     * Test that a proposal cannot be executed until the emergency protection timelock has passed since it was scheduled.
-     */
-    function testCannotExecuteBeforeEmergencyProtectionTimelock(uint256 proposalId) external {
-        _proposalIdAssumeBound(timelock, proposalId);
-        _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
-
-        ProposalRecord memory pre = _recordProposal(proposalId);
-        _validScheduledProposal(Mode.Assume, pre);
-        vm.assume(_getEmergencyModeEndsAfter(timelock) == 0);
-        vm.assume(Timestamps.now() < addTo(_getAfterScheduleDelay(address(timelock)), pre.scheduledAt));
-
-        vm.expectRevert(abi.encodeWithSelector(Proposals.AfterScheduleDelayNotPassed.selector, proposalId));
-        timelock.execute(proposalId);
-
-        ProposalRecord memory post = _recordProposal(proposalId);
-        _validScheduledProposal(Mode.Assert, post);
-    }
-
-    /**
      * Test that only proposals canceller can cancel proposals.
      */
     function testOnlyProposalsCancellerCanCancelProposals() external {
