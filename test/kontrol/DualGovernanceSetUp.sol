@@ -105,33 +105,11 @@ contract DualGovernanceSetUp is StorageSetup {
         escrowMasterCopy = signallingEscrow.ESCROW_MASTER_COPY();
         rageQuitEscrow = Escrow(payable(Clones.clone(address(escrowMasterCopy))));
 
-        // ?STORAGE
-        // ?WORD: totalPooledEther
-        // ?WORD0: totalShares
-        // ?WORD1: shares[signallingEscrow]
-        // ?WORD2: shares[withdrawalQueue]
-        // ?WORD3: allowances[withdrawalQueue]
         this.stEthInitializeStorage(stEth, signallingEscrow, rageQuitEscrow, withdrawalQueue);
-
-        // ?STORAGE0
-        // ?WORD4: currentState
-        // ?WORD5: enteredAt
-        // ?WORD6: vetoSignallingActivationTime
-        // ?WORD7: rageQuitRound
-        // ?WORD8: vetoSignallingReactivationTime
-        // ?WORD9: normalOrVetoCooldownExitedAt
         this.dualGovernanceInitializeStorage(dualGovernance, signallingEscrow, rageQuitEscrow, config);
-
-        // ?STORAGE1
         this.signallingEscrowInitializeStorage(signallingEscrow);
-
-        // ?STORAGE2
         this.rageQuitEscrowInitializeStorage(rageQuitEscrow);
-
-        // ?STORAGE3
         this.timelockStorageSetup(dualGovernance, timelock);
-
-        // ?STORAGE4
         this.withdrawalQueueStorageSetup(withdrawalQueue, stEth, rageQuitEscrow);
     }
 
