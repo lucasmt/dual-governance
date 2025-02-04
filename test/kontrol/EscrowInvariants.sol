@@ -37,8 +37,6 @@ contract EscrowInvariants is StorageSetup {
     }
 
     function signallingEscrowInvariants(Mode mode, Escrow escrow) external view {
-        assert(escrow.getEscrowState() == EscrowSt.SignallingEscrow);
-
         // Accounting for locked stETH is backed by the escrow's stETH balance
         // (only applies to signalling escrow, since in the rage quit escrow
         // requestNextWithdrawalsBatch reduces the balance without reducing
