@@ -1,3 +1,4 @@
+// SPDX-FileCopyrightText: 2024 Lido <info@lido.fi>
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
@@ -225,7 +226,7 @@ contract DualGovernance is IDualGovernance {
     ///     or `VetoSignallingDeactivation` state.
     /// @dev If the Dual Governance state is not `VetoSignalling` or `VetoSignallingDeactivation`, the function will
     ///     exit early, emitting the `CancelAllPendingProposalsSkipped` event without canceling any proposals.
-    /// @return isProposalsCancelled A boolean indicating whether the proposals were successfully canceled (`true`)
+    /// @return isProposalsCancelled A boolean indicating whether the proposals were successfully cancelled (`true`)
     ///     or the cancellation was skipped due to an inappropriate state (`false`).
     function cancelAllPendingProposals() external returns (bool) {
         _stateMachine.activateNextState();
@@ -239,7 +240,7 @@ contract DualGovernance is IDualGovernance {
             ///     reached consensus. This could lead to a situation where a proposer’s cancelAllPendingProposals() call
             ///     becomes unexecutable if the Dual Governance state changes. However, it might become executable again if
             ///     the system state shifts back to VetoSignalling or VetoSignallingDeactivation.
-            ///     To avoid such a scenario, an early return is used instead of a revert when proposals cannot be canceled
+            ///     To avoid such a scenario, an early return is used instead of a revert when proposals cannot be cancelled
             ///     due to an unsuitable Dual Governance state.
             emit CancelAllPendingProposalsSkipped();
             return false;
@@ -264,7 +265,7 @@ contract DualGovernance is IDualGovernance {
     ///     - The Dual Governance system is in the `Normal` or `VetoCooldown` state.
     ///     - If the system is in the `VetoCooldown` state, the proposal must have been submitted before the system
     ///         last entered the `VetoSignalling` state.
-    ///     - The proposal has not already been scheduled, canceled, or executed.
+    ///     - The proposal has not already been scheduled, cancelled, or executed.
     ///     - The required delay period, as defined by `ITimelock.getAfterSubmitDelay()`, has elapsed since the proposal
     ///         was submitted.
     /// @param proposalId The unique identifier of the proposal to check.
@@ -281,9 +282,9 @@ contract DualGovernance is IDualGovernance {
     ///     `DualGovernance.cancelAllPendingProposals()` method.
     /// @dev Proposal cancellation is only allowed when the Dual Governance system is in the `VetoSignalling` or
     ///     `VetoSignallingDeactivation` states. In any other state, the cancellation will be skipped and no proposals
-    ///     will be canceled.
+    ///     will be cancelled.
     /// @return canCancelAllPendingProposals A boolean value indicating whether the pending proposals can be
-    ///     canceled (`true`) or not (`false`) based on the current `effective` state of the Dual Governance system.
+    ///     cancelled (`true`) or not (`false`) based on the current `effective` state of the Dual Governance system.
     function canCancelAllPendingProposals() external view returns (bool) {
         return _stateMachine.canCancelAllPendingProposals({useEffectiveState: true});
     }
@@ -299,8 +300,8 @@ contract DualGovernance is IDualGovernance {
         _stateMachine.activateNextState();
     }
 
-    /// @notice Updates the address of the configuration provider for the Dual Governance system.
-    /// @param newConfigProvider The address of the new configuration provider contract.
+    /// @notice Sets the configuration provider for the Dual Governance system.
+    /// @param newConfigProvider The contract implementing the `IDualGovernanceConfigProvider` interface.
     function setConfigProvider(IDualGovernanceConfigProvider newConfigProvider) external {
         _checkCallerIsAdminExecutor();
         _stateMachine.setConfigProvider(newConfigProvider);
@@ -319,14 +320,14 @@ contract DualGovernance is IDualGovernance {
         emit ProposalsCancellerSet(newProposalsCanceller);
     }
 
-    /// @notice Retrieves the current proposals canceller address.
+    /// @notice Returns the current proposals canceller address.
     /// @return address The address of the current proposals canceller.
     function getProposalsCanceller() external view returns (address) {
         return _proposalsCanceller;
     }
 
-    /// @notice Returns the current configuration provider address for the Dual Governance system.
-    /// @return configProvider The address of the current configuration provider contract.
+    /// @notice Returns the current configuration provider for the Dual Governance system.
+    /// @return configProvider The contract implementing the `IDualGovernanceConfigProvider` interface.
     function getConfigProvider() external view returns (IDualGovernanceConfigProvider) {
         return _stateMachine.configProvider;
     }
@@ -396,7 +397,7 @@ contract DualGovernance is IDualGovernance {
         _proposers.setProposerExecutor(proposerAccount, newExecutor);
 
         /// @dev after update of the proposer, check that admin executor still belongs to some proposer
-        _proposers.checkRegisteredExecutor(TIMELOCK.getAdminExecutor());
+        _proposers.checkRegisteredExecutor(msg.sender);
     }
 
     /// @notice Unregisters a proposer from the system.
@@ -412,7 +413,7 @@ contract DualGovernance is IDualGovernance {
     }
 
     /// @notice Returns the proposer data if the given `proposerAccount` is a registered proposer.
-    /// @param proposerAccount The address of the proposer to retrieve information for.
+    /// @param proposerAccount The address of the proposer to return information for.
     /// @return proposer A Proposer struct containing the data of the registered proposer, including:
     ///     - `account`: The address of the registered proposer.
     ///     - `executor`: The address of the executor associated with the proposer.
@@ -426,7 +427,7 @@ contract DualGovernance is IDualGovernance {
         proposers = _proposers.getAllProposers();
     }
 
-    /// @notice Checks whether the given `proposerAccount` is a registered proposer.
+    /// @notice Returns whether the given `proposerAccount` is a registered proposer.
     /// @param proposerAccount The address to check.
     /// @return isProposer A boolean value indicating whether the `proposerAccount` is a registered
     ///     proposer (`true`) or not (`false`).
@@ -434,7 +435,7 @@ contract DualGovernance is IDualGovernance {
         return _proposers.isRegisteredProposer(proposerAccount);
     }
 
-    /// @notice Checks whether the given `executor` address is associated with an executor contract in the system.
+    /// @notice Returns whether the given `executor` address is associated with an executor contract in the system.
     /// @param executor The address to check.
     /// @return isExecutor A boolean value indicating whether the `executor` is a registered
     ///     executor (`true`) or not (`false`).
@@ -536,20 +537,20 @@ contract DualGovernance is IDualGovernance {
         _resealer.setResealCommittee(newResealCommittee);
     }
 
-    /// @notice Sets the address of the Reseal Manager.
-    /// @param newResealManager The address of the new Reseal Manager.
+    /// @notice Sets the address of the Reseal Manager contract.
+    /// @param newResealManager The contract implementing the `IResealManager` interface.
     function setResealManager(IResealManager newResealManager) external {
         _checkCallerIsAdminExecutor();
         _resealer.setResealManager(newResealManager);
     }
 
-    /// @notice Gets the address of the Reseal Manager.
-    /// @return resealManager The address of the Reseal Manager.
+    /// @notice Returns the address of the Reseal Manager contract.
+    /// @return resealManager The contract implementing the `IResealManager` interface.
     function getResealManager() external view returns (IResealManager) {
         return _resealer.resealManager;
     }
 
-    /// @notice Gets the address of the reseal committee.
+    /// @notice Returns the address of the reseal committee.
     /// @return resealCommittee The address of the reseal committee.
     function getResealCommittee() external view returns (address) {
         return _resealer.resealCommittee;
