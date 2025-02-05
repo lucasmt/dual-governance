@@ -248,8 +248,11 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
         Timestamp scheduledAt = Timestamp.wrap(_getScheduledAt(timelock, _getProposalsSlot(proposalId)));
+        Duration minExecutionDelay = timelock.MIN_EXECUTION_DELAY();
+        Timestamp submittedAt = Timestamp.wrap(_getSubmittedAt(timelock, _getProposalsSlot(proposalId)));
 
         vm.assume(afterScheduleDelay.addTo(scheduledAt) <= Timestamps.now());
+        vm.assume(minExecutionDelay.addTo(submittedAt) <= Timestamps.now());
         vm.assume(!timelock.isEmergencyModeActive());
 
         // Ensure that no external calls are performed besides
