@@ -290,6 +290,14 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testExecuteNonScheduledRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId);
+
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
+
         Status status = _getProposalStatus(timelock, proposalId);
 
         vm.assume(status != Status.Scheduled);
@@ -303,6 +311,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
     function testExecuteExecutedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Executed);
 
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
+
         vm.assume(!timelock.isEmergencyModeActive());
 
         vm.expectRevert(
@@ -313,6 +328,14 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testExecuteDelayHasNotPassedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Scheduled);
+
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
+
         vm.assume(_getLastCancelledProposalId(timelock) < proposalId);
 
         Duration afterScheduleDelay = timelock.getAfterScheduleDelay();
@@ -396,6 +419,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
         _proposalStorageSetup(timelock, proposalId);
 
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
+
         Status proposalStatus = timelock.getProposalDetails(proposalId).status;
         vm.assume(proposalStatus == Status.Cancelled);
 
@@ -414,6 +444,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
         vm.assume(timelock.isEmergencyModeActive());
 
         _proposalStorageSetup(timelock, proposalId);
+
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
 
         Status proposalStatus = timelock.getProposalDetails(proposalId).status;
         vm.assume(proposalStatus == Status.Cancelled);
@@ -637,6 +674,14 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testEmergencyExecuteNonScheduledRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId);
+
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
+
         Status status = _getProposalStatus(timelock, proposalId);
 
         vm.assume(status != Status.Scheduled);
@@ -652,6 +697,13 @@ contract TimelockInvariantsTest is DualGovernanceSetUp {
 
     function testEmergencyExecuteExecutedRevert(uint256 proposalId) external {
         _proposalStorageSetup(timelock, proposalId, Status.Executed);
+
+        // ExecutableProposals.execute loads proposal into memory, which causes
+        // Kontrol to branch on ExternalCalls length if it's symbolic.
+        // So we create a dummy proposal just so ExternalCalls is concrete
+        // (doesn't matter since execute should revert before call is made)
+        FlagSetter target = new FlagSetter();
+        _createDummyProposal(timelock, proposalId, target);
 
         vm.assume(timelock.isEmergencyModeActive());
         // Unlike in testExecute, we don't need to assume the delay has passed
