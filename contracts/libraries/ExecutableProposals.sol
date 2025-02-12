@@ -166,25 +166,25 @@ library ExecutableProposals {
         Duration afterScheduleDelay,
         Duration minExecutionDelay
     ) internal {
-        Proposal memory proposal = self.proposals[proposalId];
+        ProposalData memory proposalData = self.proposals[proposalId].data;
 
-        _checkProposalNotCancelled(self, proposalId, proposal.data);
+        _checkProposalNotCancelled(self, proposalId, proposalData);
 
-        if (proposal.data.status != Status.Scheduled) {
-            revert UnexpectedProposalStatus(proposalId, proposal.data.status);
+        if (proposalData.status != Status.Scheduled) {
+            revert UnexpectedProposalStatus(proposalId, proposalData.status);
         }
 
-        if (afterScheduleDelay.addTo(proposal.data.scheduledAt) > Timestamps.now()) {
+        if (afterScheduleDelay.addTo(proposalData.scheduledAt) > Timestamps.now()) {
             revert AfterScheduleDelayNotPassed(proposalId);
         }
 
-        if (minExecutionDelay.addTo(proposal.data.submittedAt) > Timestamps.now()) {
+        if (minExecutionDelay.addTo(proposalData.submittedAt) > Timestamps.now()) {
             revert MinExecutionDelayNotPassed(proposalId);
         }
 
         self.proposals[proposalId].data.status = Status.Executed;
 
-        ExternalCalls.execute(IExternalExecutor(proposal.data.executor), proposal.calls);
+        ExternalCalls.execute(IExternalExecutor(proposalData.executor), self.proposals[proposalId].calls);
         emit ProposalExecuted(proposalId);
     }
 
