@@ -44,7 +44,7 @@ contract EscrowAccountingTest is EscrowInvariants, DualGovernanceSetUp {
     function testEscrowInvariantsHoldInitially(uint32 minAssetsLockDuration) public {
         // Assumptions on minAssetsLockDuration, otherwise initialize reverts
         vm.assume(minAssetsLockDuration != 0);
-        uint32 maxDuration = Duration.unwrap(escrowMasterCopy.MAX_MIN_ASSETS_LOCK_DURATION());
+        uint32 maxDuration = Duration.unwrap(signallingEscrow.MAX_MIN_ASSETS_LOCK_DURATION());
         vm.assume(minAssetsLockDuration <= maxDuration);
 
         // Simulate Escrow initialization to get initial state
