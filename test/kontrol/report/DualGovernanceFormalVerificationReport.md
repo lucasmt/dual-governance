@@ -6,7 +6,7 @@ This report does not constitute legal or investment advice. You understand and a
 
 Lido has engaged Runtime Verification to formally verify correctness and safety properties of the smart contracts that comprise the Lido Dual Governance protocol. The formal verification was conducted using Runtime Verification's symbolic execution tool Kontrol. Kontrol's symbolic execution is performed over the compiled EVM bytecode of the smart contracts, thus guaranteeing that it can catch errors introduced by the compiler or identify corner cases that may not be evident on source code inspection.
 
-The formal verification of the Dual Governance contracts was performed over the following commit: https://github.com/lidofinance/dual-governance/commit/ad15aede50b2b8ffafd0f1095cc13060bd33c8bf. The contracts were compiled using Solidity v0.8.26, and the Kontrol version used was v1.0.114.
+The formal verification of the Dual Governance contracts was performed over the following commit: https://github.com/lidofinance/dual-governance/commit/ad15aede50b2b8ffafd0f1095cc13060bd33c8bf. The contracts were compiled using Solidity v0.8.26, and the Kontrol version used was v1.0.118.
 
 # Methodology
 
@@ -29,37 +29,38 @@ In order to make symbolic execution of the tests practical, it's occasionally ne
 * Rather than a fully symbolic address, several of the property tests below use an arbitrary concrete address to represent a random user of the protocol. This is done to make symbolic execution easier, since reasoning about symbolic values is harder than reasoning about concrete ones. However, since the exact value of an address is usually not important for contract execution, we can generally assume that results for one arbitrary address can generalize to other arbitrary addresses.
 * Most of the symbolic variables representing ETH amounts are assumed to have a value under `2 ** 96`. This is done so that Kontrol can ensure that there won't be an overflow when multiple of these variables are added and multiplied. Similarly, many symbolic variables representing timestamps are assumed to be under `2 ** 35`.
 
-Other simplifying assumptions specific to certain tests are described below.
+Other simplifying assumptions specific to certain tests are described in the "Tests and Properties" section.
 
 ## Kontrol Project Structure
 
-In addition to the test files, a number of auxiliary files are included in the `test/kontrol` folder:
+In addition to the test files, a number of auxiliary files are included in the repository:
 
-* **`kontrol.toml` file:** This file works similarly to the `foundry.toml` file, specifying the configurations for Kontrol to use when running the tests.
+* **`kontrol.toml` file:** This file works similarly to the `foundry.toml` file, specifying the configurations for Kontrol to use when running the tests. See the [Kontrol documentation](https://docs.runtimeverification.com/kontrol) for the meaning of different options.
+* **`kontrol-cheatcodes` library:** This submodule, included in the `lib` folder, is necessary in order to import the signature of the Kontrol-specific cheatcodes to the tests.
 * **`model` folder:** This folder contains simplified models of external contracts that the Dual Governance protocol interacts with, in particular the `StETH` token and the `WithdrawalQueue`. These models aim to reproduce the behavior of these contracts in enough detail to simulate their interactions with the Dual Governance contracts, while abstracting away some details that are not necessary to complete verification of the Dual Governance functions.
 * **`...StorageSetup.sol` files:** These files include functions to initialize the storage of important contracts, such as `DualGovernance` and `Escrow`, with symbolic variables. These functions are called by the `setUp` function implemented in the `DualGovernanceSetUp` file. By initializing storage variables with symbolic values before each test, we can execute the tests as if the contracts are in an arbitrary state.
 * **`storage` folder:** This folder contains a shell script `storage_setup.sh` that automatically generates a set of Solidity files of the form `...StorageConstants.sol` for different Dual Governance contracts. Each file contains constants indicating the storage slots and offsets for the storage variables of the corresponding contract. These constants are imported by the `...StorageSetup.sol` files, which use them to determine the storage location of each variable when initializing them symbolically. Therefore, if the storage layout of a contract changes, the `storage_setup.sh` script must be re-run in order to update the constants with the correct storage locations.
 * **`lido-lemmas.k` file:** This file contains auxiliary lemmas written in the K specification language, which are added to help Kontrol simplify challenging expressions.
 
+## Reproducibility Instructions
+
+The results of the tests can be reproduced using the Kontrol tool by running the following commands from the top-level directory of the repository.
+
+First, if storage locations in the contracts have changed, run the `storage_setup.sh` script described above in order to update the constants for each storage slot:
+```
+bash test/kontrol/storage/storage_setup.sh
+```
+Then, build the project and run the proofs symbolically using Kontrol:
+```
+export FOUNDRY_PROFILE=kprove  # set the Foundry profile to compile the Kontrol tests
+kontrol build
+kontrol prove
+```
+Be aware that the execution time of the entire test suite may take over 24h. See the KaaS report for more detailed timing information for each test, but note that running time may vary depending on the machine. 
+
 # Tests and Properties
 
 The following are descriptions of each test contract and the tests that they contain, briefly summarizing the properties being verified by each test.
-
-## `CancellingProposals.t.sol`
-
-This file consists of tests related to proposal cancellation through the `EmergencyProtectedTimelock`.
-
-### `testOnlyGovernanceCanCancelProposals`
-
-Tests that `EmergencyProtectedTimelock.cancelAllNonExecutedProposals` reverts if it is called by any address except the governance address.
-
-### `testCancelledProposalsCannotBeScheduled`
-
-Tests that `EmergencyProtectedTimelock.schedule` reverts if it is called with a proposal ID that corresponds to a proposal whose status is `Cancelled`.
-
-### `testCancelledProposalsCannotBeEmergencyExecuted`
-
-Tests that `EmergencyProtectedTimelock.emergencyExecute` reverts if it is called with a proposal ID that corresponds to a proposal whose status is `Cancelled`.
 
 ## `EscrowAccounting.t.sol`
 
@@ -161,7 +162,7 @@ This file consists of a single test, `testRageQuitDuration`, which checks that i
 
 This file consists of tests checking correctness properties of various functions of the `EmergencyProtectedTimelock` contract. These include that these functions produce the correct state changes and that they have the appropriate access protections.
 
-For simplicity, tests for functions that deal with proposal submission or execution use a proposal with a single call. When the proposal needs to be concretely executed, we use a simple proposal that sets a flag in an external contract.
+For simplicity, tests for functions that deal with proposal submission or execution use a proposal with a single call. When the proposal needs to be concretely executed or loaded into memory, we use a simple example proposal that sets a flag in an external contract.
 
 ### `_checkStateRemainsUnchanged`
 
@@ -215,6 +216,22 @@ Tests that `EmergencyProtectedTimelock.execute` reverts when the after-schedule 
 ### `testCancelAllNonExecutedProposals`
 
 Tests that when `EmergencyProtectedTimelock.cancelAllNonExecutedProposals` is called by the governance address, any proposal whose status was not `Executed` has its status set to `Cancelled`.
+
+### `testOnlyGovernanceCanCancelProposals`
+
+Tests that `EmergencyProtectedTimelock.cancelAllNonExecutedProposals` reverts if it is called by any address except the governance address.
+
+### `testCancelledProposalsCannotBeScheduled`
+
+Tests that `EmergencyProtectedTimelock.schedule` reverts if it is called with a proposal ID that corresponds to a proposal whose status is `Cancelled`.
+
+### `testCancelledProposalsCannotBeExecuted`
+
+Tests that `EmergencyProtectedTimelock.execute` reverts if it is called with a proposal ID that corresponds to a proposal whose status is `Cancelled`.
+
+### `testCancelledProposalsCannotBeEmergencyExecuted`
+
+Tests that `EmergencyProtectedTimelock.emergencyExecute` reverts if it is called with a proposal ID that corresponds to a proposal whose status is `Cancelled`.
 
 ### `testSetGovernance`
 
