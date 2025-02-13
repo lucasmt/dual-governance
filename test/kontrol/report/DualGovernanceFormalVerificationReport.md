@@ -6,7 +6,7 @@ This report does not constitute legal or investment advice. You understand and a
 
 Lido has engaged Runtime Verification to formally verify correctness and safety properties of the smart contracts that comprise the Lido Dual Governance protocol. The formal verification was conducted using Runtime Verification's symbolic execution tool Kontrol. Kontrol's symbolic execution is performed over the compiled EVM bytecode of the smart contracts, thus guaranteeing that it can catch errors introduced by the compiler or identify corner cases that may not be evident on source code inspection.
 
-The formal verification of the Dual Governance contracts was performed over the following commit: https://github.com/lidofinance/dual-governance/commit/ad15aede50b2b8ffafd0f1095cc13060bd33c8bf. The contracts were compiled using Solidity v0.8.26, and the Kontrol version used was v1.0.118.
+The formal verification of the Dual Governance contracts was performed over the following commit: https://github.com/lidofinance/dual-governance/commit/3e0f1ae5740ef8410e928f6cc106e3a5f45a5a75. The contracts were compiled using Solidity v0.8.26, and the Kontrol version used was v1.0.118.
 
 # Methodology
 
